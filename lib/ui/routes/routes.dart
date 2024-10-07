@@ -1,4 +1,6 @@
 import 'package:go_router/go_router.dart';
+import 'package:oratio_app/ui/pages/auth/forgot_pw_page.dart';
+import 'package:oratio_app/ui/pages/profile_page.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 
 import '../pages/pages.dart';
@@ -15,6 +17,16 @@ final appRouter = GoRouter(
       path: '/',
       name: RouteNames.homePage,
       builder: (context, state) => const HomePage(),
+    ),
+    GoRoute(
+      path: '/profilepage',
+      name: RouteNames.profile,
+      builder: (context, state) => const ProfilePage(),
+    ),
+    GoRoute(
+      path: '/forgotpwpage',
+      name: RouteNames.forgotpwpage,
+      builder: (context, state) => const ForgotPasswordPage(),
     ),
     GoRoute(
       path: '/${RouteNames.notifications}',

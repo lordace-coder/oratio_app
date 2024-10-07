@@ -21,6 +21,7 @@ dependencies:
   firebase_core: ^2.25.5
   image_picker: ^1.1.2
   flutter_slidable: ^3.1.1
+  # ade_flutterwave_working_version: ^0.0.2+2
 
 dev_dependencies:
   flutter_test:

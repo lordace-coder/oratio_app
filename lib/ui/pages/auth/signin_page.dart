@@ -88,7 +88,7 @@ class _LoginPageState extends State<LoginPage> {
               const Gap(10),
               GestureDetector(
                 onTap: () {
-                  // context.pushNamed(Routes.forgotPassword);
+                  context.pushNamed(RouteNames.forgotpwpage);
                 },
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
