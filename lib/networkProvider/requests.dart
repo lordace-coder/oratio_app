@@ -1,7 +1,5 @@
-import 'dart:developer';
 
 import 'package:dio/dio.dart';
-import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/networkProvider/constants.dart';
 
 final dio = Dio(

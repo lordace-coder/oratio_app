@@ -5,7 +5,6 @@ import 'package:oratio_app/ui/pages/auth/auth_wrapper.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/inputs.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});

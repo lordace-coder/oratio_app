@@ -50,7 +50,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         // todo check if tokens are valid before saving them
         try {
           final isAuth = await isTokenValid(token);
-          print(isAuth.toString() + ' is auth');
+          print('$isAuth is auth');
           if (isAuth == ResponseType.success) {
             emit(Authenticated(
                 access: pref.getString('access')!,

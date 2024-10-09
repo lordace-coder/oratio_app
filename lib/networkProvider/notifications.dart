@@ -20,8 +20,6 @@ Future<List<Map>> getNotifications(String token) async {
     for (var element in data) {
       result.add(element as Map);
     }
-  } catch (e) {
-  
   } finally {
     return result;
   }

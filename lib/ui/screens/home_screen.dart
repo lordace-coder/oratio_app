@@ -4,7 +4,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
-import 'package:oratio_app/ui/routes/routes.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/home.dart';
 

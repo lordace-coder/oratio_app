@@ -9,7 +9,7 @@ final class Anonymous extends AuthState {}
 ///user is not authenticated
 final class AuthLoading extends AuthState {
   AuthLoading() {
-    Future.delayed(Duration(seconds: 3));
+    Future.delayed(const Duration(seconds: 3));
     print('state is Authloading for 3 seconds');
   }
 }

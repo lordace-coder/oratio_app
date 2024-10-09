@@ -99,7 +99,7 @@ class UserModel {
       completed_surveys_count: map['completed_surveys_count'] as int,
       referrers_count: map['referrers_count'] as int,
       referral_code: map['referral_code'] as String,
-      exchangeRates: map['exchangeRates'] != null ? map['exchangeRates'] : null,
+      exchangeRates: map['exchangeRates'],
     );
   }
 
