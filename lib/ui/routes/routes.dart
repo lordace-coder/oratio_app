@@ -43,5 +43,22 @@ final appRouter = GoRouter(
       name: RouteNames.signup,
       builder: (context, state) => SignupPage(),
     ),
+    GoRoute(
+      path: '/community',
+      name: RouteNames.communitypage,
+      builder: (context, state) => const CommunityPage(),
+    ),
+    GoRoute(
+      path: '/parishlistpage',
+      name: RouteNames.parishpage,
+      // ignore: prefer_const_constructors
+      builder: (context, state) => ParishListPage(),
+    ),
+    GoRoute(
+      path: '/mass',
+      name: RouteNames.mass,
+      // ignore: prefer_const_constructors
+      builder: (context, state) => MassBookingPage(),
+    ),
   ],
 );

@@ -325,7 +325,9 @@ class HomeScreen extends StatelessWidget {
                         DashboardButton(
                           icon: FontAwesomeIcons.book,
                           text: 'Book Mass',
-                          onTap: () {},
+                          onTap: () {
+                            context.pushNamed(RouteNames.mass);
+                          },
                         ),
                         DashboardButton(
                           icon: FontAwesomeIcons.moneyBill,
@@ -334,7 +336,9 @@ class HomeScreen extends StatelessWidget {
                         ),
                         DashboardButton(
                           icon: FontAwesomeIcons.church,
-                          onTap: () {},
+                          onTap: () {
+                            context.pushNamed(RouteNames.parishpage);
+                          },
                           text: 'Join Parish',
                         ),
                       ],
@@ -362,7 +366,9 @@ class HomeScreen extends StatelessWidget {
                           DashboardButton(
                             icon: FontAwesomeIcons.book,
                             text: 'Communities',
-                            onTap: () {},
+                            onTap: () {
+                              context.pushNamed(RouteNames.communitypage);
+                            },
                           ),
                           gap,
                           DashboardButton(

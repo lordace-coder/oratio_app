@@ -5,6 +5,7 @@ class AppColors {
   static Color dimGray = const Color(0xffD9D9D9).withOpacity(28 / 100);
   static Color gray = const Color(0xffD9D9D9);
   static Color textDim = Colors.white.withOpacity(.5);
+  static Color textDarkDim = Colors.black.withOpacity(.5);
   static Color appBg = const Color(0xffF6F8F9);
   static Color inputBoxGray = const Color(0xffECECEC);
   static Color green = const Color(0xff00C33A);

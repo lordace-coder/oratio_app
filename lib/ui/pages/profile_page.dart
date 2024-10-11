@@ -32,14 +32,19 @@ class ProfilePage extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Row(
+                          Row(
                             children: [
-                              Icon(
-                                FontAwesomeIcons.chevronLeft,
-                                size: 18,
+                              GestureDetector(
+                                onTap: () {
+                                  context.pop();
+                                },
+                                child: const Icon(
+                                  FontAwesomeIcons.chevronLeft,
+                                  size: 18,
+                                ),
                               ),
-                              Gap(30),
-                              Text(
+                              const Gap(30),
+                              const Text(
                                 'Profile',
                                 style: TextStyle(fontSize: 20),
                               ),

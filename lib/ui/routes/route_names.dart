@@ -5,4 +5,7 @@ class RouteNames {
   static String signup = 'signuppage';
   static String login = 'loginpage';
   static String forgotpwpage = 'forgotpassword';
+  static String communitypage = 'communitypage';
+  static String parishpage = 'parishpage';
+  static String mass = 'mass';
 }
