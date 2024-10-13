@@ -60,5 +60,10 @@ final appRouter = GoRouter(
       // ignore: prefer_const_constructors
       builder: (context, state) => MassBookingPage(),
     ),
+    GoRoute(
+      path: '/massDetail',
+      name: RouteNames.massDetail,
+      builder: (context, state) => const MassDetailPage(),
+    ),
   ],
 );

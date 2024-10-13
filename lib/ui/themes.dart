@@ -12,4 +12,5 @@ class AppColors {
   static Color greenDisabled = const Color(0xff00C33A).withOpacity(.5);
   static Color blueDim = const Color(0xff0F91D7).withOpacity(.2);
   static Color blue = const Color(0xff0F91D7);
+  static Color warning = const Color.fromARGB(255, 223, 186, 17);
 }

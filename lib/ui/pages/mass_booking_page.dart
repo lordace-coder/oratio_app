@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/church_widgets.dart';
 import 'package:oratio_app/ui/widgets/inputs.dart';
@@ -23,216 +24,58 @@ class MassBookingPage extends StatelessWidget {
                 // app bar
                 appBar(context),
                 // TODO check if item is selected before displaying purple [appcolors primary] or white as bg for button
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 130,
-                        margin: const EdgeInsets.only(right: 20),
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(10),
+                const Align(
+                  alignment: Alignment.bottomLeft,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        DateItemButton(
+                          selected: false,
+                          date: 'Oct 1',
+                          title: 'Today',
                         ),
-                        child: const Column(
-                          children: [
-                            Text(
-                              'Today',
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 20),
-                            ),
-                            Gap(10),
-                            Text(
-                              'Oct 1',
-                              style: TextStyle(color: Colors.white60),
-                            ),
-                          ],
+                        DateItemButton(
+                          selected: false,
+                          date: 'Oct 1',
+                          title: 'Tommorrow',
                         ),
-                      ),
-                      Container(
-                        width: 130,
-                        margin: const EdgeInsets.only(right: 20),
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(10),
+                        DateItemButton(
+                          selected: true,
+                          date: '...',
+                          title: 'Custom',
                         ),
-                        child: const Column(
-                          children: [
-                            Text(
-                              'Tommorrow',
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 20),
-                            ),
-                            Gap(10),
-                            Text(
-                              'Oct 1',
-                              style: TextStyle(color: Colors.white60),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        width: 130,
-                        margin: const EdgeInsets.only(right: 20),
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Column(
-                          children: [
-                            Text(
-                              'Select Day',
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 20),
-                            ),
-                            Gap(10),
-                            Text(
-                              '...',
-                              style: TextStyle(color: Colors.white60),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
 
                 const Gap(20),
-                Column(
+                const Column(
                   children: [
                     Row(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.only(right: 10),
-                          child: Container(
-                            width: 160,
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 15, horizontal: 10),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(FontAwesomeIcons.clock),
-                                Gap(10),
-                                Text(
-                                  'Today',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 20,
-                                  ),
-                                ),
-                                Gap(5),
-                                Text(
-                                  'Oct 1',
-                                  style: TextStyle(color: Colors.black54),
-                                ),
-                              ],
-                            ),
-                          ),
+                        MassTimeButton(
+                          time: '8:00 AM',
+                          mass: 'Morning Mass',
                         ),
-                        Padding(
-                          padding: const EdgeInsets.only(right: 10),
-                          child: Container(
-                            width: 160,
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 15, horizontal: 10),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(FontAwesomeIcons.clock),
-                                Gap(10),
-                                Text(
-                                  'Today',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 20,
-                                  ),
-                                ),
-                                Gap(5),
-                                Text(
-                                  'Oct 1',
-                                  style: TextStyle(color: Colors.black54),
-                                ),
-                              ],
-                            ),
-                          ),
+                        MassTimeButton(
+                          time: '10:00 AM',
+                          mass: 'Late Morning Mass',
                         ),
                       ],
                     ),
-                    const Gap(20),
+                    Gap(20),
                     Row(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.only(right: 10),
-                          child: Container(
-                            width: 160,
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 15, horizontal: 10),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(FontAwesomeIcons.clock),
-                                Gap(10),
-                                Text(
-                                  'Today',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 20,
-                                  ),
-                                ),
-                                Gap(5),
-                                Text(
-                                  'Oct 1',
-                                  style: TextStyle(color: Colors.black54),
-                                ),
-                              ],
-                            ),
-                          ),
+                        MassTimeButton(
+                          time: '12:00 PM',
+                          mass: 'Noon Mass',
                         ),
-                        Padding(
-                          padding: const EdgeInsets.only(right: 10),
-                          child: Container(
-                            width: 160,
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 15, horizontal: 10),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(FontAwesomeIcons.clock),
-                                Gap(10),
-                                Text(
-                                  'Today',
-                                  style: TextStyle(
-                                    color: Colors.black,
-                                    fontSize: 20,
-                                  ),
-                                ),
-                                Gap(5),
-                                Text(
-                                  'Oct 1',
-                                  style: TextStyle(color: Colors.black54),
-                                ),
-                              ],
-                            ),
-                          ),
+                        MassTimeButton(
+                          time: '2:00 PM',
+                          mass: 'Afternoon Mass',
                         ),
                       ],
                     ),
@@ -241,10 +84,13 @@ class MassBookingPage extends StatelessWidget {
                 const Gap(10),
                 SubmitButtonV1(
                     radius: 10,
+                    ontap: () {
+                      context.pushNamed(RouteNames.massDetail);
+                    },
                     backgroundcolor: AppColors.primary,
                     child: const Text(
                       'Book Now',
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(color: Colors.white, fontSize: 17),
                     )),
                 const Gap(30),
                 Row(
@@ -252,18 +98,22 @@ class MassBookingPage extends StatelessWidget {
                   children: [
                     const Text(
                       'Select A Parish Or Mass Center',
-                      style: TextStyle(fontSize: 20),
+                      style: TextStyle(fontSize: 17),
                     ),
-                    TextButton(
-                        onPressed: () {}, child: const Text('see more..'))
+                    GestureDetector(
+                        child: Text(
+                      'see more',
+                      style: TextStyle(fontSize: 13, color: AppColors.primary),
+                    ))
                   ],
                 ),
                 const Gap(10),
                 CustomSearchBar(controller: controller),
                 const Gap(20),
-                const ChurchListTile(),
-                const ChurchListTile(),
-                const ChurchListTile(),
+                // const ChurchListTile(),
+                // const ChurchListTile(),
+                // const ChurchListTile(),
+                const NoParishYet()
               ],
             ),
           ),
@@ -338,6 +188,53 @@ class MassBookingPage extends StatelessWidget {
           },
         ),
       ],
+    );
+  }
+}
+
+class NoParishYet extends StatelessWidget {
+  const NoParishYet({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 30),
+      child: Column(
+        children: [
+          const Icon(
+            FontAwesomeIcons.wineGlassEmpty,
+            size: 30,
+          ),
+          const Gap(20),
+          const Text(
+            'Churches You Have Joined Will Be Displayed Here',
+            textAlign: TextAlign.center,
+          ),
+          const Gap(20),
+          MaterialButton(
+            animationDuration: Durations.extralong2,
+            onPressed: () {
+              context.pushNamed(RouteNames.massDetail);
+            },
+            color: AppColors.green,
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  FontAwesomeIcons.church,
+                  color: Colors.white,
+                  size: 14,
+                ),
+                Gap(10),
+                Text(
+                  'Join Church',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ],
+            ),
+          )
+        ],
+      ),
     );
   }
 }

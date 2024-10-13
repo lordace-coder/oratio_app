@@ -8,4 +8,5 @@ class RouteNames {
   static String communitypage = 'communitypage';
   static String parishpage = 'parishpage';
   static String mass = 'mass';
+  static String massDetail = 'massDetail';
 }
