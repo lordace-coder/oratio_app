@@ -9,4 +9,5 @@ class RouteNames {
   static String parishpage = 'parishpage';
   static String mass = 'mass';
   static String massDetail = 'massDetail';
+  static String paymentSuccesful = 'paymentSuccesful';
 }

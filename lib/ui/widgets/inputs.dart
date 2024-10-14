@@ -4,20 +4,25 @@ import 'package:gap/gap.dart';
 import 'package:oratio_app/ui/themes.dart';
 
 class TextFieldd extends StatefulWidget {
-  const TextFieldd({
-    super.key,
-    required this.labeltext,
-    required this.hintText,
-    required this.controller,
-    required this.isPassword,
-    this.inputType = TextInputType.text
-  });
+  const TextFieldd(
+      {super.key,
+      required this.labeltext,
+      required this.hintText,
+      required this.controller,
+      required this.isPassword,
+      this.inputType = TextInputType.text,
+      this.labelTextStyle,
+      this.inputTextStyle,
+      this.decoration, this.bg});
   final String labeltext;
   final String hintText;
   final TextEditingController controller;
   final bool isPassword;
   final TextInputType inputType;
-
+  final TextStyle? labelTextStyle;
+  final TextStyle? inputTextStyle;
+  final InputDecoration? decoration;
+  final Color? bg;
   @override
   State<TextFieldd> createState() => _TextFielddState();
 }
@@ -32,7 +37,7 @@ class _TextFielddState extends State<TextFieldd> {
         children: [
           Text(
             widget.labeltext,
-            style:
+            style: widget.labelTextStyle ??
                 TextStyle(color: AppColors.appBg, fontWeight: FontWeight.w600),
           ),
           const Gap(5),
@@ -42,34 +47,39 @@ class _TextFielddState extends State<TextFieldd> {
                 color: AppColors.dimGray,
                 borderRadius: BorderRadius.circular(5)),
             child: TextField(
-              keyboardType:widget.inputType,
+              keyboardType: widget.inputType,
               obscureText: widget.isPassword ? isvisible : false,
-              style: TextStyle(
-                color: AppColors.gray,
-              ),
+              style: widget.inputTextStyle ??
+                  TextStyle(
+                    color: AppColors.gray,
+                  ),
               controller: widget.controller,
               // cursorColor: AppColors.textColor,
-              decoration: InputDecoration(
-                  hintStyle: TextStyle(
-                      color: AppColors.dimGray, fontWeight: FontWeight.normal),
-                  border: InputBorder.none,
-                  hintText: widget.hintText,
-                  suffixIcon: widget.isPassword
-                      ? GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              isvisible = !isvisible;
-                            });
-                          },
-                          child: Icon(
-                            !isvisible
-                                ? FontAwesomeIcons.eye
-                                : FontAwesomeIcons.eyeSlash,
-                            color: AppColors.dimGray,
-                            size: 17,
-                          ),
-                        )
-                      : null),
+              decoration: widget.decoration?.copyWith(
+                    hintText: widget.hintText,
+                  ) ??
+                  InputDecoration(
+                      hintStyle: TextStyle(
+                          color: AppColors.dimGray,
+                          fontWeight: FontWeight.normal),
+                      border: InputBorder.none,
+                      hintText: widget.hintText,
+                      suffixIcon: widget.isPassword
+                          ? GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  isvisible = !isvisible;
+                                });
+                              },
+                              child: Icon(
+                                !isvisible
+                                    ? FontAwesomeIcons.eye
+                                    : FontAwesomeIcons.eyeSlash,
+                                color: AppColors.dimGray,
+                                size: 17,
+                              ),
+                            )
+                          : null),
             ),
           )
         ],

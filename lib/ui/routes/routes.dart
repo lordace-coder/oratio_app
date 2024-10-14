@@ -55,6 +55,14 @@ final appRouter = GoRouter(
       builder: (context, state) => ParishListPage(),
     ),
     GoRoute(
+      path: '/paymentsuccesfull/:status',
+      name: RouteNames.paymentSuccesful,
+      // ignore: prefer_const_constructors
+      builder: (context, state) => PaymentSuccesful(
+        paymentStatus: PaymentStatus.succesful,
+      ),
+    ),
+    GoRoute(
       path: '/mass',
       name: RouteNames.mass,
       // ignore: prefer_const_constructors

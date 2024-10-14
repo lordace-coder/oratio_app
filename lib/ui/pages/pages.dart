@@ -6,3 +6,4 @@ export 'community_page.dart';
 export 'parish_list_page.dart';
 export 'mass_booking_page.dart';
 export 'mass_detail_page.dart';
+export 'payment_succesful.dart';

@@ -82,16 +82,19 @@ class MassBookingPage extends StatelessWidget {
                   ],
                 ),
                 const Gap(10),
-                SubmitButtonV1(
-                    radius: 10,
-                    ontap: () {
-                      context.pushNamed(RouteNames.massDetail);
-                    },
-                    backgroundcolor: AppColors.primary,
-                    child: const Text(
-                      'Book Now',
-                      style: TextStyle(color: Colors.white, fontSize: 17),
-                    )),
+                Opacity(
+                  opacity: 0.4,
+                  child: SubmitButtonV1(
+                      radius: 10,
+                      ontap: () {
+                        context.pushNamed(RouteNames.massDetail);
+                      },
+                      backgroundcolor: AppColors.primary,
+                      child: const Text(
+                        'Book Now',
+                        style: TextStyle(color: Colors.white, fontSize: 17),
+                      )),
+                ),
                 const Gap(30),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
