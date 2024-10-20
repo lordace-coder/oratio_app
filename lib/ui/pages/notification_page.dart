@@ -3,6 +3,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:oratio_app/ui/themes.dart';
+import 'package:oratio_app/ui/widgets/church_widgets.dart';
 
 class NotificationPage extends StatelessWidget {
   const NotificationPage({super.key});
@@ -11,34 +12,29 @@ class NotificationPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.gray,
-      appBar: AppBar(
-        foregroundColor: Colors.white,
-        backgroundColor: AppColors.primary,
-        title: const Text('Notifications'),
-        actions: [
-          PopupMenuButton(itemBuilder: (context) {
-            return [
-              const PopupMenuItem(
-                child: Row(
-                  children: [
-                    Icon(
-                      FontAwesomeIcons.trash,
+      appBar: createAppBar(actions: [
+        PopupMenuButton(itemBuilder: (context) {
+          return [
+            const PopupMenuItem(
+              child: Row(
+                children: [
+                  Icon(
+                    FontAwesomeIcons.trash,
+                    color: Colors.black54,
+                  ),
+                  Gap(7),
+                  Text(
+                    'Delete All',
+                    style: TextStyle(
                       color: Colors.black54,
                     ),
-                    Gap(7),
-                    Text(
-                      'Delete All',
-                      style: TextStyle(
-                        color: Colors.black54,
-                      ),
-                    )
-                  ],
-                ),
+                  )
+                ],
               ),
-            ];
-          })
-        ],
-      ),
+            ),
+          ];
+        })
+      ], label: 'Notifications'),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10.0),
         child: ListView(children: const [
@@ -66,6 +62,8 @@ class NotificationPage extends StatelessWidget {
       ),
     );
   }
+
+ 
 }
 
 class NotificationItem extends StatelessWidget {

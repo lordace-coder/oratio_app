@@ -202,7 +202,8 @@ class MassBookBottomSheet extends StatelessWidget {
           const Gap(10),
           SubmitButtonV1(
               ontap: () {
-                context.pushNamed(RouteNames.paymentSuccesful);
+                context.pushNamed(RouteNames.paymentSuccesful,
+                    pathParameters: {'status': ''});
               },
               radius: 12,
               backgroundcolor: AppColors.primary,

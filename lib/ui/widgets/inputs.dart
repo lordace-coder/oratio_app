@@ -13,7 +13,8 @@ class TextFieldd extends StatefulWidget {
       this.inputType = TextInputType.text,
       this.labelTextStyle,
       this.inputTextStyle,
-      this.decoration, this.bg});
+      this.decoration,
+      this.bg});
   final String labeltext;
   final String hintText;
   final TextEditingController controller;
@@ -112,7 +113,6 @@ class SubmitButtonV1 extends StatelessWidget {
         ontap?.call();
       },
       child: Container(
-        width: MediaQuery.of(context).size.width,
         height: height,
         decoration: BoxDecoration(
           border:

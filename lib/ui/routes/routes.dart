@@ -51,27 +51,39 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/parishlistpage',
       name: RouteNames.parishpage,
-      // ignore: prefer_const_constructors
-      builder: (context, state) => ParishListPage(),
+      builder: (context, state) => const ParishListPage(),
+    ),
+    GoRoute(
+      path: '/${RouteNames.communityDetailPage}',
+      name: RouteNames.communityDetailPage,
+      builder: (context, state) => PrayerCommunityDetail(),
     ),
     GoRoute(
       path: '/paymentsuccesfull/:status',
       name: RouteNames.paymentSuccesful,
-      // ignore: prefer_const_constructors
-      builder: (context, state) => PaymentSuccesful(
+      builder: (context, state) => const PaymentSuccesful(
         paymentStatus: PaymentStatus.succesful,
       ),
     ),
     GoRoute(
       path: '/mass',
       name: RouteNames.mass,
-      // ignore: prefer_const_constructors
-      builder: (context, state) => MassBookingPage(),
+      builder: (context, state) => const MassBookingPage(),
+    ),
+    GoRoute(
+      path: '/parishdetails',
+      name: RouteNames.parishlanding,
+      builder: (context, state) => const ParishLandingPage(),
     ),
     GoRoute(
       path: '/massDetail',
       name: RouteNames.massDetail,
       builder: (context, state) => const MassDetailPage(),
+    ),
+    GoRoute(
+      path: '/${RouteNames.transactionsPage}',
+      name: RouteNames.transactionsPage,
+      builder: (context, state) => const TransactionPage(),
     ),
   ],
 );

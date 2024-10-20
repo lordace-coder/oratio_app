@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
+import 'package:go_router/go_router.dart';
+import 'package:oratio_app/ui/pages/payment_succesful.dart';
+import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 
 class ChurchListTile extends StatelessWidget {
@@ -12,59 +15,70 @@ class ChurchListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10), color: Colors.black45),
-          ),
-          const Gap(15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: InkWell(
+        onTap: () {
+          context.pushNamed(RouteNames.parishlanding);
+        },
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const Text(
-                  'St. Patrick ',
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 18,
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.black45),
+                ),
+                const Gap(15),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'St. Patrick ',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 18,
+                        ),
+                      ),
+                      Text(
+                        '5th Ave. New York, NY',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: AppColors.textDarkDim,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                Text(
-                  '5th Ave. New York, NY',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textDarkDim,
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: GestureDetector(
+                    onTap: () {},
+                    child: Container(
+                      width: 60,
+                      height: 30,
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(10),
+                          color: AppColors.gray),
+                      child: const Center(
+                          child: Text(
+                        'Select',
+                        style: TextStyle(
+                          fontSize: 13,
+                        ),
+                      )),
+                    ),
                   ),
-                ),
+                )
               ],
             ),
-          ),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: GestureDetector(
-              onTap: () {},
-              child: Container(
-                width: 60,
-                height: 30,
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: AppColors.gray),
-                child: const Center(
-                    child: Text(
-                  'Select',
-                  style: TextStyle(
-                    fontSize: 13,
-                  ),
-                )),
-              ),
-            ),
-          )
-        ],
+            const Divider()
+          ],
+        ),
       ),
     );
   }
@@ -184,3 +198,18 @@ class MassTimeButton extends StatelessWidget {
     );
   }
 }
+
+
+
+ AppBar createAppBar(
+      {required String label,
+      List<Widget>? actions,
+      Color? foregroundColor,
+      Color? backgroundColor}) {
+    return AppBar(
+      foregroundColor: foregroundColor ?? Colors.white,
+      backgroundColor: backgroundColor ?? AppColors.primary,
+      title: Text(label),
+      actions: actions,
+    );
+  }

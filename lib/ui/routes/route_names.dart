@@ -10,4 +10,7 @@ class RouteNames {
   static String mass = 'mass';
   static String massDetail = 'massDetail';
   static String paymentSuccesful = 'paymentSuccesful';
+  static String communityDetailPage = 'communityDetailPage';
+  static String parishlanding = 'parishlanding';
+  static String transactionsPage = 'transactionsPage';
 }

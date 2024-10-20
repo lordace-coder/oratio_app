@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 
 class CommunityPage extends StatelessWidget {
@@ -55,6 +56,7 @@ class CommunityListItem extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         // TODO enter inside community
+        context.pushNamed(RouteNames.communityDetailPage);
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
@@ -64,7 +66,7 @@ class CommunityListItem extends StatelessWidget {
               mainAxisSize: MainAxisSize.max,
               children: [
                 const CircleAvatar(
-                  radius: 30,
+                  radius: 20,
                 ),
                 const Gap(15),
                 Expanded(
@@ -74,21 +76,27 @@ class CommunityListItem extends StatelessWidget {
                       Row(
                         mainAxisSize: MainAxisSize.max,
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          const Text(
-                            'Sacred heart society',
-                            style: TextStyle(fontSize: 18),
+                          const Expanded(
+                            child: Text(
+                              'Sacred heart society Sacred heart society',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 17,
+                              ),
+                            ),
                           ),
                           Text(
                             '04:12AM',
                             style: TextStyle(
-                                fontSize: 16, color: AppColors.textDarkDim),
+                                fontSize: 14, color: AppColors.textDarkDim),
                           ),
                         ],
                       ),
                       const Text(
                         'Paul: Greeting children of God',
-                        style: TextStyle(fontSize: 18),
+                        style: TextStyle(fontSize: 14),
                       ),
                     ],
                   ),

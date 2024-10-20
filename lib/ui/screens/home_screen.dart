@@ -183,7 +183,10 @@ class HomeScreen extends StatelessWidget {
                                   ],
                                 ),
                                 GestureDetector(
-                                  onTap: () {},
+                                  onTap: () {
+                                    context
+                                        .pushNamed(RouteNames.transactionsPage);
+                                  },
                                   child: const Text(
                                     'Transactions >',
                                     style: TextStyle(
@@ -264,7 +267,10 @@ class HomeScreen extends StatelessWidget {
                                   ],
                                 ),
                                 GestureDetector(
-                                  onTap: () {},
+                                  onTap: () {
+                                    context
+                                        .pushNamed(RouteNames.transactionsPage);
+                                  },
                                   child: const Text(
                                     'Transactions >',
                                     style: TextStyle(
@@ -443,7 +449,9 @@ class HomeScreen extends StatelessWidget {
                           style: TextStyle(fontSize: 17),
                         ),
                         TextButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            context.pushNamed(RouteNames.transactionsPage);
+                          },
                           child: const Text('see more..'),
                         )
                       ],
