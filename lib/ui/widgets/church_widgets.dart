@@ -44,12 +44,22 @@ class ChurchListTile extends StatelessWidget {
                           fontSize: 18,
                         ),
                       ),
-                      Text(
-                        '5th Ave. New York, NY',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textDarkDim,
-                        ),
+                      Row(
+                        children: [
+                          Icon(
+                            FontAwesomeIcons.locationPin,
+                            size: 10,
+                            color: AppColors.primary,
+                          ),
+                          const Gap(3),
+                          Text(
+                            '5th Ave. New York, NY',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textDarkDim,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -100,8 +110,8 @@ class CustomSearchBar extends StatelessWidget {
           color: AppColors.dimGray, borderRadius: BorderRadius.circular(5)),
       child: TextField(
         keyboardType: TextInputType.name,
-        style: TextStyle(
-          color: AppColors.gray,
+        style: const TextStyle(
+          color: Colors.black54,
         ),
         controller: controller,
         decoration: const InputDecoration(
@@ -125,33 +135,40 @@ class DateItemButton extends StatelessWidget {
     required this.selected,
     required this.title,
     required this.date,
+    required this.onTap,
   });
 
+  final VoidCallback onTap;
   final bool selected;
   final String title;
   final String date;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(right: 10),
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 7),
-      decoration: BoxDecoration(
-        color: selected ? AppColors.primary : Colors.white,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-                color: selected ? Colors.white : Colors.black54, fontSize: 17),
-          ),
-          Text(
-            date,
-            style: TextStyle(color: selected ? Colors.white60 : Colors.black54),
-          ),
-        ],
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(right: 10),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 7),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                  color: selected ? Colors.white : Colors.black54,
+                  fontSize: 17),
+            ),
+            Text(
+              date,
+              style:
+                  TextStyle(color: selected ? Colors.white60 : Colors.black54),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -162,54 +179,70 @@ class MassTimeButton extends StatelessWidget {
     super.key,
     required this.time,
     required this.mass,
+    required this.selected,
+    required this.onTap,
   });
 
   final String time;
   final String mass;
+  final bool selected;
+  final VoidCallback onTap;
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(right: 10),
-      child: Container(
-        width: 130,
-        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Icon(FontAwesomeIcons.clock),
-            const Gap(5),
-            Text(
-              time,
-              style: const TextStyle(
-                color: Colors.black,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: 130,
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.primary : Colors.white,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                FontAwesomeIcons.clock,
+                color: selected ? Colors.white : Colors.black,
               ),
-            ),
-            Text(
-              mass,
-              style: const TextStyle(color: Colors.black54, fontSize: 13),
-            ),
-          ],
+              const Gap(5),
+              Text(
+                time,
+                style: TextStyle(
+                  color: selected ? Colors.white : Colors.black,
+                ),
+              ),
+              Text(
+                mass,
+                style: TextStyle(
+                    color: selected ? Colors.white : Colors.black,
+                    fontSize: 13),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-
-
- AppBar createAppBar(
-      {required String label,
-      List<Widget>? actions,
-      Color? foregroundColor,
-      Color? backgroundColor}) {
-    return AppBar(
-      foregroundColor: foregroundColor ?? Colors.white,
-      backgroundColor: backgroundColor ?? AppColors.primary,
-      title: Text(label),
-      actions: actions,
-    );
-  }
+AppBar createAppBar(
+  BuildContext context,
+    {required String label,
+    List<Widget>? actions,
+    Color? foregroundColor,
+    Color? backgroundColor}) {
+  return AppBar(
+    leading: GestureDetector(
+        onTap: () {
+          context.pop();
+        },
+        child: const Icon(FontAwesomeIcons.chevronLeft)),
+    foregroundColor: foregroundColor ?? Colors.white,
+    backgroundColor: backgroundColor ?? AppColors.primary,
+    title: Text(label),
+    actions: actions,
+  );
+}

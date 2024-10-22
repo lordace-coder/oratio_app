@@ -7,8 +7,32 @@ import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/church_widgets.dart';
 import 'package:oratio_app/ui/widgets/inputs.dart';
 
-class MassBookingPage extends StatelessWidget {
+enum SelectedDateType { today, tommorrow, custom }
+
+enum SelectedTimeType { morning, lateMorning, noon, afternoon }
+
+class MassBookingPage extends StatefulWidget {
   const MassBookingPage({super.key});
+
+  @override
+  State<MassBookingPage> createState() => _MassBookingPageState();
+}
+
+class _MassBookingPageState extends State<MassBookingPage> {
+  SelectedDateType? massDate;
+
+  SelectedTimeType? massTime;
+
+  bool selectedDateById(int id) {
+    if (massDate == null) return false;
+    return SelectedDateType.values[id - 1] == massDate;
+  }
+
+  bool selectedTimeById(int id) {
+    if (massTime == null) return false;
+
+    return SelectedTimeType.values[id - 1] == massTime;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +48,7 @@ class MassBookingPage extends StatelessWidget {
                 // app bar
                 appBar(context),
                 // TODO check if item is selected before displaying purple [appcolors primary] or white as bg for button
-                const Align(
+                Align(
                   alignment: Alignment.bottomLeft,
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
@@ -32,17 +56,32 @@ class MassBookingPage extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         DateItemButton(
-                          selected: false,
+                          selected: selectedDateById(1),
                           date: 'Oct 1',
                           title: 'Today',
+                          onTap: () {
+                            setState(() {
+                              massDate = SelectedDateType.values[0];
+                            });
+                          },
                         ),
                         DateItemButton(
-                          selected: false,
+                          onTap: () {
+                            setState(() {
+                              massDate = SelectedDateType.values[1];
+                            });
+                          },
+                          selected: selectedDateById(2),
                           date: 'Oct 1',
                           title: 'Tommorrow',
                         ),
                         DateItemButton(
-                          selected: true,
+                          onTap: () {
+                            setState(() {
+                              massDate = SelectedDateType.values[2];
+                            });
+                          },
+                          selected: selectedDateById(3),
                           date: '...',
                           title: 'Custom',
                         ),
@@ -52,28 +91,47 @@ class MassBookingPage extends StatelessWidget {
                 ),
 
                 const Gap(20),
-                const Column(
+                Column(
                   children: [
                     Row(
                       children: [
                         MassTimeButton(
                           time: '8:00 AM',
                           mass: 'Morning Mass',
+                          selected: selectedTimeById(1),
+                          onTap: () {
+                            setState(() => massTime = SelectedTimeType.morning);
+                          },
                         ),
                         MassTimeButton(
                           time: '10:00 AM',
                           mass: 'Late Morning Mass',
+                          selected: selectedTimeById(2),
+                          onTap: () {
+                            setState(
+                                () => massTime = SelectedTimeType.lateMorning);
+                          },
                         ),
                       ],
                     ),
-                    Gap(20),
+                    const Gap(20),
                     Row(
                       children: [
                         MassTimeButton(
+                          selected: selectedTimeById(3),
+                          onTap: () {
+                            setState(() => massTime = SelectedTimeType.noon);
+                          },
                           time: '12:00 PM',
                           mass: 'Noon Mass',
                         ),
                         MassTimeButton(
+                          selected: selectedTimeById(4),
+                          onTap: () {
+                            setState(() {
+                              massTime = SelectedTimeType.afternoon;
+                            });
+                          },
                           time: '2:00 PM',
                           mass: 'Afternoon Mass',
                         ),
@@ -82,19 +140,26 @@ class MassBookingPage extends StatelessWidget {
                   ],
                 ),
                 const Gap(10),
-                Opacity(
-                  opacity: 0.4,
-                  child: SubmitButtonV1(
-                      radius: 10,
-                      ontap: () {
-                        context.pushNamed(RouteNames.massDetail);
-                      },
-                      backgroundcolor: AppColors.primary,
-                      child: const Text(
-                        'Book Now',
-                        style: TextStyle(color: Colors.white, fontSize: 17),
-                      )),
-                ),
+                Builder(builder: (context) {
+                  bool disabledButton = massDate == null || massTime == null;
+                  return Opacity(
+                    opacity: disabledButton ? 0.4 : 1,
+                    child: SubmitButtonV1(
+                        radius: 10,
+                        ontap: () {
+                          if (disabledButton) {
+                            // TODO run some code if the button is disabled for example prompt user to insert date and time
+                            return;
+                          }
+                          context.pushNamed(RouteNames.massDetail);
+                        },
+                        backgroundcolor: AppColors.primary,
+                        child: const Text(
+                          'Book Now',
+                          style: TextStyle(color: Colors.white, fontSize: 17),
+                        )),
+                  );
+                }),
                 const Gap(30),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -104,10 +169,14 @@ class MassBookingPage extends StatelessWidget {
                       style: TextStyle(fontSize: 17),
                     ),
                     GestureDetector(
+                        onTap: () {
+                          context.pushNamed(RouteNames.parishpage);
+                        },
                         child: Text(
-                      'see more',
-                      style: TextStyle(fontSize: 13, color: AppColors.primary),
-                    ))
+                          'see more',
+                          style:
+                              TextStyle(fontSize: 13, color: AppColors.primary),
+                        ))
                   ],
                 ),
                 const Gap(10),
@@ -217,7 +286,7 @@ class NoParishYet extends StatelessWidget {
           MaterialButton(
             animationDuration: Durations.extralong2,
             onPressed: () {
-              context.pushNamed(RouteNames.massDetail);
+              context.pushNamed(RouteNames.parishpage);
             },
             color: AppColors.green,
             child: const Row(

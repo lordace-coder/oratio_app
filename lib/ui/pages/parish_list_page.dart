@@ -21,9 +21,6 @@ class ParishListPage extends StatelessWidget {
                 // app bar
                 appBar(context),
 
-                // search box ui
-
-                // church items
 
                 const Gap(20),
                 CustomSearchBar(controller: controller),

@@ -23,6 +23,7 @@ final appRouter = GoRouter(
       name: RouteNames.profile,
       builder: (context, state) => const ProfilePage(),
     ),
+ 
     GoRoute(
       path: '/forgotpwpage',
       name: RouteNames.forgotpwpage,
@@ -68,7 +69,7 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/mass',
       name: RouteNames.mass,
-      builder: (context, state) => const MassBookingPage(),
+      builder: (context, state) => MassBookingPage(),
     ),
     GoRoute(
       path: '/parishdetails',
@@ -83,7 +84,7 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/${RouteNames.transactionsPage}',
       name: RouteNames.transactionsPage,
-      builder: (context, state) => const TransactionPage(),
+      builder: (context, state) =>  TransactionPage(),
     ),
   ],
 );

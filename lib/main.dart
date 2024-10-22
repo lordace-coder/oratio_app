@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/ui/routes/routes.dart';
+import 'package:oratio_app/ui/themes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MyHttpOverrides extends HttpOverrides {
@@ -33,7 +34,7 @@ void main() async {
       ],
       child: const MainApp(),
     ),
-  );
+  ); 
 }
 
 class MainApp extends StatelessWidget {
@@ -44,9 +45,9 @@ class MainApp extends StatelessWidget {
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'Oratio Afrika',
-      color: Colors.purpleAccent,
+      color: AppColors.primary,
       routerConfig: appRouter,
-      theme: ThemeData(fontFamily: 'Itim'),
+      theme: ThemeData(fontFamily: 'Itim', primaryColor: AppColors.primary),
     );
   }
 }

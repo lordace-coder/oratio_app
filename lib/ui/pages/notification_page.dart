@@ -12,29 +12,31 @@ class NotificationPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.gray,
-      appBar: createAppBar(actions: [
-        PopupMenuButton(itemBuilder: (context) {
-          return [
-            const PopupMenuItem(
-              child: Row(
-                children: [
-                  Icon(
-                    FontAwesomeIcons.trash,
-                    color: Colors.black54,
+      appBar: createAppBar(context,
+          actions: [
+            PopupMenuButton(itemBuilder: (context) {
+              return [
+                const PopupMenuItem(
+                  child: Row(
+                    children: [
+                      Icon(
+                        FontAwesomeIcons.trash,
+                        color: Colors.black54,
+                      ),
+                      Gap(7),
+                      Text(
+                        'Delete All',
+                        style: TextStyle(
+                          color: Colors.black54,
+                        ),
+                      )
+                    ],
                   ),
-                  Gap(7),
-                  Text(
-                    'Delete All',
-                    style: TextStyle(
-                      color: Colors.black54,
-                    ),
-                  )
-                ],
-              ),
-            ),
-          ];
-        })
-      ], label: 'Notifications'),
+                ),
+              ];
+            })
+          ],
+          label: 'Notifications'),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10.0),
         child: ListView(children: const [
@@ -62,8 +64,6 @@ class NotificationPage extends StatelessWidget {
       ),
     );
   }
-
- 
 }
 
 class NotificationItem extends StatelessWidget {

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
-import 'package:oratio_app/ui/pages/auth/forgot_pw_page.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/inputs.dart';
@@ -17,7 +16,7 @@ class MassDetailPage extends StatelessWidget {
       child: Scaffold(
         bottomSheet: MassBookBottomSheet(),
         backgroundColor: Colors.transparent,
-        appBar: getAppBar(),
+        appBar: getAppBar(context),
         body: const SingleChildScrollView(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.end,
@@ -30,10 +29,12 @@ class MassDetailPage extends StatelessWidget {
     );
   }
 
-  AppBar getAppBar() {
+  AppBar getAppBar(BuildContext context) {
     return AppBar(
       leading: GestureDetector(
-        onTap: () {},
+        onTap: () {
+          context.pop();
+        },
         child: const Icon(FontAwesomeIcons.chevronLeft),
       ),
       backgroundColor: Colors.transparent,
