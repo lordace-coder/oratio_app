@@ -14,4 +14,7 @@ class RouteNames {
   static String parishlanding = 'parishlanding';
   static String chatDetailPage = 'chatDetailPage';
   static String transactionsPage = 'transactionsPage';
+
+  // priest pages
+  static String dashboard = 'dashboardPage';
 }

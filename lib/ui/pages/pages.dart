@@ -13,3 +13,6 @@ export 'prayer_readings.dart';
 export 'profile_visitor.dart';
 export 'parish_landing.dart';
 export 'transaction_page.dart';
+
+// priest pages
+export 'priest/dashboard_page.dart';

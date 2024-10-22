@@ -91,5 +91,10 @@ final appRouter = GoRouter(
       name: RouteNames.chatDetailPage,
       builder: (context, state) => const ChatPage(),
     ),
+    // priest routes
+    GoRoute(
+        path: '/priest/dashboard',
+        name: RouteNames.dashboard,
+        builder: (context, state) => const DashboardPage())
   ],
 );
