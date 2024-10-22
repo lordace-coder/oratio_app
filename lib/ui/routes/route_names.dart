@@ -12,5 +12,6 @@ class RouteNames {
   static String paymentSuccesful = 'paymentSuccesful';
   static String communityDetailPage = 'communityDetailPage';
   static String parishlanding = 'parishlanding';
+  static String chatDetailPage = 'chatDetailPage';
   static String transactionsPage = 'transactionsPage';
 }

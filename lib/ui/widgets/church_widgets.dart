@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
-import 'package:oratio_app/ui/pages/payment_succesful.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 

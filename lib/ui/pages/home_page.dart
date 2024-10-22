@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:gap/gap.dart';
 import 'package:oratio_app/ui/screens/chat_screen.dart';
 import 'package:oratio_app/ui/screens/feeds_page.dart';
 import 'package:oratio_app/ui/screens/home_screen.dart';
 import 'package:oratio_app/ui/themes.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -16,11 +14,11 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
-  final _pages = <Widget>[HomeScreen(), FeedsListScreen(), const ChatScreen()];
+  final _pages = <Widget>[HomeScreen(), const FeedsListScreen(), ChatScreen()];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.gray,
+      backgroundColor: _selectedIndex == 2 ? Colors.white : AppColors.gray,
       body: _pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         items: const [

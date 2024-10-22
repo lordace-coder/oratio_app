@@ -1,5 +1,6 @@
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/ui/pages/auth/forgot_pw_page.dart';
+import 'package:oratio_app/ui/pages/chat_page.dart';
 import 'package:oratio_app/ui/pages/profile_page.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 
@@ -23,7 +24,6 @@ final appRouter = GoRouter(
       name: RouteNames.profile,
       builder: (context, state) => const ProfilePage(),
     ),
- 
     GoRoute(
       path: '/forgotpwpage',
       name: RouteNames.forgotpwpage,
@@ -69,7 +69,7 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/mass',
       name: RouteNames.mass,
-      builder: (context, state) => MassBookingPage(),
+      builder: (context, state) => const MassBookingPage(),
     ),
     GoRoute(
       path: '/parishdetails',
@@ -84,7 +84,12 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/${RouteNames.transactionsPage}',
       name: RouteNames.transactionsPage,
-      builder: (context, state) =>  TransactionPage(),
+      builder: (context, state) => const TransactionPage(),
+    ),
+    GoRoute(
+      path: '/${RouteNames.chatDetailPage}',
+      name: RouteNames.chatDetailPage,
+      builder: (context, state) => const ChatPage(),
     ),
   ],
 );
