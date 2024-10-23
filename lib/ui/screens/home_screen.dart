@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/home.dart';
@@ -16,29 +17,6 @@ class HomeScreen extends StatelessWidget {
 
   bool showBalance = false;
   final WebViewController controller = WebViewController();
-
-  void handleAccountFunding(BuildContext context) async {
-    Uri uri = Uri.parse('https://google.com');
-    // Scaffold.of(context).showBottomSheet(
-    //   (context) => Container(
-    //     padding: const EdgeInsets.only(top: 10),
-    //     child: Column(
-    //       children: [
-    //         const Row(),
-    //         const Text('Complete Funding Transaction'),
-    //         const Gap(20),
-    //         WebViewWidget(
-    //           controller: controller,
-    //         )
-    //       ],
-    //     ),
-    //   ),
-    // );
-    // launch url to payment inside the app
-    if (await canLaunchUrl(uri)) {
-      launchUrl(uri, mode: LaunchMode.inAppWebView);
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -168,8 +146,7 @@ class HomeScreen extends StatelessWidget {
                                   ),
                                   GestureDetector(
                                     onTap: () {
-                                      // collectPayment(context);
-                                      handleAccountFunding(context);
+                                      collectPayment(context);
                                     },
                                     child: Container(
                                         padding: const EdgeInsets.all(6),

@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/ui/pages/auth/forgot_pw_page.dart';
 import 'package:oratio_app/ui/pages/chat_page.dart';
@@ -10,8 +11,6 @@ final appRouter = GoRouter(
   redirectLimit: 2,
   redirect: (context, state) {
     return null;
-
-    // return '/auth/signup';
   },
   routes: [
     GoRoute(
@@ -95,6 +94,18 @@ final appRouter = GoRouter(
     GoRoute(
         path: '/priest/dashboard',
         name: RouteNames.dashboard,
-        builder: (context, state) => const DashboardPage())
+        pageBuilder: (context, state) {
+          return CustomTransitionPage(
+            transitionDuration: const Duration(seconds: 1),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              return FadeTransition(
+                opacity: animation,
+                child: DashboardPage(),
+              );
+            },
+            child: DashboardPage(),
+          );
+        })
   ],
 );

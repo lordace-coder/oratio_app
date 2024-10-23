@@ -16,9 +16,11 @@ class MyHttpOverrides extends HttpOverrides {
   }
 }
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final pref = await SharedPreferences.getInstance();
+
   runApp(
     MultiBlocProvider(
       providers: [
@@ -37,9 +39,9 @@ void main() async {
   ); 
 }
 
+
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
