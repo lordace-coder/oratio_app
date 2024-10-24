@@ -1,5 +1,6 @@
 // import 'package:ade_flutterwave_working_version/core/ade_flutterwave.dart';
-import 'package:flutter/cupertino.dart';
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
@@ -7,16 +8,56 @@ import 'package:go_router/go_router.dart';
 import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
+import 'package:oratio_app/ui/widgets/custom_ads.dart';
 import 'package:oratio_app/ui/widgets/home.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-class HomeScreen extends StatelessWidget {
-  HomeScreen({
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({
     super.key,
   });
 
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
   bool showBalance = false;
+
   final WebViewController controller = WebViewController();
+
+  final _pageController = PageController();
+  late StreamController streamController;
+  bool isPriest = true;
+  bool animate = false;
+  Stream animatePageView() async* {
+    while (true) {
+      await Future.delayed(const Duration(seconds: 6));
+      await _pageController.animateToPage(2,
+          duration: Durations.medium3, curve: Curves.bounceIn);
+      await Future.delayed(const Duration(seconds: 6));
+      await _pageController.animateToPage(0,
+          duration: Durations.medium3, curve: Curves.bounceIn);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (isPriest && animate) {
+      streamController = StreamController();
+      streamController.addStream(animatePageView());
+      streamController.stream.listen(null);
+    }
+  }
+
+  @override
+  void dispose() {
+    if (isPriest && animate) {
+      streamController.close();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +121,7 @@ class HomeScreen extends StatelessWidget {
                 SizedBox(
                   height: 109,
                   child: PageView(
+                    controller: _pageController,
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -274,13 +316,14 @@ class HomeScreen extends StatelessWidget {
                               context.pushNamed(RouteNames.mass);
                             },
                           ),
-                          DashboardButton(
-                            icon: FontAwesomeIcons.desktop,
-                            onTap: () {
-                              context.pushNamed(RouteNames.dashboard);
-                            },
-                            text: 'Dashboard',
-                          ),
+                          if (isPriest)
+                            DashboardButton(
+                              icon: FontAwesomeIcons.desktop,
+                              onTap: () {
+                                context.pushNamed(RouteNames.dashboard);
+                              },
+                              text: 'Dashboard',
+                            ),
                           DashboardButton(
                             icon: FontAwesomeIcons.church,
                             onTap: () {
@@ -348,6 +391,7 @@ class HomeScreen extends StatelessWidget {
                     ),
                     // ignore: prefer_const_constructors
                     child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Column(
@@ -368,6 +412,14 @@ class HomeScreen extends StatelessWidget {
                               },
                               text: 'Schedules',
                             ),
+                            gap,
+                            DashboardButton(
+                              icon: FontAwesomeIcons.gear,
+                              onTap: () {
+                                context.pushNamed(RouteNames.settingsPage);
+                              },
+                              text: 'Settings',
+                            ),
                           ],
                         ),
                         Column(
@@ -375,11 +427,11 @@ class HomeScreen extends StatelessWidget {
                             Tooltip(
                               message: 'Account Settings',
                               child: DashboardButton(
-                                icon: FontAwesomeIcons.gear,
+                                icon: FontAwesomeIcons.solidUser,
                                 onTap: () {
                                   context.pushNamed(RouteNames.profile);
                                 },
-                                text: 'Account',
+                                text: 'Profile',
                               ),
                             ),
                             gap,
@@ -390,6 +442,17 @@ class HomeScreen extends StatelessWidget {
                                 text: 'Prayer\'s',
                                 onTap: () {
                                   context.pushNamed(RouteNames.prayerPage);
+                                },
+                              ),
+                            ),
+                            gap,
+                            Tooltip(
+                              message: 'Find friends and family',
+                              child: DashboardButton(
+                                icon: FontAwesomeIcons.userPlus,
+                                text: 'Connect',
+                                onTap: () {
+                                  context.pushNamed(RouteNames.connect);
                                 },
                               ),
                             ),
@@ -426,6 +489,8 @@ class HomeScreen extends StatelessWidget {
                   );
                 }),
                 const Gap(20),
+                // CustomBannerAd(
+                //     buttonColor: Colors.white, onTap: () {}, label: 'join now'),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10),
                   decoration: BoxDecoration(

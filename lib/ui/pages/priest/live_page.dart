@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class PrayerPage extends StatelessWidget {
-  const PrayerPage({super.key});
+class LiveMassPage extends StatelessWidget {
+  const LiveMassPage({super.key});
 
   @override
   Widget build(BuildContext context) {

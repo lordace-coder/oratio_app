@@ -19,6 +19,8 @@ class RouteNames {
   static String schedule = 'schedule';
   static String readingPage = 'readingPage';
   static String prayerPage = 'prayerPage';
+  static String connect = 'connect';
+  static String settingsPage = 'settingsPage';
 
   // priest pages
   static String dashboard = 'dashboardPage';

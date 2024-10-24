@@ -7,6 +7,7 @@ import 'package:oratio_app/ui/pages/profile_page.dart';
 import 'package:oratio_app/ui/pages/schedules_page.dart';
 import 'package:oratio_app/ui/pages/transaction_details.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
+import 'package:oratio_app/ui/pages/settings_screen.dart';
 
 import '../pages/pages.dart';
 
@@ -20,6 +21,16 @@ final appRouter = GoRouter(
       path: '/',
       name: RouteNames.homePage,
       builder: (context, state) => const HomePage(),
+    ),
+    GoRoute(
+      path: '/settings',
+      name: RouteNames.settingsPage,
+      builder: (context, state) => const SettingsPage(),
+    ),
+    GoRoute(
+      path: '/connect',
+      name: RouteNames.connect,
+      builder: (context, state) => const ConnectPage(),
     ),
     GoRoute(
       path: '/profilepage',

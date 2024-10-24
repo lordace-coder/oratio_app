@@ -263,7 +263,7 @@ class DashboardPage extends StatelessWidget {
                                 message: 'Hold a live mass',
                                 child: DashboardButton(
                                   icon: FontAwesomeIcons.readme,
-                                  text: 'Go Mass',
+                                  text: 'Live Mass',
                                   onTap: () {},
                                 ),
                               ),

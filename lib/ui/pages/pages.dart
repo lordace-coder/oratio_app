@@ -14,5 +14,6 @@ export 'profile_visitor.dart';
 export 'parish_landing.dart';
 export 'transaction_page.dart';
 export 'scan_qr_page.dart';
+export 'connect_page.dart';
 // priest pages
 export 'priest/dashboard_page.dart';
