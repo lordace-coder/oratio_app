@@ -46,7 +46,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
-      title: 'Oratio Afrika',
+      title: 'Book Mass',
       color: AppColors.primary,
       routerConfig: appRouter,
       theme: ThemeData(fontFamily: 'Itim', primaryColor: AppColors.primary),

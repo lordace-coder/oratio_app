@@ -1,8 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/ui/pages/auth/forgot_pw_page.dart';
+import 'package:oratio_app/ui/pages/bible_reading_page.dart';
 import 'package:oratio_app/ui/pages/chat_page.dart';
 import 'package:oratio_app/ui/pages/profile_page.dart';
+import 'package:oratio_app/ui/pages/schedules_page.dart';
+import 'package:oratio_app/ui/pages/transaction_details.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 
 import '../pages/pages.dart';
@@ -86,10 +89,36 @@ final appRouter = GoRouter(
       builder: (context, state) => const TransactionPage(),
     ),
     GoRoute(
+      path: '/${RouteNames.schedule}',
+      name: RouteNames.schedule,
+      builder: (context, state) => const SchedulesPage(),
+    ),
+    GoRoute(
       path: '/${RouteNames.chatDetailPage}',
       name: RouteNames.chatDetailPage,
       builder: (context, state) => const ChatPage(),
     ),
+    GoRoute(
+      path: '/${RouteNames.transactionDetails}',
+      name: RouteNames.transactionDetails,
+      builder: (context, state) => const TransactionDetailsPage(),
+    ),
+    GoRoute(
+      path: '/${RouteNames.scanQr}',
+      name: RouteNames.scanQr,
+      builder: (context, state) => const ScanQrPage(),
+    ),
+    GoRoute(
+      path: '/${RouteNames.readingPage}',
+      name: RouteNames.readingPage,
+      builder: (context, state) => const BibleReadingPage(),
+    ),
+    GoRoute(
+      path: '/${RouteNames.prayerPage}',
+      name: RouteNames.prayerPage,
+      builder: (context, state) => const PrayerPage(),
+    ),
+
     // priest routes
     GoRoute(
         path: '/priest/dashboard',

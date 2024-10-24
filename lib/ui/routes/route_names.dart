@@ -8,12 +8,17 @@ class RouteNames {
   static String communitypage = 'communitypage';
   static String parishpage = 'parishpage';
   static String mass = 'mass';
+  static String scanQr = 'scanQr';
   static String massDetail = 'massDetail';
   static String paymentSuccesful = 'paymentSuccesful';
   static String communityDetailPage = 'communityDetailPage';
   static String parishlanding = 'parishlanding';
   static String chatDetailPage = 'chatDetailPage';
   static String transactionsPage = 'transactionsPage';
+  static String transactionDetails = 'transactionDetails';
+  static String schedule = 'schedule';
+  static String readingPage = 'readingPage';
+  static String prayerPage = 'prayerPage';
 
   // priest pages
   static String dashboard = 'dashboardPage';

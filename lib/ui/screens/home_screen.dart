@@ -1,4 +1,5 @@
 // import 'package:ade_flutterwave_working_version/core/ade_flutterwave.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
@@ -7,7 +8,6 @@ import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/home.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -292,6 +292,42 @@ class HomeScreen extends StatelessWidget {
                             icon: FontAwesomeIcons.dropbox,
                             onTap: () {
                               // show modal with more options like give offering ,tithes
+                              showAdaptiveDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return Dialog(
+                                      child: Container(
+                                        height: 200,
+                                        padding: const EdgeInsets.all(8),
+                                        child: Column(
+                                          children: [
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.end,
+                                              children: [
+                                                IconButton(
+                                                    onPressed: () {
+                                                      context.pop();
+                                                    },
+                                                    icon: const Icon(
+                                                        FontAwesomeIcons
+                                                            .close)),
+                                              ],
+                                            ),
+                                            dashboardModalOption(
+                                                label: 'Give Offering',
+                                                onTap: () {}),
+                                            dashboardModalOption(
+                                                label: 'Give Offering',
+                                                onTap: () {}),
+                                            dashboardModalOption(
+                                                label: 'Give Offering',
+                                                onTap: () {}),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  });
                             },
                             text: 'More',
                           ),
@@ -327,7 +363,9 @@ class HomeScreen extends StatelessWidget {
                             gap,
                             DashboardButton(
                               icon: FontAwesomeIcons.clock,
-                              onTap: () {},
+                              onTap: () {
+                                context.pushNamed(RouteNames.schedule);
+                              },
                               text: 'Schedules',
                             ),
                           ],
@@ -350,7 +388,9 @@ class HomeScreen extends StatelessWidget {
                               child: DashboardButton(
                                 icon: FontAwesomeIcons.pray,
                                 text: 'Prayer\'s',
-                                onTap: () {},
+                                onTap: () {
+                                  context.pushNamed(RouteNames.prayerPage);
+                                },
                               ),
                             ),
                           ],
@@ -363,7 +403,9 @@ class HomeScreen extends StatelessWidget {
                               child: DashboardButton(
                                 icon: FontAwesomeIcons.qrcode,
                                 text: 'Scan Qr',
-                                onTap: () {},
+                                onTap: () {
+                                  context.pushNamed(RouteNames.scanQr);
+                                },
                               ),
                             ),
                             gap,
@@ -372,7 +414,9 @@ class HomeScreen extends StatelessWidget {
                               child: DashboardButton(
                                 icon: FontAwesomeIcons.readme,
                                 text: 'Reading',
-                                onTap: () {},
+                                onTap: () {
+                                  context.pushNamed(RouteNames.readingPage);
+                                },
                               ),
                             ),
                           ],
@@ -415,6 +459,24 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget dashboardModalOption(
+      {required String label, required Function() onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Text(label),
+            ],
+          ),
+          const Divider(),
+          const Gap(6)
+        ],
       ),
     );
   }

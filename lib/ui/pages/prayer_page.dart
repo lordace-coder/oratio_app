@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 
-
-class ScanQrPage extends StatelessWidget {
-  const ScanQrPage({super.key});
+class PrayerPage extends StatelessWidget {
+  const PrayerPage({super.key});
 
   @override
   Widget build(BuildContext context) {

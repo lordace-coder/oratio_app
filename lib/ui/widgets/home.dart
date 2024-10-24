@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 
 class DashboardButton extends StatelessWidget {
@@ -50,7 +52,9 @@ class TransactionItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {},
+      onTap: () {
+        context.pushNamed(RouteNames.transactionDetails);
+      },
       child: Padding(
         padding: const EdgeInsets.symmetric(
           vertical: 6,

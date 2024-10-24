@@ -27,7 +27,7 @@ class _HomePageState extends State<HomePage> {
           BottomNavigationBarItem(
               icon: Icon(FontAwesomeIcons.rss), label: 'Feeds'),
           BottomNavigationBarItem(
-              icon: Icon(FontAwesomeIcons.solidMessage), label: 'Chats'),
+              icon: Icon(FontAwesomeIcons.solidMessage), label: 'Check Up'),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: AppColors.primary, // Change the selected item color
