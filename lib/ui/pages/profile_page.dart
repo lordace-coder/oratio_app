@@ -11,263 +11,238 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: AppColors.gray,
-        body: SafeArea(
-          child: RefreshIndicator.adaptive(
-            onRefresh: () async {},
-            child: ListView(
-              padding: EdgeInsets.zero,
-              // appbar
-              children: [
-                Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(20),
-                      bottomRight: Radius.circular(20),
+      backgroundColor: AppColors.gray,
+      body: SafeArea(
+        child: RefreshIndicator.adaptive(
+          onRefresh: () async {},
+          child: ListView(
+            padding: EdgeInsets.zero,
+            children: [
+              // Top section with avatar, username, and buttons
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    height: 200,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primary,
+                          const Color.fromARGB(255, 35, 1, 86)
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(20),
+                        bottomRight: Radius.circular(20),
+                      ),
                     ),
                   ),
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              GestureDetector(
-                                onTap: () {
-                                  context.pop();
-                                },
-                                child: const Icon(
-                                  FontAwesomeIcons.chevronLeft,
-                                  size: 18,
-                                ),
-                              ),
-                              const Gap(30),
-                              const Text(
-                                'Profile',
-                                style: TextStyle(fontSize: 20),
-                              ),
-                            ],
-                          ),
-                          PopupMenuButton(
-                            padding: const EdgeInsets.all(0),
-                            itemBuilder: (context) {
-                              return [
-                                PopupMenuItem(
-                                  onTap: () {
-                                    context.pushNamed(RouteNames.login);
-                                  },
-                                  child: const Row(
-                                    children: [
-                                      Icon(
-                                        FontAwesomeIcons.doorOpen,
-                                        color: Colors.black54,
-                                      ),
-                                      Gap(7),
-                                      Text(
-                                        'LogOut',
-                                        style: TextStyle(
-                                          color: Colors.black54,
-                                        ),
-                                      )
-                                    ],
-                                  ),
-                                ),
-                              ];
-                            },
-                          ),
-                        ],
+                  Positioned(
+                    top: 30,
+                    left: 16,
+                    child: IconButton(
+                      onPressed: () {
+                        context.pop();
+                      },
+                      icon: const Icon(
+                        FontAwesomeIcons.chevronLeft,
+                        color: Colors.white,
+                        size: 18,
                       ),
-                      const Gap(30),
-                      const CircleAvatar(
-                        backgroundColor: Colors.blue,
-                        radius: 30,
-                      ),
-                      const Gap(10),
-                      const Text("Ahmed Christian"),
-                      const Gap(30),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: AppColors.primary),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.edit,
-                                  size: 14,
-                                  color: AppColors.primary,
-                                ),
-                                const Gap(7),
-                                Text(
-                                  'Edit Profile',
-                                  style: TextStyle(
-                                    color: AppColors.primary,
-                                  ),
-                                )
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: AppColors.primary),
-                            ),
-                            child: Text(
-                              'Recent Activity',
-                              style: TextStyle(
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Gap(20),
-                    ],
+                    ),
                   ),
-                ),
-                const Gap(20),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 7,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Parish Your Attending'),
-                      const Gap(10),
-                      ChurchProfileItem(
-                        label: 'St John\'s Parish',
-                        onTap: () {},
-                        onTapLabel: 'remove',
-                      ),
-                      ChurchProfileItem(
-                        label: 'St John\'s Parish',
-                        onTap: () {},
-                        onTapLabel: 'remove',
-                      ),
-                      ChurchProfileItem(
-                        label: 'St John\'s Parish',
-                        onTap: () {},
-                        onTapLabel: 'remove',
-                      ),
-                    ],
-                  ),
-                ),
-                const Gap(20),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 7,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Contact Information'),
-                      const Gap(10),
-                      ChurchProfileItem(
-                        label: '0901234567809',
-                        onTap: () {},
-                        onTapLabel: 'edit',
-                      ),
-                      GestureDetector(
-                        onTap: () {},
-                        child: Text(
-                          'Add Contact Information',
-                          style: TextStyle(
-                            color: AppColors.blue,
-                            decoration: TextDecoration.underline,
-                            decorationColor: AppColors.blue,
+                  Positioned(
+                    top: 60,
+                    child: Column(
+                      children: [
+                        const CircleAvatar(
+                          backgroundColor: Colors.blue,
+                          radius: 40,
+                          child: Icon(
+                            FontAwesomeIcons.userAstronaut,
+                            color: Colors.white,
+                            size: 30,
                           ),
                         ),
-                      ),
-                      const Gap(10),
-                    ],
+                        const Gap(10),
+                        const Text(
+                          "Ahmed Christian",
+                          style: TextStyle(
+                            fontSize: 22,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const Gap(20),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _buildActionButton("Edit Profile", Icons.edit, () {
+                              // Handle profile edit
+                            }),
+                            const Gap(10),
+                            _buildActionButton("Recent Activity", Icons.history,
+                                () {
+                              // Handle recent activity
+                            }),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const Gap(20),
+
+              // Fields for Parish, Contact Information, and Language
+              _buildSection("Parish You're Attending", [
+                _buildItem("St John's Parish", "remove", () {}),
+                _buildItem("St Mary's Parish", "remove", () {}),
+                _buildItem("St Peter's Parish", "remove", () {}),
+              ]),
+              _buildSection("Contact Information", [
+                _buildItem("09012345678", "edit", () {}),
+                GestureDetector(
+                  onTap: () {
+                    // Handle add contact
+                  },
+                  child: Text(
+                    'Add Contact Information',
+                    style: TextStyle(
+                      color: AppColors.blue,
+                      decoration: TextDecoration.underline,
+                      decorationColor: AppColors.blue,
+                    ),
                   ),
                 ),
-                const Gap(10),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 7,
+              ]),
+              _buildSection("Select Language", [
+                _buildItem("English - US", "Choose Language", () {}),
+              ]),
+
+              // Logout button
+              Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Select Language'),
-                      const Gap(10),
-                      ChurchProfileItem(
-                        label: 'English -Us',
-                        onTap: () {},
-                        onTapLabel: 'Choose Language',
-                      ),
-                    ],
+                  onPressed: () {
+                    context.pushNamed(RouteNames.login);
+                  },
+                  child: const Text(
+                    "Log Out",
+                    style: TextStyle(fontSize: 16, color: Colors.white),
                   ),
                 ),
-              ],
-            ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: () {
+                    context.pushNamed(RouteNames.login);
+                  },
+                  child: const Text(
+                    "Customer Service",
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ));
+        ),
+      ),
+    );
   }
-}
 
-class ChurchProfileItem extends StatelessWidget {
-  const ChurchProfileItem({
-    super.key,
-    required this.label,
-    required this.onTapLabel,
-    required this.onTap,
-  });
+  Widget _buildActionButton(String text, IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: AppColors.primary),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: AppColors.primary),
+            const Gap(5),
+            Text(
+              text,
+              style: TextStyle(color: AppColors.primary, fontSize: 14),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-  final String label;
-  final String onTapLabel;
-  final VoidCallback onTap;
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.only(bottom: 20),
+  Widget _buildSection(String title, List<Widget> items) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      child: Container(
+        padding: const EdgeInsets.all(15),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 3,
+              blurRadius: 5,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const Gap(10),
+            ...items,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildItem(String label, String actionLabel, VoidCallback onTap) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 15),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text('St John\'s parish'),
+          Text(label, style: const TextStyle(fontSize: 15)),
           GestureDetector(
-            onTap: () {},
+            onTap: onTap,
             child: Text(
-              'remove',
+              actionLabel,
               style: TextStyle(
                 color: AppColors.blue,
                 decoration: TextDecoration.underline,
-                decorationColor: AppColors.blue,
               ),
             ),
-          )
+          ),
         ],
       ),
     );

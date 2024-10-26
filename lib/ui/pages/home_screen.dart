@@ -350,7 +350,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                               children: [
                                                 IconButton(
                                                     onPressed: () {
-                                                      context.pop();
+                                                      // context.pop();
+                                                      Navigator.of(context)
+                                                          .pop();
                                                     },
                                                     icon: const Icon(
                                                         FontAwesomeIcons
@@ -509,6 +511,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             onPressed: () {
                               context.pushNamed(RouteNames.transactionsPage);
                             },
+                            style: TextButton.styleFrom(
+                                foregroundColor: Colors.blue),
                             child: const Text('see more..'),
                           )
                         ],

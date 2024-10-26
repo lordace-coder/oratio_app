@@ -16,8 +16,8 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   final _pages = <Widget>[
-    const HomeScreen(),
     const FeedsListScreen(),
+    const HomeScreen(),
     ChatScreen(),
   ];
   @override
@@ -28,9 +28,9 @@ class _HomePageState extends State<HomePage> {
       bottomNavigationBar: BottomNavigationBar(
         items: const [
           BottomNavigationBarItem(
-              icon: Icon(FontAwesomeIcons.wallet), label: 'Wallet'),
-          BottomNavigationBarItem(
               icon: Icon(FontAwesomeIcons.rss), label: 'Feeds'),
+          BottomNavigationBarItem(
+              icon: Icon(FontAwesomeIcons.wallet), label: 'Wallet'),
           BottomNavigationBarItem(
               icon: Icon(FontAwesomeIcons.solidMessage), label: 'Check Up'),
         ],

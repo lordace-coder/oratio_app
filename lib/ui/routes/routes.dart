@@ -122,7 +122,7 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/${RouteNames.readingPage}',
       name: RouteNames.readingPage,
-      builder: (context, state) => const BibleReadingPage(),
+      builder: (context, state) => BibleReadingPage(),
     ),
     GoRoute(
       path: '/${RouteNames.prayerPage}',

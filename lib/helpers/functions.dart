@@ -45,7 +45,7 @@ void collectPayment(BuildContext context) async {
               children: [
                 TextButton(
                   onPressed: () {
-                    context.pop();
+                    Navigator.of(context).pop();
                   },
                   child: const Text('Cancel'),
                 ),

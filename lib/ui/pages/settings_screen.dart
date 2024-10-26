@@ -5,8 +5,336 @@ class SettingsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: SafeArea(child: Text('settings page')),
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xff202ADA),
+              Color.fromARGB(255, 16, 21, 105),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Profile Section
+                Container(
+                  margin: const EdgeInsets.all(24),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            colors: [Colors.blue[400]!, Colors.purple[400]!],
+                          ),
+                        ),
+                        child: CircleAvatar(
+                          radius: 35,
+                          backgroundColor: Colors.grey[900],
+                          child: const CircleAvatar(
+                            radius: 32,
+                            backgroundImage:
+                                NetworkImage('https://picsum.photos/200'),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Alex Johnson',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Premium Member',
+                            style: TextStyle(
+                              color: Colors.blue[400],
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () {},
+                        icon: const Icon(Icons.edit_outlined,
+                            color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Quick Actions
+                Container(
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  child: const Text(
+                    'QUICK ACTIONS',
+                    style: TextStyle(
+                      color: Colors.white54,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ),
+
+                // Quick Actions Grid
+                SizedBox(
+                  height: 380,
+                  child: GridView.count(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
+                    children: [
+                      _buildQuickActionCard(
+                        icon: Icons.notifications_outlined,
+                        title: 'Notifications',
+                        subtitle: '3 unread',
+                        gradient: [Colors.purple[400]!, Colors.pink[400]!],
+                      ),
+                      _buildQuickActionCard(
+                        icon: Icons.security_outlined,
+                        title: 'Security',
+                        subtitle: 'Fingerprint',
+                        gradient: [Colors.blue[400]!, Colors.cyan[400]!],
+                      ),
+                      _buildQuickActionCard(
+                        icon: Icons.backup_outlined,
+                        title: 'Backup',
+                        subtitle: 'Last: 3h ago',
+                        gradient: [Colors.orange[400]!, Colors.amber[400]!],
+                      ),
+                      _buildQuickActionCard(
+                        icon: Icons.storage_outlined,
+                        title: 'Storage',
+                        subtitle: '45% used',
+                        gradient: [Colors.teal[400]!, Colors.green[400]!],
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Settings List
+                Container(
+                  margin: const EdgeInsets.only(top: 12, left: 24, right: 24),
+                  child: const Text(
+                    'SETTINGS',
+                    style: TextStyle(
+                      color: Colors.white54,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ),
+
+                ..._buildSettingsItems(),
+
+                const SizedBox(height: 24), // Bottom padding
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
+
+  Widget _buildQuickActionCard({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required List<Color> gradient,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF2A35E8)
+                .withOpacity(0.15), // Lighter variation of background
+            const Color(0xFF1C24BD)
+                .withOpacity(0.25), // Darker variation of background
+          ],
+        ),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.1),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF202ADA).withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {},
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: gradient,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: gradient[0].withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(icon, color: Colors.white, size: 22),
+                ),
+                const Spacer(),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.7),
+                    fontSize: 13,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _buildSettingsItems() {
+    final items = [
+      _SettingsItem(
+        icon: Icons.person_outline,
+        title: 'Account Settings',
+        subtitle: 'Update your profile details',
+        iconGradient: [Colors.purple[400]!, Colors.pink[400]!],
+      ),
+      _SettingsItem(
+        icon: Icons.palette_outlined,
+        title: 'Appearance',
+        subtitle: 'Customize your app theme',
+        iconGradient: [Colors.blue[400]!, Colors.cyan[400]!],
+      ),
+      _SettingsItem(
+        icon: Icons.language_outlined,
+        title: 'Language',
+        subtitle: 'Change app language',
+        iconGradient: [Colors.orange[400]!, Colors.amber[400]!],
+      ),
+      _SettingsItem(
+        icon: Icons.help_outline,
+        title: 'Help & Support',
+        subtitle: 'Get help from our team',
+        iconGradient: [Colors.teal[400]!, Colors.green[400]!],
+      ),
+      _SettingsItem(
+        icon: Icons.info_outline,
+        title: 'About',
+        subtitle: 'Version 1.0.0',
+        iconGradient: [Colors.indigo[400]!, Colors.blue[400]!],
+      ),
+    ];
+
+    return items.map((item) => _buildSettingsItem(item)).toList();
+  }
+
+  Widget _buildSettingsItem(_SettingsItem item) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: Colors.grey[850]!.withOpacity(0.5),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: ListTile(
+          onTap: () {},
+          contentPadding: const EdgeInsets.all(16),
+          leading: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(colors: item.iconGradient),
+            ),
+            child: Icon(item.icon, color: Colors.white, size: 24),
+          ),
+          title: Text(
+            item.title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          subtitle: Text(
+            item.subtitle,
+            style: const TextStyle(
+              color: Colors.white54,
+              fontSize: 14,
+            ),
+          ),
+          trailing: const Icon(
+            Icons.arrow_forward_ios,
+            color: Colors.white54,
+            size: 16,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsItem {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final List<Color> iconGradient;
+
+  _SettingsItem({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.iconGradient,
+  });
 }

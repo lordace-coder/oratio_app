@@ -2,73 +2,179 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
-import 'package:oratio_app/ui/themes.dart';
+import 'package:oratio_app/ui/widgets/live_streams.dart';
 
-class ChatScreen extends StatelessWidget {
-  ChatScreen({super.key});
+class ChatScreen extends StatefulWidget {
+  const ChatScreen({super.key});
 
+  @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  bool _showFloatingButton = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(() {
+      setState(() {
+        _showFloatingButton = _scrollController.offset > 200;
+      });
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 10,
-          ),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 0, horizontal: 5),
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: AppColors.gray.withOpacity(.5),
-                ),
-                child: Row(
-                  children: [
-                    IconButton(
-                      onPressed: () {},
-                      icon: const Icon(
-                        FontAwesomeIcons.search,
-                        // color: theme.titleColor,
-                        size: 13,
-                      ),
-                    ),
-                    Expanded(
-                      child: TextFormField(
-                        style: const TextStyle(fontSize: 15),
-                        controller: searchController,
-                        decoration: const InputDecoration(
-                          hintStyle: TextStyle(
-                              color: Colors.black45,
-                              fontWeight: FontWeight.w400),
-                          hintText: 'Search here...',
-                          border: InputBorder.none,
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            CustomScrollView(
+              controller: _scrollController,
+              slivers: [
+                SliverAppBar(
+                  floating: true,
+                  snap: true,
+                  elevation: 0,
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                  expandedHeight: 120,
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                          child: Row(
+                            children: [
+                              Text(
+                                'Chats',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .headlineMedium
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                              const Spacer(),
+                              _buildProfileButton(),
+                            ],
+                          ),
                         ),
+                        _buildSearchBar(),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverToBoxAdapter(
+                    child: buildStorySection(context),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: AnimationLimiter(
+                    child: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) =>
+                            AnimationConfiguration.staggeredList(
+                          position: index,
+                          duration: const Duration(milliseconds: 375),
+                          child: SlideAnimation(
+                            verticalOffset: 50.0,
+                            child: FadeInAnimation(
+                              child: ChatItem(index: index),
+                            ),
+                          ),
+                        ),
+                        childCount: 10,
                       ),
                     ),
-                  ],
+                  ),
+                ),
+              ],
+            ),
+            if (_showFloatingButton)
+              Positioned(
+                right: 16,
+                bottom: 16,
+                child: FloatingActionButton(
+                  onPressed: () {
+                    _scrollController.animateTo(
+                      0,
+                      duration: const Duration(milliseconds: 500),
+                      curve: Curves.easeOutCubic,
+                    );
+                  },
+                  child: const Icon(Icons.arrow_upward),
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
 
-              // a few widget like stories to show prayers of friends and family
-
-              // chats
-              const ChatItem(),
-              const ChatItem(),
-              const ChatItem(),
-
-              const ChatItem(),
-              const ChatItem(),
-              const ChatItem(),
-              const ChatItem(),
-              const ChatItem(),
-              const ChatItem(),
-              const ChatItem(),
-            ],
+  Widget _buildProfileButton() {
+    return Hero(
+      tag: 'finduser',
+      child: Material(
+        color: Colors.transparent,
+        child: CircleAvatar(
+          radius: 20,
+          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+          child: IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () {
+              // Handle profile tap
+              context.pushNamed(RouteNames.connect);
+            },
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        height: 45,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(25),
+        ),
+        child: Row(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Icon(
+                FontAwesomeIcons.search,
+                size: 16,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+            Expanded(
+              child: TextFormField(
+                controller: searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search conversations...',
+                  border: InputBorder.none,
+                  hintStyle: TextStyle(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurfaceVariant
+                        .withOpacity(0.7),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -76,109 +182,170 @@ class ChatScreen extends StatelessWidget {
 }
 
 class ChatItem extends StatefulWidget {
-  const ChatItem({
-    super.key,
-  });
+  final int index;
+
+  const ChatItem({super.key, required this.index});
 
   @override
   State<ChatItem> createState() => _ChatItemState();
 }
 
-class _ChatItemState extends State<ChatItem> with TickerProviderStateMixin {
-  late AnimationController animationController;
-  late Animation<Offset> offsetAnimation;
+class _ChatItemState extends State<ChatItem>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
 
   @override
   void initState() {
     super.initState();
-    animationController = AnimationController(
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 150),
       vsync: this,
-      duration: const Duration(milliseconds: 300),
     );
-    offsetAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.5),
-      end: const Offset(0, -0.2),
-    ).animate(animationController);
-
-    // animationController.addStatusListener( (status) {
-    //   if (status == AnimationStatus.completed) {
-    //     animationController.();
-    //   }
-    // });
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
   }
 
   @override
   void dispose() {
-    animationController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: InkWell(
-        onTap: () {
-          context.pushNamed(RouteNames.chatDetailPage);
-        },
-        child: SizedBox(
-          height: 60,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      animationController.forward();
-                    },
-                    child: const Align(
-                      alignment: Alignment.center,
-                      child: CircleAvatar(
-                        // backgroundColor: theme.primary.withOpacity(0.6),
-                        radius: 20,
-                        child: Icon(
-                          Icons.person,
-                          // color: theme.subtitleColor,
-                          size: 30,
-                        ),
+    return GestureDetector(
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) => _controller.reverse(),
+      onTapCancel: () => _controller.reverse(),
+      onTap: () => context.pushNamed('chatDetailPage'),
+      child: AnimatedBuilder(
+        animation: _scaleAnimation,
+        builder: (context, child) => Transform.scale(
+          scale: _scaleAnimation.value,
+          child: child,
+        ),
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Theme.of(context).shadowColor.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Stack(
+                  children: [
+                    CircleAvatar(
+                      radius: 28,
+                      backgroundColor:
+                          Theme.of(context).colorScheme.primaryContainer,
+                      child: Text(
+                        String.fromCharCode(65 + widget.index),
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ),
-                  ),
-                  const Gap(11),
-                  const Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
+                    if (widget.index % 3 == 0)
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: Container(
+                          width: 16,
+                          height: 16,
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Theme.of(context).scaffoldBackgroundColor,
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const Gap(12),
+                Expanded(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Username',
-                        style: TextStyle(
-                            // color: theme.chatInoutColor!.withOpacity(0.7),
-
-                            fontWeight: FontWeight.bold,
-                            fontSize: 15),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'User ${widget.index}',
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleMedium
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          Text(
+                            '${widget.index}m ago',
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                    ),
+                          ),
+                        ],
                       ),
-                      Gap(6),
-                      Text(
-                        '~ some message here',
-                        style: TextStyle(
-                            // color: theme.shadePrimary.withOpacity(0.8),
+                      const Gap(4),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'This is a preview of the last message sent in the conversation...',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurfaceVariant,
+                                  ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                      )
+                          ),
+                          if (widget.index % 2 == 0)
+                            Container(
+                              margin: const EdgeInsets.only(left: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.primary,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                '${widget.index}',
+                                style: TextStyle(
+                                  color:
+                                      Theme.of(context).colorScheme.onPrimary,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                     ],
-                  )
-                ],
-              ),
-              const Text(
-                '15 mins ago',
-                style: TextStyle(
-                  fontSize: 12,
-                  // color: theme.shadePrimary,
+                  ),
                 ),
-              )
-            ],
+              ],
+            ),
           ),
         ),
       ),

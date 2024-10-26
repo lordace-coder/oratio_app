@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 class ScanQrPage extends StatelessWidget {
   const ScanQrPage({super.key});
 
