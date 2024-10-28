@@ -2,32 +2,300 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
-import 'package:oratio_app/ui/widgets/church_widgets.dart';
-// import 'package:oratio_app/ui/widgets/church_widgets.dart';
 
-class ParishListPage extends StatelessWidget {
+class ParishListPage extends StatefulWidget {
   const ParishListPage({super.key});
+
+  @override
+  State<ParishListPage> createState() => _ParishListPageState();
+}
+
+class _ParishListPageState extends State<ParishListPage>
+    with SingleTickerProviderStateMixin {
+  // Controller for search bar animations
+  late AnimationController _animationController;
+  late Animation<double> _searchBarAnimation;
+  bool _isHovered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize animation controller with 300ms duration
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+
+    // Create curved animation for smooth effect
+    _searchBarAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
+
+    // Start the animation when the page loads
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final controller = TextEditingController();
+    // Get screen size for responsive layout
+    final screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          child: SingleChildScrollView(
-            child: Column(
+        // Handle potential overflow with error boundary
+        child: ErrorBoundary(
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(), // Smooth scrolling physics
+            slivers: [
+              // Sliver app bar with search
+              SliverToBoxAdapter(
+                child: Container(
+                  padding: const EdgeInsets.all(8), // Reduced padding
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 5,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      _buildAppBar(context),
+                      const Gap(8), // Reduced gap
+                      // Animate search bar entrance
+                      SlideTransition(
+                        position: Tween<Offset>(
+                          begin: const Offset(0, -0.5),
+                          end: Offset.zero,
+                        ).animate(_searchBarAnimation),
+                        child: FadeTransition(
+                          opacity: _searchBarAnimation,
+                          child: _buildSearchBar(controller),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Quick filters with horizontal scroll
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: 50, // Fixed height to prevent layout issues
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                    children: [
+                      _buildFilterChip('Nearest', true),
+                      _buildFilterChip('Popular', false),
+                      _buildFilterChip('Recent', false),
+                      _buildFilterChip('Favorites', false),
+                    ],
+                  ),
+                ),
+              ),
+              // Church list with staggered animations
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) => AnimatedBuilder(
+                    animation: _animationController,
+                    builder: (context, child) {
+                      // Stagger the animations of list items
+                      final itemAnimation = Tween<double>(
+                        begin: 0.0,
+                        end: 1.0,
+                      ).animate(
+                        CurvedAnimation(
+                          parent: _animationController,
+                          curve: Interval(
+                            (index * 0.1).clamp(0.0, 1.0),
+                            ((index + 1) * 0.1).clamp(0.0, 1.0),
+                            curve: Curves.easeOut,
+                          ),
+                        ),
+                      );
+
+                      return FadeTransition(
+                        opacity: itemAnimation,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0.2, 0),
+                            end: Offset.zero,
+                          ).animate(itemAnimation),
+                          child: _buildChurchCard(context),
+                        ),
+                      );
+                    },
+                  ),
+                  childCount: 10,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      // Animated FAB
+      floatingActionButton: ScaleTransition(
+        scale: _searchBarAnimation,
+        child: FloatingActionButton(
+          onPressed: () {},
+          backgroundColor: Theme.of(context).primaryColor,
+          child: const Icon(Icons.map_outlined, color: Colors.white),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAppBar(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              IconButton(
+                onPressed: () => context.pop(),
+                icon: const Icon(FontAwesomeIcons.chevronLeft, size: 16),
+                padding: const EdgeInsets.all(8), // Reduced padding
+              ),
+              const Gap(8), // Reduced gap
+              // Flexible text to prevent overflow
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Mass Centers',
+                      style: TextStyle(
+                        fontSize: 20, // Reduced font size
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis, // Handle text overflow
+                    ),
+                    Text(
+                      '48 churches nearby',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 12, // Reduced font size
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuButton(
+          padding: EdgeInsets.zero,
+          icon: const Icon(FontAwesomeIcons.ellipsisVertical, size: 16),
+          itemBuilder: (context) => [
+            _buildPopupMenuItem(
+              FontAwesomeIcons.solidBookmark,
+              'My Churches',
+              () {},
+            ),
+            _buildPopupMenuItem(
+              FontAwesomeIcons.church,
+              'All Churches',
+              () {},
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSearchBar(TextEditingController controller) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        hintText: 'Search churches...',
+        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 14),
+        prefixIcon: Icon(Icons.search, color: Colors.grey[400], size: 20),
+        filled: true,
+        fillColor: Colors.grey[100],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide.none,
+        ),
+        isDense: true, // Reduce input field height
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 8,
+        ),
+      ),
+    );
+  }
+
+  PopupMenuItem<void> _buildPopupMenuItem(
+    IconData icon,
+    String text,
+    VoidCallback onTap,
+  ) {
+    // Use StatefulBuilder to handle hover effects
+    return PopupMenuItem<void>(
+      onTap: onTap,
+      height: 40, // Reduced height for better compactness
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: StatefulBuilder(
+        builder: (context, setState) => InkWell(
+          onTap: onTap,
+          // Animate on hover
+          onHover: (isHovered) => setState(() => _isHovered = isHovered),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: _isHovered ? Colors.grey[100] : Colors.transparent,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                // app bar
-                appBar(context),
-
-
-                const Gap(20),
-                CustomSearchBar(controller: controller),
-                const Gap(20),
-                const ChurchListTile(),
-                const ChurchListTile(),
-                const ChurchListTile(),
+                // Animated icon
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: _isHovered
+                        ? Theme.of(context).primaryColor.withOpacity(0.1)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 16,
+                    color: _isHovered
+                        ? Theme.of(context).primaryColor
+                        : Colors.grey[700],
+                  ),
+                ),
+                const Gap(8),
+                // Animated text
+                DefaultTextStyle(
+                  style: TextStyle(
+                    color: _isHovered
+                        ? Theme.of(context).primaryColor
+                        : Colors.grey[800],
+                    fontSize: 14,
+                    fontWeight:
+                        _isHovered ? FontWeight.w500 : FontWeight.normal,
+                  ),
+                  child: Text(text),
+                ),
               ],
             ),
           ),
@@ -36,72 +304,155 @@ class ParishListPage extends StatelessWidget {
     );
   }
 
-  Row appBar(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
+  // Add this boolean to your State class
+  Widget _buildFilterChip(String label, bool isSelected) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 4), // Reduced padding
+      child: FilterChip(
+        label: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.grey[800],
+            fontSize: 12,
+          ),
+        ),
+        selected: isSelected,
+        onSelected: (bool value) {},
+        backgroundColor: Colors.grey[100],
+        selectedColor: Colors.blue,
+        padding: const EdgeInsets.symmetric(horizontal: 4), // Reduced padding
+        materialTapTargetSize:
+            MaterialTapTargetSize.shrinkWrap, // Smaller touch target
+      ),
+    );
+  }
+
+  Widget _buildChurchCard(BuildContext context) {
+    return Card(
+      margin: const EdgeInsets.symmetric(
+          horizontal: 8, vertical: 4), // Reduced margins
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: Colors.grey[200]!),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8), // Reduced padding
+        child: Row(
           children: [
-            GestureDetector(
-              onTap: () {
-                context.pop();
-              },
-              child: const Icon(
-                FontAwesomeIcons.chevronLeft,
-                size: 18,
+            // Church image with error handling
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                'https://via.placeholder.com/60', // Reduced size
+                width: 60,
+                height: 60,
+                fit: BoxFit.cover,
+                // Handle image load errors
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    width: 60,
+                    height: 60,
+                    color: Colors.grey[300],
+                    child: Icon(Icons.church, color: Colors.grey[400]),
+                  );
+                },
               ),
             ),
-            const Gap(30),
-            const Text(
-              'Mass Centers',
-              style: TextStyle(fontSize: 20),
+            const Gap(8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'St. Mary\'s Cathedral',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[900],
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const Gap(2),
+                  Row(
+                    children: [
+                      Icon(Icons.location_on,
+                          size: 12, color: Colors.grey[600]),
+                      const Gap(2),
+                      Expanded(
+                        child: Text(
+                          '123 Church Street, City',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Gap(4),
+                  Row(
+                    children: [
+                      _buildInfoChip(Icons.access_time, '5 min'),
+                      const Gap(4),
+                      _buildInfoChip(Icons.calendar_today, '4 masses'),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.favorite_border, size: 16),
+              onPressed: () {},
+              padding: const EdgeInsets.all(4),
+              constraints: const BoxConstraints(
+                minWidth: 32,
+                minHeight: 32,
+              ),
             ),
           ],
         ),
-        PopupMenuButton(
-          padding: const EdgeInsets.all(0),
-          itemBuilder: (context) {
-            return [
-              PopupMenuItem(
-                onTap: () {},
-                child: const Row(
-                  children: [
-                    Icon(
-                      FontAwesomeIcons.solidBookmark,
-                      color: Colors.black54,
-                    ),
-                    Gap(7),
-                    Text(
-                      'My Churches',
-                      style: TextStyle(
-                        color: Colors.black54,
-                      ),
-                    )
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                onTap: () {},
-                child: const Row(
-                  children: [
-                    Icon(
-                      FontAwesomeIcons.church,
-                      color: Colors.black54,
-                    ),
-                    Gap(7),
-                    Text(
-                      'All Churches',
-                      style: TextStyle(
-                        color: Colors.black54,
-                      ),
-                    )
-                  ],
-                ),
-              ),
-            ];
-          },
-        ),
-      ],
+      ),
+    );
+  }
+
+  Widget _buildInfoChip(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 10, color: Colors.grey[600]),
+          const Gap(2),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              color: Colors.grey[600],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// Error boundary widget to handle potential errors
+class ErrorBoundary extends StatelessWidget {
+  final Widget child;
+
+  const ErrorBoundary({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: Colors.transparent,
+      child: child,
     );
   }
 }

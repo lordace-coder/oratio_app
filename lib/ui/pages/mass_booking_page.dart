@@ -7,7 +7,7 @@ import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/church_widgets.dart';
 import 'package:oratio_app/ui/widgets/inputs.dart';
 
-enum SelectedDateType { today, tommorrow, custom }
+enum SelectedDateType { today, tomorrow, custom }
 
 enum SelectedTimeType { morning, lateMorning, noon, afternoon }
 
@@ -20,246 +20,364 @@ class MassBookingPage extends StatefulWidget {
 
 class _MassBookingPageState extends State<MassBookingPage> {
   SelectedDateType? massDate;
-
   SelectedTimeType? massTime;
+  final controller = TextEditingController();
 
-  bool selectedDateById(int id) {
-    if (massDate == null) return false;
-    return SelectedDateType.values[id - 1] == massDate;
-  }
+  bool selectedDateById(int id) =>
+      massDate != null && SelectedDateType.values[id - 1] == massDate;
 
-  bool selectedTimeById(int id) {
-    if (massTime == null) return false;
-
-    return SelectedTimeType.values[id - 1] == massTime;
-  }
+  bool selectedTimeById(int id) =>
+      massTime != null && SelectedTimeType.values[id - 1] == massTime;
 
   @override
   Widget build(BuildContext context) {
-    final controller = TextEditingController();
     return Scaffold(
-      backgroundColor: AppColors.appBg,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6),
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                // app bar
-                appBar(context),
-                // TODO check if item is selected before displaying purple [appcolors primary] or white as bg for button
-                Align(
-                  alignment: Alignment.bottomLeft,
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        DateItemButton(
-                          selected: selectedDateById(1),
-                          date: 'Oct 1',
-                          title: 'Today',
-                          onTap: () {
-                            setState(() {
-                              massDate = SelectedDateType.values[0];
-                            });
-                          },
-                        ),
-                        DateItemButton(
-                          onTap: () {
-                            setState(() {
-                              massDate = SelectedDateType.values[1];
-                            });
-                          },
-                          selected: selectedDateById(2),
-                          date: 'Oct 1',
-                          title: 'Tommorrow',
-                        ),
-                        DateItemButton(
-                          onTap: () {
-                            setState(() {
-                              massDate = SelectedDateType.values[2];
-                            });
-                          },
-                          selected: selectedDateById(3),
-                          date: '...',
-                          title: 'Custom',
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const Gap(20),
-                Column(
-                  children: [
-                    Row(
-                      children: [
-                        MassTimeButton(
-                          time: '8:00 AM',
-                          mass: 'Morning Mass',
-                          selected: selectedTimeById(1),
-                          onTap: () {
-                            setState(() => massTime = SelectedTimeType.morning);
-                          },
-                        ),
-                        MassTimeButton(
-                          time: '10:00 AM',
-                          mass: 'Late Morning Mass',
-                          selected: selectedTimeById(2),
-                          onTap: () {
-                            setState(
-                                () => massTime = SelectedTimeType.lateMorning);
-                          },
-                        ),
-                      ],
-                    ),
-                    const Gap(20),
-                    Row(
-                      children: [
-                        MassTimeButton(
-                          selected: selectedTimeById(3),
-                          onTap: () {
-                            setState(() => massTime = SelectedTimeType.noon);
-                          },
-                          time: '12:00 PM',
-                          mass: 'Noon Mass',
-                        ),
-                        MassTimeButton(
-                          selected: selectedTimeById(4),
-                          onTap: () {
-                            setState(() {
-                              massTime = SelectedTimeType.afternoon;
-                            });
-                          },
-                          time: '2:00 PM',
-                          mass: 'Afternoon Mass',
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const Gap(10),
-                Builder(builder: (context) {
-                  bool disabledButton = massDate == null || massTime == null;
-                  return Opacity(
-                    opacity: disabledButton ? 0.4 : 1,
-                    child: SubmitButtonV1(
-                        radius: 10,
-                        ontap: () {
-                          if (disabledButton) {
-                            // TODO run some code if the button is disabled for example prompt user to insert date and time
-                            return;
-                          }
-                          context.pushNamed(RouteNames.massDetail);
-                        },
-                        backgroundcolor: AppColors.primary,
-                        child: const Text(
-                          'Book Now',
-                          style: TextStyle(color: Colors.white, fontSize: 17),
-                        )),
-                  );
-                }),
-                const Gap(30),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Select A Parish Or Mass Center',
-                      style: TextStyle(fontSize: 17),
-                    ),
-                    GestureDetector(
-                        onTap: () {
-                          context.pushNamed(RouteNames.parishpage);
-                        },
-                        child: Text(
-                          'see more',
-                          style:
-                              TextStyle(fontSize: 13, color: AppColors.primary),
-                        ))
-                  ],
-                ),
-                const Gap(10),
-                CustomSearchBar(controller: controller),
-                const Gap(20),
-                // const ChurchListTile(),
-                // const ChurchListTile(),
-                // const ChurchListTile(),
-                const NoParishYet()
-              ],
+      backgroundColor: Colors.grey[50],
+      appBar: createAppBar(
+        context,
+        label: 'Book Mass',
+        actions: [
+          PopupMenuButton(
+            icon: const Icon(FontAwesomeIcons.ellipsisVertical),
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
             ),
+            itemBuilder: (context) => [
+              _buildPopupMenuItem(
+                icon: FontAwesomeIcons.solidBookmark,
+                label: 'My Churches',
+                onTap: () {},
+              ),
+              _buildPopupMenuItem(
+                icon: FontAwesomeIcons.church,
+                label: 'All Churches',
+                onTap: () {},
+              ),
+            ],
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      offset: const Offset(0, 2),
+                      blurRadius: 8,
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Select Date',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const Gap(12),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _DateOption(
+                            isSelected: selectedDateById(1),
+                            label: 'Today',
+                            date: 'Oct 1',
+                            onTap: () => setState(
+                                () => massDate = SelectedDateType.today),
+                          ),
+                          _DateOption(
+                            isSelected: selectedDateById(2),
+                            label: 'Tomorrow',
+                            date: 'Oct 2',
+                            onTap: () => setState(
+                                () => massDate = SelectedDateType.tomorrow),
+                          ),
+                          _DateOption(
+                            isSelected: selectedDateById(3),
+                            label: 'Custom',
+                            date: '...',
+                            onTap: () => setState(
+                                () => massDate = SelectedDateType.custom),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Select Time',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const Gap(12),
+                    GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 1.5,
+                      children: [
+                        _TimeSlot(
+                          isSelected: selectedTimeById(1),
+                          time: '8:00 AM',
+                          label: 'Morning Mass',
+                          onTap: () => setState(
+                              () => massTime = SelectedTimeType.morning),
+                        ),
+                        _TimeSlot(
+                          isSelected: selectedTimeById(2),
+                          time: '10:00 AM',
+                          label: 'Late Morning Mass',
+                          onTap: () => setState(
+                              () => massTime = SelectedTimeType.lateMorning),
+                        ),
+                        _TimeSlot(
+                          isSelected: selectedTimeById(3),
+                          time: '12:00 PM',
+                          label: 'Noon Mass',
+                          onTap: () =>
+                              setState(() => massTime = SelectedTimeType.noon),
+                        ),
+                        _TimeSlot(
+                          isSelected: selectedTimeById(4),
+                          time: '2:00 PM',
+                          label: 'Afternoon Mass',
+                          onTap: () => setState(
+                              () => massTime = SelectedTimeType.afternoon),
+                        ),
+                      ],
+                    ),
+                    const Gap(24),
+                    _buildParishSection(context),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: _BookingButton(
+            isEnabled: massDate != null && massTime != null,
+            onPressed: () => context.pushNamed(RouteNames.massDetail),
           ),
         ),
       ),
     );
   }
 
-  Row appBar(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  Widget _buildParishSection(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            GestureDetector(
-              onTap: () {
-                context.pop();
-              },
-              child: const Icon(
-                FontAwesomeIcons.chevronLeft,
-                size: 18,
-              ),
+            Text(
+              'Select A Parish Or Mass Center',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
             ),
-            const Gap(30),
-            const Text(
-              'Book Mass',
-              style: TextStyle(fontSize: 20),
+            TextButton(
+              onPressed: () => context.pushNamed(RouteNames.parishpage),
+              child: Text(
+                'See More',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ],
         ),
-        PopupMenuButton(
-          padding: const EdgeInsets.all(0),
-          itemBuilder: (context) {
-            return [
-              PopupMenuItem(
-                onTap: () {},
-                child: const Row(
-                  children: [
-                    Icon(
-                      FontAwesomeIcons.solidBookmark,
-                      color: Colors.black54,
-                    ),
-                    Gap(7),
-                    Text(
-                      'My Churches',
-                      style: TextStyle(
-                        color: Colors.black54,
-                      ),
-                    )
-                  ],
-                ),
-              ),
-              PopupMenuItem(
-                onTap: () {},
-                child: const Row(
-                  children: [
-                    Icon(
-                      FontAwesomeIcons.church,
-                      color: Colors.black54,
-                    ),
-                    Gap(7),
-                    Text(
-                      'All Churches',
-                      style: TextStyle(
-                        color: Colors.black54,
-                      ),
-                    )
-                  ],
-                ),
-              ),
-            ];
-          },
-        ),
+        const Gap(12),
+        CustomSearchBar(controller: controller),
+        const Gap(24),
+        const NoParishYet(),
       ],
+    );
+  }
+
+  PopupMenuItem _buildPopupMenuItem({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return PopupMenuItem(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: Colors.grey[700]),
+          const Gap(12),
+          Text(
+            label,
+            style: TextStyle(
+              color: Colors.grey[700],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DateOption extends StatelessWidget {
+  final bool isSelected;
+  final String label;
+  final String date;
+  final VoidCallback onTap;
+
+  const _DateOption({
+    required this.isSelected,
+    required this.label,
+    required this.date,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(right: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : Colors.grey[300]!,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.grey[700],
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const Gap(4),
+            Text(
+              date,
+              style: TextStyle(
+                color: isSelected ? Colors.white70 : Colors.grey[500],
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TimeSlot extends StatelessWidget {
+  final bool isSelected;
+  final String time;
+  final String label;
+  final VoidCallback onTap;
+
+  const _TimeSlot({
+    required this.isSelected,
+    required this.time,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : Colors.grey[300]!,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              time,
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.grey[900],
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const Gap(4),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white70 : Colors.grey[600],
+                fontSize: 13,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BookingButton extends StatelessWidget {
+  final bool isEnabled;
+  final VoidCallback onPressed;
+
+  const _BookingButton({
+    required this.isEnabled,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton(
+      onPressed: isEnabled ? onPressed : null,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        disabledBackgroundColor: Colors.grey[300],
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      child: Text(
+        'Book Now',
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+      ),
     );
   }
 }
@@ -270,41 +388,50 @@ class NoParishYet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 30),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
       child: Column(
         children: [
-          const Icon(
+          Icon(
             FontAwesomeIcons.wineGlassEmpty,
-            size: 30,
+            size: 32,
+            color: Colors.grey[600],
           ),
-          const Gap(20),
-          const Text(
+          const Gap(16),
+          Text(
             'Churches You Have Joined Will Be Displayed Here',
             textAlign: TextAlign.center,
-          ),
-          const Gap(20),
-          MaterialButton(
-            animationDuration: Durations.extralong2,
-            onPressed: () {
-              context.pushNamed(RouteNames.parishpage);
-            },
-            color: AppColors.green,
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  FontAwesomeIcons.church,
-                  color: Colors.white,
-                  size: 14,
-                ),
-                Gap(10),
-                Text(
-                  'Join Church',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ],
+            style: TextStyle(
+              color: Colors.grey[700],
+              fontSize: 15,
             ),
-          )
+          ),
+          const Gap(24),
+          ElevatedButton.icon(
+            onPressed: () => context.pushNamed(RouteNames.parishpage),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.green,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 12,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            icon: const Icon(FontAwesomeIcons.church, size: 16),
+            label: const Text(
+              'Join Church',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
         ],
       ),
     );

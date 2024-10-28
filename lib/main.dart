@@ -24,7 +24,7 @@ void main() async {
   HttpOverrides.global = MyHttpOverrides();
 
   runApp(
-    MultiBlocProvider(
+    MultiBlocProvider( 
       providers: [
         BlocProvider(
           create: (context) => AuthBloc(pref),

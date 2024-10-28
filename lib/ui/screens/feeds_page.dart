@@ -40,12 +40,7 @@ class _FeedsListScreenState extends State<FeedsListScreen>
               expandedHeight: 100,
               floating: true,
               pinned: true,
-              leading: IconButton(
-                  onPressed: () {},
-                  icon: const Icon(
-                    FontAwesomeIcons.chevronLeft,
-                    color: Colors.white,
-                  )),
+              automaticallyImplyLeading: false,
               backgroundColor: AppColors.primary,
               elevation: 0,
               flexibleSpace: FlexibleSpaceBar(
@@ -71,7 +66,7 @@ class _FeedsListScreenState extends State<FeedsListScreen>
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Feeds',
+                                'Book Mass',
                                 style: Theme.of(context)
                                     .textTheme
                                     .headlineMedium
@@ -80,13 +75,17 @@ class _FeedsListScreenState extends State<FeedsListScreen>
                                       fontWeight: FontWeight.bold,
                                     ),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.add_box_outlined,
-                                    color: Colors.white),
-                                onPressed: () {
-                                  // Add new post/prayer request
-                                },
-                              ),
+                              Row(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.person_add,
+                                        color: Colors.white),
+                                    onPressed: () {
+                                      // Add new post/prayer request
+                                    },
+                                  ),
+                                ],
+                              )
                             ],
                           ),
                         ),
@@ -154,15 +153,15 @@ class CommunityPostCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      elevation: 0,
+      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Post Header
           ListTile(
-            contentPadding: const EdgeInsets.all(16),
+            contentPadding: const EdgeInsets.all(10),
             leading: CircleAvatar(
               radius: 24,
               backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
@@ -186,7 +185,7 @@ class CommunityPostCard extends StatelessWidget {
           ),
           // Post Content
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             child: Text(
               'Join us for the Novena to Our Lady of Perpetual Help every Wednesday at 6:00 PM.',
               style: Theme.of(context).textTheme.bodyLarge,
@@ -245,7 +244,7 @@ class PrayerRequestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       elevation: 0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Column(
@@ -253,7 +252,7 @@ class PrayerRequestCard extends StatelessWidget {
         children: [
           // Prayer Request Header
           ListTile(
-            contentPadding: const EdgeInsets.all(16),
+            contentPadding: const EdgeInsets.all(10),
             leading: CircleAvatar(
               radius: 24,
               backgroundColor: Colors.orange.withOpacity(0.1),
@@ -287,7 +286,7 @@ class PrayerRequestCard extends StatelessWidget {
           ),
           // Prayer Request Content
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -316,7 +315,7 @@ class PrayerRequestCard extends StatelessWidget {
           ),
           // Prayer Actions
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(10),
             child: Row(
               children: [
                 _PrayerAction(

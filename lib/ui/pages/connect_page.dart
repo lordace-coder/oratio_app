@@ -315,8 +315,7 @@ class _ConnectPageState extends State<ConnectPage>
                   padding: const EdgeInsets.only(left: 16),
                   child: ListView(
                     scrollDirection: Axis.horizontal,
-                    children:
-                        ['All', 'Following', 'Popular', 'New'].map((filter) {
+                    children: ['All', 'Priest', 'Users'].map((filter) {
                       return Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: FilterChip(
