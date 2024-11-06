@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
+import 'package:oratio_app/helpers/snackbars.dart';
+import 'package:oratio_app/helpers/url_launcher.dart';
 import 'package:oratio_app/ui/pages/auth/auth_wrapper.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/inputs.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -22,10 +27,7 @@ class _LoginPageState extends State<LoginPage> {
 
   bool isValid(BuildContext context) {
     if (emailController.text.isEmpty || passwordController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('Email and Password are required'),
-        showCloseIcon: true,
-      ));
+      showError(context, message: 'Email and Password are required');
       return false;
     }
     return true;
@@ -34,10 +36,17 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _handleLogin(BuildContext context) async {
     if (isValid(context)) {
       // submit form data
-      final Map<String, String> data = {
-        'email': emailController.text,
-        'password': passwordController.text
-      };
+      try {
+        final pb = context.read<PocketBaseServiceCubit>().state.pb;
+        final auth = await pb.collection('users').authWithPassword(
+            emailController.text.trim(), passwordController.text.trim());
+      } on ClientException catch (e) {
+        if (e.statusCode == 400) {
+          showError(context, message: 'Invalid email or password');
+          return;
+        }
+        showError(context, message: 'Client connection error');
+      }
     }
   }
 
@@ -124,7 +133,7 @@ class _LoginPageState extends State<LoginPage> {
               StatefulBuilder(builder: (context, rebuild) {
                 return SubmitButtonV1(
                     ontap: () async {
-                      // if (_isLoading) return;
+                      if (_isLoading) return;
                       rebuild(() {
                         _isLoading = true;
                       });
@@ -153,7 +162,9 @@ class _LoginPageState extends State<LoginPage> {
               Row(
                 children: [
                   GestureDetector(
-                    onTap: () async {},
+                    onTap: () async {
+                      openTermsUrl(context);
+                    },
                     child: const Text(
                       "Terms for use",
                       style: TextStyle(color: Colors.white54),

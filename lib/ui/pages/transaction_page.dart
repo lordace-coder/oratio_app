@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
 import 'package:oratio_app/ui/themes.dart';
-import 'package:oratio_app/ui/widgets/church_widgets.dart';
 import 'package:oratio_app/ui/widgets/home.dart';
 import 'package:path_provider/path_provider.dart' as pathProvider;
 

@@ -3,7 +3,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:oratio_app/ui/screens/chat_screen.dart';
 import 'package:oratio_app/ui/screens/feeds_page.dart';
 import 'package:oratio_app/ui/pages/home_screen.dart';
-import 'package:oratio_app/ui/pages/settings_screen.dart';
 import 'package:oratio_app/ui/themes.dart';
 
 class HomePage extends StatefulWidget {
@@ -18,7 +17,7 @@ class _HomePageState extends State<HomePage> {
   final _pages = <Widget>[
     const FeedsListScreen(),
     const HomeScreen(),
-    ChatScreen(),
+    const ChatScreen(),
   ];
   @override
   Widget build(BuildContext context) {

@@ -31,7 +31,7 @@ class _LockScreenState extends State<LockScreen> {
 
         AppLock.of(context)!.didUnlock();
       }
-    } on PlatformException catch (e) {
+    } on PlatformException {
       // user hasnt settup password on device
     }
   }

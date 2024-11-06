@@ -1,5 +1,8 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
+import 'package:oratio_app/ui/pages/auth/auth_wrapper.dart';
 import 'package:oratio_app/ui/pages/auth/forgot_pw_page.dart';
 import 'package:oratio_app/ui/pages/bible_reading_page.dart';
 import 'package:oratio_app/ui/pages/chat_page.dart';
@@ -14,13 +17,21 @@ import '../pages/pages.dart';
 final appRouter = GoRouter(
   redirectLimit: 2,
   redirect: (context, state) {
+    final pb = context.read<PocketBaseServiceCubit>().state.pb;
+    if (!pb.authStore.isValid && !state.fullPath!.contains('auth')) {
+      print(state.fullPath);
+      return '/auth/login';
+    }
+
+    print([state.fullPath, pb.authStore.isValid]);
+
     return null;
   },
   routes: [
     GoRoute(
       path: '/',
       name: RouteNames.homePage,
-      builder: (context, state) => const HomePage(),
+      builder: (context, state) => const AuthListener(child: HomePage()),
     ),
     GoRoute(
       path: '/settings',
@@ -35,32 +46,34 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/profilepage',
       name: RouteNames.profile,
-      builder: (context, state) => const ProfilePage(),
+      builder: (context, state) => const AuthListener(child: ProfilePage()),
     ),
     GoRoute(
-      path: '/forgotpwpage',
+      path: '/auth/forgotpwpage',
       name: RouteNames.forgotpwpage,
-      builder: (context, state) => const ForgotPasswordPage(),
+      builder: (context, state) =>
+          const AuthListener(child: ForgotPasswordPage()),
     ),
     GoRoute(
       path: '/${RouteNames.notifications}',
       name: RouteNames.notifications,
-      builder: (context, state) => const NotificationPage(),
+      builder: (context, state) =>
+          const AuthListener(child: NotificationPage()),
     ),
     GoRoute(
       path: '/auth/login',
       name: RouteNames.login,
-      builder: (context, state) => const LoginPage(),
+      builder: (context, state) => const AuthListener(child: LoginPage()),
     ),
     GoRoute(
       path: '/auth/signup',
       name: RouteNames.signup,
-      builder: (context, state) => SignupPage(),
+      builder: (context, state) => const AuthListener(child: SignupPage()),
     ),
     GoRoute(
       path: '/community',
       name: RouteNames.communitypage,
-      builder: (context, state) => const CommunityPage(),
+      builder: (context, state) => const AuthListener(child: CommunityPage()),
     ),
     GoRoute(
       path: '/parishlistpage',
@@ -70,7 +83,7 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/${RouteNames.communityDetailPage}',
       name: RouteNames.communityDetailPage,
-      builder: (context, state) => PrayerCommunityDetail(),
+      builder: (context, state) => const PrayerCommunityDetail(),
     ),
     GoRoute(
       path: '/paymentsuccesfull/:status',
@@ -122,7 +135,7 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/${RouteNames.readingPage}',
       name: RouteNames.readingPage,
-      builder: (context, state) => BibleReadingPage(),
+      builder: (context, state) => const BibleReadingPage(),
     ),
     GoRoute(
       path: '/${RouteNames.prayerPage}',

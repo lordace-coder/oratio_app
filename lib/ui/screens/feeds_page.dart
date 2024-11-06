@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:oratio_app/ui/themes.dart';
+import 'package:oratio_app/ui/widgets/buttons.dart';
 import 'package:oratio_app/ui/widgets/live_streams.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:gap/gap.dart';
+import 'package:go_router/go_router.dart';
+import 'package:oratio_app/ui/routes/route_names.dart';
 
 class FeedsListScreen extends StatefulWidget {
   const FeedsListScreen({super.key});
@@ -60,32 +63,75 @@ class _FeedsListScreenState extends State<FeedsListScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Padding(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 20.0, horizontal: 18),
+                          padding: const EdgeInsets.all(10.0),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                'Book Mass',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineMedium
-                                    ?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
+                              Row(
+                                children: [
+                                  GestureDetector(
+                                    onTap: () =>
+                                        context.pushNamed(RouteNames.profile),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: Theme.of(context).primaryColor,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      child: const CircleAvatar(
+                                        backgroundColor: Colors.white,
+                                        radius: 20,
+                                        child: Icon(FontAwesomeIcons.user),
+                                      ),
                                     ),
+                                  ),
+                                  const Gap(12),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Welcome back,',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall!
+                                            .copyWith(
+                                              color: Colors.white,
+                                            ),
+                                      ),
+                                      Text(
+                                        'Chibuike',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
                               Row(
                                 children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.person_add,
-                                        color: Colors.white),
-                                    onPressed: () {
-                                      // Add new post/prayer request
+                                  buildIconButton(
+                                    icon: FontAwesomeIcons.magnifyingGlass,
+                                    onTap: () {
+                                      context.pushNamed(RouteNames.connect);
                                     },
                                   ),
+                                  const Gap(8),
+                                  buildIconButton(
+                                    icon: FontAwesomeIcons.bell,
+                                    onTap: () => context
+                                        .pushNamed(RouteNames.notifications),
+                                    hasNotification: true,
+                                  ),
                                 ],
-                              )
+                              ),
                             ],
                           ),
                         ),

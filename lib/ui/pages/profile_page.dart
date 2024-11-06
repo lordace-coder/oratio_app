@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/ui/themes.dart';
 
 class ProfilePage extends StatelessWidget {
@@ -151,7 +153,14 @@ class ProfilePage extends StatelessWidget {
                             FontAwesomeIcons.rightFromBracket,
                             const Color(0xFFFF6B6B),
                             const Color(0xFFFF3131),
-                            () => context.pushNamed('login'),
+                            () {
+                              context
+                                  .read<PocketBaseServiceCubit>()
+                                  .state
+                                  .pb
+                                  .authStore
+                                  .clear();
+                            },
                           ),
                         ],
                       ),

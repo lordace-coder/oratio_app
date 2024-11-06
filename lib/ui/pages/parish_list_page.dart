@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:oratio_app/ui/routes/route_names.dart';
 
 class ParishListPage extends StatefulWidget {
   const ParishListPage({super.key});
@@ -328,90 +329,95 @@ class _ParishListPageState extends State<ParishListPage>
   }
 
   Widget _buildChurchCard(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(
-          horizontal: 8, vertical: 4), // Reduced margins
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: BorderSide(color: Colors.grey[200]!),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(8), // Reduced padding
-        child: Row(
-          children: [
-            // Church image with error handling
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                'https://via.placeholder.com/60', // Reduced size
-                width: 60,
-                height: 60,
-                fit: BoxFit.cover,
-                // Handle image load errors
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 60,
-                    height: 60,
-                    color: Colors.grey[300],
-                    child: Icon(Icons.church, color: Colors.grey[400]),
-                  );
-                },
+    return GestureDetector(
+      onTap: () {
+        context.pushNamed(RouteNames.parishlanding);
+      },
+      child: Card(
+        margin: const EdgeInsets.symmetric(
+            horizontal: 8, vertical: 4), // Reduced margins
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(color: Colors.grey[200]!),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(8), // Reduced padding
+          child: Row(
+            children: [
+              // Church image with error handling
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  'https://via.placeholder.com/60', // Reduced size
+                  width: 60,
+                  height: 60,
+                  fit: BoxFit.cover,
+                  // Handle image load errors
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: 60,
+                      height: 60,
+                      color: Colors.grey[300],
+                      child: Icon(Icons.church, color: Colors.grey[400]),
+                    );
+                  },
+                ),
               ),
-            ),
-            const Gap(8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'St. Mary\'s Cathedral',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[900],
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const Gap(2),
-                  Row(
-                    children: [
-                      Icon(Icons.location_on,
-                          size: 12, color: Colors.grey[600]),
-                      const Gap(2),
-                      Expanded(
-                        child: Text(
-                          '123 Church Street, City',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+              const Gap(8),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'St. Mary\'s Cathedral',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[900],
                       ),
-                    ],
-                  ),
-                  const Gap(4),
-                  Row(
-                    children: [
-                      _buildInfoChip(Icons.access_time, '5 min'),
-                      const Gap(4),
-                      _buildInfoChip(Icons.calendar_today, '4 masses'),
-                    ],
-                  ),
-                ],
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const Gap(2),
+                    Row(
+                      children: [
+                        Icon(Icons.location_on,
+                            size: 12, color: Colors.grey[600]),
+                        const Gap(2),
+                        Expanded(
+                          child: Text(
+                            '123 Church Street, City',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Gap(4),
+                    Row(
+                      children: [
+                        _buildInfoChip(Icons.access_time, '5 min'),
+                        const Gap(4),
+                        _buildInfoChip(Icons.calendar_today, '4 masses'),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.favorite_border, size: 16),
-              onPressed: () {},
-              padding: const EdgeInsets.all(4),
-              constraints: const BoxConstraints(
-                minWidth: 32,
-                minHeight: 32,
+              IconButton(
+                icon: const Icon(Icons.favorite_border, size: 16),
+                onPressed: () {},
+                padding: const EdgeInsets.all(4),
+                constraints: const BoxConstraints(
+                  minWidth: 32,
+                  minHeight: 32,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

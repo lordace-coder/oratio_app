@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
+import 'package:oratio_app/ui/widgets/buttons.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -91,14 +92,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         Row(
                           children: [
-                            _buildIconButton(
+                            buildIconButton(
                               icon: FontAwesomeIcons.magnifyingGlass,
                               onTap: () {
                                 context.pushNamed(RouteNames.connect);
                               },
                             ),
                             const Gap(8),
-                            _buildIconButton(
+                            buildIconButton(
                               icon: FontAwesomeIcons.bell,
                               onTap: () =>
                                   context.pushNamed(RouteNames.notifications),
@@ -193,7 +194,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Quick Actions
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.all(10.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -207,13 +208,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         const Gap(16),
                         ConstrainedBox(
                           constraints: const BoxConstraints(
-                              maxHeight: 200), // Limit the height
+                              maxHeight: 210), // Limit the height
                           child: GridView.count(
                             shrinkWrap: true,
                             physics: const NeverScrollableScrollPhysics(),
                             crossAxisCount: 4,
-                            mainAxisSpacing: 16,
-                            crossAxisSpacing: 16,
+                            mainAxisSpacing: 10,
+                            crossAxisSpacing: 10,
                             children: [
                               _buildQuickAction(
                                 icon: FontAwesomeIcons.book,
@@ -357,41 +358,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildIconButton({
-    required IconData icon,
-    required VoidCallback onTap,
-    bool hasNotification = false,
-  }) {
-    return Stack(
-      children: [
-        IconButton(
-          onPressed: onTap,
-          icon: Icon(icon, size: 20),
-          style: IconButton.styleFrom(
-            backgroundColor: Colors.grey.shade100,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        ),
-        if (hasNotification)
-          Positioned(
-            right: 8,
-            top: 8,
-            child: Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: Colors.red,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 1.5),
-              ),
-            ),
-          ),
-      ],
     );
   }
 

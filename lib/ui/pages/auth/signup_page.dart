@@ -1,50 +1,59 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
+import 'package:oratio_app/helpers/snackbars.dart';
+import 'package:oratio_app/main.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/inputs.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 // ignore: must_be_immutable
-class SignupPage extends StatelessWidget {
-  SignupPage({super.key});
+class SignupPage extends StatefulWidget {
+  const SignupPage({super.key});
 
+  @override
+  State<SignupPage> createState() => _SignupPageState();
+}
+
+class _SignupPageState extends State<SignupPage> {
   final TextEditingController usernameController = TextEditingController();
-  final TextEditingController phoneController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPassword = TextEditingController();
-  final TextEditingController referralController = TextEditingController();
-  final TextEditingController firstNameController = TextEditingController();
-  final TextEditingController lastNameController = TextEditingController();
-  bool _isLoading = false;
 
-  showSnackBar({required BuildContext context, required String message}) =>
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-        ),
-      );
+  final TextEditingController phoneController = TextEditingController();
+
+  final TextEditingController emailController = TextEditingController();
+
+  final TextEditingController passwordController = TextEditingController();
+
+  final TextEditingController confirmPassword = TextEditingController();
+
+  final TextEditingController referralController = TextEditingController();
+
+  final TextEditingController firstNameController = TextEditingController();
+
+  final TextEditingController lastNameController = TextEditingController();
+
+  bool _isLoading = false;
 
   bool isValid(BuildContext context) {
     if (usernameController.text.isEmpty ||
         emailController.text.isEmpty ||
         passwordController.text.isEmpty) {
-      showSnackBar(
-          context: context, message: 'Please fill in the required fields');
+      showError(context, message: 'Please fill in the required fields');
       return false;
     }
     if (passwordController.text != confirmPassword.text) {
-      showSnackBar(
-        context: context,
+      showError(
+        context,
         message: 'Password does not match confirm password',
       );
       return false;
     }
     if (passwordController.text.length < 7) {
-      showSnackBar(
-          context: context, message: 'Password cant be less than 7 characters');
+      showError(context, message: 'Password cant be less than 7 characters');
       return false;
     }
     return true;
@@ -53,26 +62,63 @@ class SignupPage extends StatelessWidget {
   Future<void> handleSignup(BuildContext context) async {
     // todo handle loading
     if (!isValid(context)) return;
-    // Map<String, String> data = {
-    //   "email": emailController.text,
-    //   "password": passwordController.text,
-    //   "username": usernameController.text,
-    //   "referral_code": referralController.text,
-    // };
-    // final response = await signup(data);
-    // if (response.containsKey('error')) {
-    //   // handle error
-    //   ScaffoldMessenger.of(context).showSnackBar(
-    //       SnackBar(content: Text('${response['error_message']}')));
-    //   return;
-    // } else {
-    //   BlocProvider.of<AuthBloc>(context).add(
-    //     AuthSubmitEvent(
-    //       access: response['access'],
-    //       refresh: response['refresh'],
-    //     ),
-    //   );
-    // }
+    try {
+      final pb = context.read<PocketBaseServiceCubit>().state.pb;
+      Map<String, dynamic> data = {
+        "username": usernameController.text.trim(),
+        "email": emailController.text.trim(),
+        "password": passwordController.text.trim(),
+        "passwordConfirm": confirmPassword.text.trim(),
+        "first_name": firstNameController.text.trim(),
+        "last_name": lastNameController.text.trim(),
+        "phone_number": phoneController.text.trim(),
+      };
+      pb.collection('users').create(body: data).then((_) {
+        pb.collection('users').authWithPassword(
+            emailController.text.trim(), passwordController.text.trim());
+      }).catchError((err) {
+        final error = err as ClientException;
+        try {
+          final firstError = error.response['data'].keys.first;
+          showError(context,
+              message: error.response['data'][firstError]['message']);
+        } catch (e) {
+          showError(context, message: 'Error occured during signup');
+          return;
+        }
+      });
+    } on ClientException catch (e) {
+      showError(context, message: 'Unknown Error occured during signup');
+      return;
+    }
+  }
+
+  @override
+  void dispose() {
+    usernameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPassword.dispose();
+    firstNameController.dispose();
+    lastNameController.dispose();
+    phoneController.dispose();
+
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final pb = context.read<PocketBaseServiceCubit>();
+    pb.state.pb.authStore.onChange.listen((event) {
+      if (!pb.state.pb.authStore.isValid) {
+        context.pushNamed(RouteNames.homePage);
+        return;
+      }
+    });
+    if (pb.state.pb.authStore.isValid) {
+      context.pushNamed(RouteNames.homePage);
+    }
   }
 
   @override
