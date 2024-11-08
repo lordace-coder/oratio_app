@@ -42,6 +42,10 @@ class _FeedsListScreenState extends State<FeedsListScreen>
     } catch (e) {}
   }
 
+
+void getPrayerRequests(){
+  try
+}
   @override
   void initState() {
     super.initState();
@@ -204,8 +208,37 @@ class _FeedsListScreenState extends State<FeedsListScreen>
                   builder: (context, state) {
                     if (state is PostLoaded) {
                       if (state.posts.isEmpty) {
-                        return Container(
-                          child: const Text('no posts yet'),
+                        return SizedBox(
+                          height: 400,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Lottie.network(
+                                  height: 100,
+                                  'https://lottie.host/fece67a7-2389-4c66-b33c-6eb5bb658347/dK1IxI9mjB.json'),
+                              const Row(),
+                              const Gap(20),
+                              const Text(
+                                  'Join A Community to start seeing feeds'),
+                              const Gap(20),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 20),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                        child: BookingButton(
+                                            label: 'Join Community',
+                                            isEnabled: true,
+                                            onPressed: () {
+                                              context.pushNamed(
+                                                  RouteNames.communitypage);
+                                            })),
+                                  ],
+                                ),
+                              )
+                            ],
+                          ),
                         );
                       } else {
                         return Column(
@@ -223,36 +256,6 @@ class _FeedsListScreenState extends State<FeedsListScreen>
                   },
                 ),
                 // card for a post item
-
-                // SizedBox(
-                //   height: 400,
-                //   child: Column(
-                //     mainAxisAlignment: MainAxisAlignment.center,
-                //     children: [
-                //       Lottie.network(
-                //           height: 100,
-                //           'https://lottie.host/fece67a7-2389-4c66-b33c-6eb5bb658347/dK1IxI9mjB.json'),
-                //       const Row(),
-                //       const Text('Join A Community to start seeing feeds'),
-                //       const Gap(20),
-                //       Padding(
-                //         padding: const EdgeInsets.symmetric(horizontal: 20),
-                //         child: Row(
-                //           children: [
-                //             Expanded(
-                //                 child: BookingButton(
-                //                     label: 'Join Community',
-                //                     isEnabled: true,
-                //                     onPressed: () {
-                //                       context
-                //                           .pushNamed(RouteNames.communitypage);
-                //                     })),
-                //           ],
-                //         ),
-                //       )
-                //     ],
-                //   ),
-                // )
               ]),
 
               // Prayer Requests Tab

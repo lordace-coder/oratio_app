@@ -2,11 +2,38 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lottie/lottie.dart';
+import 'package:oratio_app/bloc/community.dart';
+import 'package:oratio_app/networkProvider/requests.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 
-class CommunityPage extends StatelessWidget {
+class CommunityPage extends StatefulWidget {
   const CommunityPage({super.key});
+
+  @override
+  State<CommunityPage> createState() => _CommunityPageState();
+}
+
+class _CommunityPageState extends State<CommunityPage> {
+  final bool _loading = false;
+
+  List<PrayerCommunity> communities = [];
+
+  Future<List<PrayerCommunity>> loadData() async {
+    print('loading');
+
+    final data = await getCommunities(context);
+
+    print(data[0]);
+
+    return data;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,77 +132,97 @@ class CommunityPage extends StatelessWidget {
           ),
 
           // Search Bar Section
-          SliverToBoxAdapter(
-            child: Container(
-              margin: const EdgeInsets.all(16),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
+          FutureBuilder(
+            future: loadData(),
+            builder: (BuildContext context, AsyncSnapshot snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 200,
+                    child: Lottie.asset('assets/lottie/anim1.json'),
                   ),
-                ],
-              ),
-              child: const TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search communities...',
-                  border: InputBorder.none,
-                  icon: Icon(FontAwesomeIcons.magnifyingGlass, size: 16),
-                ),
-              ),
-            ),
-          ),
+                );
+              }
+              if (snapshot.hasData) {
+                return SliverToBoxAdapter(
+                  child: Column(
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const TextField(
+                          decoration: InputDecoration(
+                            hintText: 'Search communities...',
+                            border: InputBorder.none,
+                            icon: Icon(FontAwesomeIcons.magnifyingGlass,
+                                size: 16),
+                          ),
+                        ),
+                      ),
 
-          // Featured Communities Section
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Featured Communities',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                      // Featured Communities Section
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Featured Communities',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Gap(16),
+                            SizedBox(
+                              height: 160,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: 5,
+                                itemBuilder: (context, index) =>
+                                    buildFeaturedCard(),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Column(
+                        children: [
+                          ...snapshot.data
+                              .map((i) => buildCommunityListItem(context, i))
+                        ],
+                      )
+                    ],
                   ),
-                  const Gap(16),
-                  SizedBox(
-                    height: 160,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: 5,
-                      itemBuilder: (context, index) => _buildFeaturedCard(),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Community List
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) => _buildCommunityListItem(context),
-              childCount: 10,
-            ),
+                );
+              }
+              // default widget
+              return SliverToBoxAdapter(child: Container());
+            },
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: AppColors.primary,
-        child: const Icon(FontAwesomeIcons.plus),
-      ),
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: () {},
+      //   backgroundColor: AppColors.primary,
+      //   foregroundColor: Colors.white,
+      //   child: const Icon(FontAwesomeIcons.plus),
+      // ),
     );
   }
 
-  Widget _buildFeaturedCard() {
+  Widget buildFeaturedCard() {
     return Container(
       width: 280,
       margin: const EdgeInsets.only(right: 16),
@@ -257,10 +304,13 @@ class CommunityPage extends StatelessWidget {
     );
   }
 
-  Widget _buildCommunityListItem(BuildContext context) {
+  Widget buildCommunityListItem(
+      BuildContext context, PrayerCommunity community) {
     return InkWell(
       onTap: () {
-        context.pushNamed(RouteNames.communityDetailPage);
+        context.pushNamed(RouteNames.communityDetailPage, pathParameters: {
+          'community': community.id,
+        });
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -296,9 +346,9 @@ class CommunityPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Sacred Heart Society',
-                    style: TextStyle(
+                  Text(
+                    community.community,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -312,36 +362,14 @@ class CommunityPage extends StatelessWidget {
                         color: Colors.grey,
                       ),
                       const Gap(4),
-                      const Text(
-                        '1.2K Members',
-                        style: TextStyle(
+                      Text(
+                        '${community.members} Members',
+                        style: const TextStyle(
                           color: Colors.grey,
                           fontSize: 12,
                         ),
                       ),
                       const Gap(12),
-                      Container(
-                        width: 4,
-                        height: 4,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const Gap(12),
-                      const Icon(
-                        FontAwesomeIcons.solidMessage,
-                        size: 12,
-                        color: Colors.grey,
-                      ),
-                      const Gap(4),
-                      const Text(
-                        '24 New',
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                        ),
-                      ),
                     ],
                   ),
                 ],
@@ -361,7 +389,7 @@ class CommunityPage extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
+            )
           ],
         ),
       ),

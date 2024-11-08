@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/bloc/notifications_cubit/notifications_cubit.dart';
 import 'package:oratio_app/bloc/posts/post_cubit.dart';
+import 'package:oratio_app/bloc/prayer_requests/requests_cubit.dart';
 import 'package:oratio_app/ui/pages/security/lock_page.dart';
 import 'package:oratio_app/ui/routes/routes.dart';
 import 'package:oratio_app/ui/themes.dart';
@@ -14,7 +15,7 @@ void main() async {
   final pref = await SharedPreferences.getInstance();
   final pbCubit = PocketBaseServiceCubit(pref);
   final notificationCubit = NotificationCubit(pbCubit.state.pb);
-   await notificationCubit.realtimeConnection();
+  await notificationCubit.realtimeConnection();
   runApp(
     MultiBlocProvider(
       providers: [
@@ -23,6 +24,9 @@ void main() async {
         ),
         BlocProvider(
           create: (context) => notificationCubit,
+        ),
+        BlocProvider(
+          create: (context) => PrayerRequestCubit(pbCubit.state.pb),
         ),
         BlocProvider(
           lazy: false,

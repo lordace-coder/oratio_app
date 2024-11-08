@@ -87,7 +87,7 @@ class _SignupPageState extends State<SignupPage> {
           return;
         }
       });
-    } on ClientException catch (e) {
+    } on ClientException {
       showError(context, message: 'Unknown Error occured during signup');
       return;
     }

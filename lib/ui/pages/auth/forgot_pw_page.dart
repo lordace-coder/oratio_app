@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:oratio_app/networkProvider/constants.dart';
 
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';

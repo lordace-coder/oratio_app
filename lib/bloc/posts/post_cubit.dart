@@ -13,10 +13,11 @@ class PostCubit extends Cubit<PostState> {
     try {
       final records =
           await _pocketBase.collection('posts').getList(expand: 'community');
-          // fetch prayer requests
-      emit(PostLoaded(records.items
-          .map((record) => Post.fromRecord(record, _pocketBase))
-          .toList(),[]));
+      emit(PostLoaded(
+        records.items
+            .map((record) => Post.fromRecord(record, _pocketBase))
+            .toList(),
+      ));
     } catch (e) {
       print(e);
       emit(PostError(e.toString()));

@@ -87,9 +87,11 @@ final appRouter = GoRouter(
       builder: (context, state) => const ParishListPage(),
     ),
     GoRoute(
-      path: '/${RouteNames.communityDetailPage}',
+      path: '/${RouteNames.communityDetailPage}/:community',
       name: RouteNames.communityDetailPage,
-      builder: (context, state) => const PrayerCommunityDetail(),
+      builder: (context, state) => PrayerCommunityDetail(
+        communityId: state.pathParameters['community'].toString(),
+      ),
     ),
     GoRoute(
       path: '/paymentsuccesfull/:status',

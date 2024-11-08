@@ -54,9 +54,10 @@ class PostLoading extends PostState {}
 
 class PostLoaded extends PostState {
   final List<Post> posts;
-  final List<Post> prayerRequests;
 
-  const PostLoaded(this.posts,this.prayerRequests);
+  const PostLoaded(
+    this.posts,
+  );
 
   @override
   List<Object?> get props => [posts];

@@ -7,3 +7,11 @@ void showError(BuildContext context, {required String message}) {
     backgroundColor: Colors.red,
   ));
 }
+
+void showSuccess(BuildContext context, {required String message}) {
+  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+    content: Text(message),
+    showCloseIcon: true,
+    backgroundColor: Colors.green,
+  ));
+}

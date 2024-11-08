@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gap/gap.dart';
 import 'package:oratio_app/ui/themes.dart';
 
 Widget buildIconButton({
@@ -70,4 +71,55 @@ class BookingButton extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget buildGradientButton(
+  String text,
+  IconData icon,
+  VoidCallback onPressed,
+) {
+  return Container(
+    width: double.infinity,
+    height: 56,
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [const Color(0xFF8E2DE2), AppColors.primary],
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+      ),
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: [
+        BoxShadow(
+          color: const Color(0xFF8E2DE2).withOpacity(0.3),
+          blurRadius: 8,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(16),
+        child: Center(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: Colors.white, size: 20),
+              const Gap(12),
+              Text(
+                text,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
 }
