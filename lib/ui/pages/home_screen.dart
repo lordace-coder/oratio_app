@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
-import 'package:oratio_app/ui/widgets/buttons.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -43,74 +42,6 @@ class _HomeScreenState extends State<HomeScreen> {
             child: CustomScrollView(
               slivers: [
                 // Modern App Bar
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            GestureDetector(
-                              onTap: () =>
-                                  context.pushNamed(RouteNames.profile),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Theme.of(context).primaryColor,
-                                    width: 2,
-                                  ),
-                                ),
-                                child: const CircleAvatar(
-                                  backgroundColor: Colors.white,
-                                  radius: 20,
-                                  child: Icon(FontAwesomeIcons.user),
-                                ),
-                              ),
-                            ),
-                            const Gap(12),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Welcome back,',
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                                Text(
-                                  'Chibuike',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            buildIconButton(
-                              icon: FontAwesomeIcons.magnifyingGlass,
-                              onTap: () {
-                                context.pushNamed(RouteNames.connect);
-                              },
-                            ),
-                            const Gap(8),
-                            buildIconButton(
-                              icon: FontAwesomeIcons.bell,
-                              onTap: () =>
-                                  context.pushNamed(RouteNames.notifications),
-                              hasNotification: true,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
 
                 // Balance Card
                 SliverToBoxAdapter(

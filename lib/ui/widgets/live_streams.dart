@@ -1,34 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 
- Widget buildStorySection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Text(
-            'Stories',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+Widget buildStorySection(BuildContext context) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Text(
+          'Live Masses',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+        ),
+      ),
+      SizedBox(
+        height: 100,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: 10,
+          itemBuilder: (context, index) => Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: _StoryAvatar(index: index),
           ),
         ),
-        SizedBox(
-          height: 100,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: 10,
-            itemBuilder: (context, index) => Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: _StoryAvatar(index: index),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
+      ),
+    ],
+  );
+}
 
 class _StoryAvatar extends StatelessWidget {
   final int index;

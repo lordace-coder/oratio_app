@@ -7,6 +7,7 @@ class RouteNames {
   static String forgotpwpage = 'forgotpassword';
   static String communitypage = 'communitypage';
   static String parishpage = 'parishpage';
+  static String profilepagevisitor = 'profilepagevisitor';
   static String mass = 'mass';
   static String scanQr = 'scanQr';
   static String massDetail = 'massDetail';

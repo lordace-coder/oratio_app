@@ -39,6 +39,12 @@ final appRouter = GoRouter(
       builder: (context, state) => const SettingsPage(),
     ),
     GoRoute(
+      path: '/profilevisitor',
+      name: RouteNames.profilepagevisitor,
+      builder: (context, state) =>
+          const AuthListener(child: ProfileVisitorPage()),
+    ),
+    GoRoute(
       path: '/connect',
       name: RouteNames.connect,
       builder: (context, state) => const ConnectPage(),

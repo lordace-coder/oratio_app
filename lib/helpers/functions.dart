@@ -1,7 +1,13 @@
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
+import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
+import 'package:oratio_app/ui/pages/auth/auth_wrapper.dart';
+import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:url_launcher/url_launcher.dart';
-
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
 
 void handleAccountFunding(
@@ -215,9 +221,6 @@ void openWhatsApp(
   }
 }
 
-
-
-
 class PaymentModal extends StatelessWidget {
   final TextEditingController controller;
   final String email;
@@ -392,4 +395,32 @@ class PaymentModal extends StatelessWidget {
       ],
     );
   }
+}
+
+String formatDateTimeToHoursAgo(DateTime dateTime) {
+  final now = DateTime.now().toUtc();
+  final difference = now.difference(dateTime);
+
+  if (difference.inMinutes < 60) {
+    return '${difference.inMinutes} minutes ago';
+  } else if (difference.inHours < 24) {
+    return '${difference.inHours} hours ago';
+  } else {
+    return DateFormat('d MMM yyyy').add_jm().format(dateTime);
+  }
+}
+
+void openProfile(BuildContext context, String userId) {
+  final currentUser = context
+      .read<PocketBaseServiceCubit>()
+      .state
+      .pb
+      .authStore
+      .model
+      .id as String;
+  if (currentUser == userId) {
+    context.pushNamed(RouteNames.profile);
+    return;
+  }
+  context.pushNamed(RouteNames.profilepagevisitor);
 }

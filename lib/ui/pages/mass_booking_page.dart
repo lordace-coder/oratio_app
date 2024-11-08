@@ -4,6 +4,7 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
+import 'package:oratio_app/ui/widgets/buttons.dart';
 import 'package:oratio_app/ui/widgets/church_widgets.dart';
 
 enum SelectedDateType { today, tomorrow, custom }
@@ -177,7 +178,7 @@ class _MassBookingPageState extends State<MassBookingPage> {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: _BookingButton(
+          child: BookingButton(
             isEnabled: massDate != null && massTime != null,
             onPressed: () => context.pushNamed(RouteNames.massDetail),
           ),
@@ -343,39 +344,6 @@ class _TimeSlot extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _BookingButton extends StatelessWidget {
-  final bool isEnabled;
-  final VoidCallback onPressed;
-
-  const _BookingButton({
-    required this.isEnabled,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: isEnabled ? onPressed : null,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        disabledBackgroundColor: Colors.grey[300],
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-      child: Text(
-        'Book Now',
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ),
       ),
     );
   }

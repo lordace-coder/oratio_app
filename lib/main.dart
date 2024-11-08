@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:oratio_app/bloc/blocs.dart';
-import 'package:oratio_app/ui/pages/auth/forgot_pw_page.dart';
+import 'package:oratio_app/bloc/notifications_cubit/notifications_cubit.dart';
+import 'package:oratio_app/bloc/posts/post_cubit.dart';
 import 'package:oratio_app/ui/pages/security/lock_page.dart';
-import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/routes/routes.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,12 +12,25 @@ import 'package:shared_preferences/shared_preferences.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final pref = await SharedPreferences.getInstance();
-
+  final pbCubit = PocketBaseServiceCubit(pref);
+  final notificationCubit = NotificationCubit(pbCubit.state.pb);
+   await notificationCubit.realtimeConnection();
   runApp(
     MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (context) => PocketBaseServiceCubit(pref),
+          create: (context) => pbCubit,
+        ),
+        BlocProvider(
+          create: (context) => notificationCubit,
+        ),
+        BlocProvider(
+          lazy: false,
+          create: (context) {
+            final postCubit = PostCubit(pbCubit.state.pb);
+            postCubit.fetchPosts();
+            return postCubit;
+          },
         ),
       ],
       child: const MainApp(),

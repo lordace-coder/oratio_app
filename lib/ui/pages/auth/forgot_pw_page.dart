@@ -20,10 +20,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   final TextEditingController emailController = TextEditingController();
 
-  final dio = Dio(
-    BaseOptions(baseUrl: BASEURL),
-  );
-
   String? email;
 
   void showError(BuildContext context, String error) =>
@@ -49,18 +45,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       showError(context, 'Enter a valid email first');
       return;
     }
-    try {
-      final res = await dio.get('/recovery/${emailController.text}');
-      if (res.statusCode == 201) {
-        showSuccess(context, "Token has been sent to your email");
-
-        email = emailController.text;
-
-        return;
-      } else {
-        showError(context, res.data);
-      }
-    } on DioException catch (e) {
+    try {} on DioException catch (e) {
       print(e.response!.data);
       showError(context, 'Invalid Email, account doesnt exist');
       return;
@@ -165,9 +150,7 @@ class ChangePasswordScreen extends StatelessWidget {
   final TextEditingController token = TextEditingController();
   final TextEditingController password = TextEditingController();
   final String email;
-  final dio = Dio(
-    BaseOptions(baseUrl: BASEURL),
-  );
+
   bool _isLoading = false;
 
   void showError(BuildContext context, String error) =>
@@ -193,8 +176,8 @@ class ChangePasswordScreen extends StatelessWidget {
       return;
     }
     try {
-      final res = await dio.post('/recovery/$email',
-          data: {'new_password': password.text, 'token': token.text});
+      // final res = await dio.post('/recovery/$email',
+      //     data: {'new_password': password.text, 'token': token.text});
       showSuccess(context, 'Changed Password succesfully');
       await Future.delayed(Durations.extralong4);
       context.pushNamed(RouteNames.login);

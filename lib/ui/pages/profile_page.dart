@@ -4,13 +4,21 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
+import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/ui/themes.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final user = (context
+        .read<PocketBaseServiceCubit>()
+        .state
+        .pb
+        .authStore
+        .model as RecordModel);
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
       body: RefreshIndicator.adaptive(
@@ -65,6 +73,7 @@ class ProfilePage extends StatelessWidget {
                                 border:
                                     Border.all(color: Colors.white, width: 2),
                               ),
+                              // display image here
                               child: const CircleAvatar(
                                 radius: 50,
                                 backgroundColor: Color(0xFF8B80FF),
@@ -76,9 +85,9 @@ class ProfilePage extends StatelessWidget {
                               ),
                             ),
                             const Gap(16),
-                            const Text(
-                              "Ahmed Christian",
-                              style: TextStyle(
+                            Text(
+                              "${user.getStringValue('first_name')} ${user.getStringValue('last_name')}",
+                              style: const TextStyle(
                                 fontSize: 24,
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -145,7 +154,11 @@ class ProfilePage extends StatelessWidget {
                             FontAwesomeIcons.headset,
                             const Color(0xFF6C63FF),
                             AppColors.primary,
-                            () => context.pushNamed('customer_service'),
+                            () {
+                              openWhatsApp(
+                                  phoneNumber: '+2349061299286',
+                                  message: 'Im looking for customer support');
+                            },
                           ),
                           const Gap(12),
                           _buildGradientButton(

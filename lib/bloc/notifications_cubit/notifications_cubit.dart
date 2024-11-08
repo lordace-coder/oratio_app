@@ -1,39 +1,49 @@
 import 'dart:convert';
 
 import 'package:bloc/bloc.dart';
-import 'package:oratio_app/networkProvider/notifications.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:pocketbase/pocketbase.dart';
 part 'notifications_state.dart';
 
-class NotificationsCubit extends Cubit<List<Notification>> {
-  SharedPreferences pref;
-  NotificationsCubit(this.pref) : super(<Notification>[]);
+class NotificationCubit extends Cubit<NotificationState> {
+  final PocketBase _pocketBase;
 
-  ///gets notifications and updates the state as well as the ui
-  Future fetchNotifications() async {
-    pref = await SharedPreferences.getInstance();
-    List<Notification> notifications = [];
+  NotificationCubit(this._pocketBase) : super(NotificationInitial());
 
-    final data = await getNotifications(pref.getString('access')!);
-    // //* check if notifications is empty
-    if (data.isEmpty) return;
-
-    for (var item in data) {
-      final n = Notification.fromMap(item as Map<String, dynamic>);
-      notifications.add(n);
+  Future<void> fetchNotifications() async {
+    try {
+      emit(NotificationLoading());
+      final records = await _pocketBase.collection('notifications').getList();
+      emit(NotificationLoaded(records.items));
+    } catch (e) {
+      emit(NotificationError(e.toString()));
     }
-    emit([...notifications]);
   }
 
-  void readAll() async {
-    await readAllNotifications(pref.getString('access')!);
-    await fetchNotifications();
+  Future<void> markAsRead(String id) async {
+    try {
+      await _pocketBase
+          .collection('notifications')
+          .update(id, body: {'read': true});
+      final updatedNotification =
+          await _pocketBase.collection('notifications').getOne(id);
+      emit(NotificationUpdated(updatedNotification));
+    } catch (e) {
+      emit(NotificationError(e.toString()));
+    }
   }
 
-  void deleteAll() async {
-    emit([]);
-    await deleteAllNotifications(pref.getString('access')!);
-    // await fetchNotifications();
+  Future realtimeConnection() async {
+    final userId = _pocketBase.authStore.model.id;
+    try {
+      final stream =
+          await _pocketBase.collection('notifications').subscribe('*', (e) {
+        print(e.record);
+      }, filter: 'user = $userId');
+      stream.call();
+      print('subscribed');
+    } catch (e) {
+      print('realtime error $e');
+      emit(NotificationError(e.toString()));
+    }
   }
 }
