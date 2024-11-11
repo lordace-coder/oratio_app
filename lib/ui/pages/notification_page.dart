@@ -1,78 +1,106 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
+import 'package:intl/intl.dart';
+import 'package:lottie/lottie.dart';
+import 'package:oratio_app/bloc/notifications_cubit/notifications_cubit.dart';
+import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/church_widgets.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 class NotificationPage extends StatelessWidget {
   const NotificationPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // load notifications if its not loaded
+    final notificationState = context.read<NotificationCubit>().state;
+    if (notificationState is! NotificationLoaded) {
+      context.read<NotificationCubit>().fetchNotifications();
+    }
     return Scaffold(
-      backgroundColor: AppColors.gray,
-      appBar: createAppBar(context,
-          actions: [
-            PopupMenuButton(itemBuilder: (context) {
-              return [
-                const PopupMenuItem(
-                  child: Row(
-                    children: [
-                      Icon(
-                        FontAwesomeIcons.trash,
-                        color: Colors.black54,
-                      ),
-                      Gap(7),
-                      Text(
-                        'Delete All',
-                        style: TextStyle(
+        backgroundColor: AppColors.gray,
+        appBar: createAppBar(context,
+            actions: [
+              PopupMenuButton(itemBuilder: (context) {
+                return [
+                  const PopupMenuItem(
+                    child: Row(
+                      children: [
+                        Icon(
+                          FontAwesomeIcons.trash,
                           color: Colors.black54,
                         ),
+                        Gap(7),
+                        Text(
+                          'Delete All',
+                          style: TextStyle(
+                            color: Colors.black54,
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                ];
+              })
+            ],
+            label: 'Notifications'),
+        body: BlocConsumer<NotificationCubit, NotificationState>(
+          listener: (context, state) {},
+          builder: (context, state) {
+            if (state is NotificationLoaded) {
+              if (state.notifications.isEmpty) {
+                return Container(
+                  width: double.infinity,
+                  height: MediaQuery.of(context).size.height,
+                  color: Colors.white,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Lottie.asset('assets/lottie/bell.json', height: 200),
+                      const Text(
+                        'No Notifications Yet',
+                        style: TextStyle(color: Colors.black45, fontSize: 18),
                       )
                     ],
                   ),
-                ),
-              ];
-            })
-          ],
-          label: 'Notifications'),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10.0),
-        child: ListView(children: const [
-          Gap(20),
-          Text(
-            'Recent',
-            style: TextStyle(
-              color: Colors.black45,
-            ),
-          ),
-          Gap(10),
-          NotificationItem(),
-          NotificationItem(),
-          NotificationItem(),
-          NotificationItem(),
-          NotificationItem(),
-          NotificationItem(),
-          NotificationItem(),
-          NotificationItem(),
-          NotificationItem(),
-          NotificationItem(),
-          NotificationItem(),
-          NotificationItem(),
-        ]),
-      ),
-    );
+                );
+              } else {
+                // there are notifications
+                return ListView.builder(
+                  padding:
+                      const EdgeInsets.only(left: 10.0, right: 10, top: 10),
+                  itemCount: state.notifications.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    return NotificationItem(data: state.notifications[index]);
+                  },
+                );
+              }
+            } else if (state is NotificationLoading) {
+              return Container(
+                child: const Text('loading'),
+              );
+            }
+            return Container(
+              child: const Text('data'),
+            );
+          },
+        ));
   }
 }
 
 class NotificationItem extends StatelessWidget {
   const NotificationItem({
     super.key,
+    required this.data,
   });
-
+  final RecordModel data;
   @override
   Widget build(BuildContext context) {
+    DateFormat format = DateFormat("yyyy-MM-dd HH:mm:ss.SSS'Z'");
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       child: Slidable(
@@ -89,7 +117,11 @@ class NotificationItem extends StatelessWidget {
           motion: const DrawerMotion(),
           children: [
             SlidableAction(
-              onPressed: (context) {},
+              onPressed: (context) async {
+                await context
+                    .read<NotificationCubit>()
+                    .deleteNotification(data.id);
+              },
               icon: Icons.delete,
               label: 'Delete',
               backgroundColor: Colors.red[400]!,
@@ -106,21 +138,32 @@ class NotificationItem extends StatelessWidget {
             color: Colors.white,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Row(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(FontAwesomeIcons.microphone),
-              Gap(20),
+              const Icon(FontAwesomeIcons.microphone),
+              const Gap(20),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(
-                      'Mass Booked Succesfully, You will be noticed for the mass schedule',
+                    // title
+                    Align(
+                      alignment: Alignment.bottomLeft,
+                      child: Text(
+                        data.getStringValue('title'),
+                      ),
+                    ),
+                    // notification
+                    Align(
+                      alignment: Alignment.bottomLeft,
+                      child: Text(
+                        data.getStringValue('notification'),
+                      ),
                     ),
                     Text(
-                      '12:12pm',
-                      style: TextStyle(
+                      formatDateTimeToHoursAgo(format.parse(data.created)),
+                      style: const TextStyle(
                         color: Colors.black45,
                         fontSize: 12,
                       ),

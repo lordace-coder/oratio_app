@@ -1,9 +1,12 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lottie/lottie.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/bloc/posts/post_cubit.dart';
 import 'package:oratio_app/bloc/posts/post_state.dart';
+import 'package:oratio_app/bloc/prayer_requests/requests_cubit.dart';
+import 'package:oratio_app/bloc/prayer_requests/requests_state.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/buttons.dart';
 import 'package:oratio_app/ui/widgets/live_streams.dart';
@@ -42,16 +45,30 @@ class _FeedsListScreenState extends State<FeedsListScreen>
     } catch (e) {}
   }
 
+  void getPrayerRequests() {
+    try {
+      final prayerRequestsState = context.read<PrayerRequestCubit>().state;
+      // if (postState is PostLoaded) {
+      //   if (postState.posts.isEmpty) {
+      //     context.read<PostCubit>().fetchPosts();
+      //   }
+      //   return;
+      // }
+      // if (postState is! PostLoaded && postState is! PostError) {
+      //   context.read<PostCubit>().fetchPosts();
+      // }
+      context.read<PrayerRequestCubit>().fetchPrayerRequests();
+      return;
+    } catch (e) {}
+  }
 
-void getPrayerRequests(){
-  try
-}
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       getPosts();
+      getPrayerRequests();
     });
   }
 
@@ -219,7 +236,9 @@ void getPrayerRequests(){
                               const Row(),
                               const Gap(20),
                               const Text(
-                                  'Join A Community to start seeing feeds'),
+                                'Join A Community to start seeing feeds',
+                                textAlign: TextAlign.center,
+                              ),
                               const Gap(20),
                               Padding(
                                 padding:
@@ -250,8 +269,9 @@ void getPrayerRequests(){
                         );
                       }
                     }
-                    return Container(
-                      child: const Text('data'),
+                    return const SizedBox(
+                      height: 300,
+                      child: Center(child: CupertinoActivityIndicator()),
                     );
                   },
                 ),
@@ -259,10 +279,55 @@ void getPrayerRequests(){
               ]),
 
               // Prayer Requests Tab
-              ListView(padding: const EdgeInsets.only(top: 8), children: const [
-                PrayerRequestCard(),
-                // if its empty
-              ]),
+              BlocConsumer<PrayerRequestCubit, PrayerRequestState>(
+                listener: (context, state) {
+                  // TODO: implement listener
+                },
+                builder: (context, state) {
+                  if (state is PrayerRequestLoaded) {
+                    return ListView.builder(
+                      itemCount: state.prayerRequests.length,
+                      padding: const EdgeInsets.only(top: 8),
+                      itemBuilder: (context, index) => PrayerRequestCard(
+                        data: state.prayerRequests[index],
+                      ),
+                    );
+                  }
+                  return SizedBox(
+                    height: 400,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Lottie.network(
+                            height: 100,
+                            'https://lottie.host/fece67a7-2389-4c66-b33c-6eb5bb658347/dK1IxI9mjB.json'),
+                        const Row(),
+                        const Gap(20),
+                        const Text(
+                          'Find friends and family to be up to date on thier prayer requests',
+                          textAlign: TextAlign.center,
+                        ),
+                        const Gap(20),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                  child: BookingButton(
+                                      label: 'Find Friends',
+                                      isEnabled: true,
+                                      onPressed: () {
+                                        context.pushNamed(
+                                            RouteNames.communitypage);
+                                      })),
+                            ],
+                          ),
+                        )
+                      ],
+                    ),
+                  );
+                },
+              )
             ],
           ),
         ),

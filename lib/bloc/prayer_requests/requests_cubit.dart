@@ -12,16 +12,23 @@ class PrayerRequestCubit extends Cubit<PrayerRequestState> {
     try {
       emit(PrayerRequestLoading());
 
-      final records = await pb.collection('prayer_requests').getFullList(
-            sort: '-created',
-          );
-
+      final records = await pb
+          .collection('prayer_requests')
+          .getFullList(sort: '-created', expand: 'user');
       final prayerRequests = records.map((record) {
-        return PrayerRequest.fromJson(record.toJson());
+        return PrayerRequest(
+            comment: record.getListValue('comment'),
+            id: record.id,
+            praying: record.getListValue('praying'),
+            request: record.getStringValue('request'),
+            urgent: record.getBoolValue('urgent'),
+            user: record.expand['user']!.first,
+            created: record.created);
       }).toList();
 
       emit(PrayerRequestLoaded(prayerRequests));
     } catch (e) {
+      print(e);
       emit(PrayerRequestError(e.toString()));
     }
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/bloc/notifications_cubit/notifications_cubit.dart';
 import 'package:oratio_app/bloc/posts/post_cubit.dart';
@@ -15,7 +16,8 @@ void main() async {
   final pref = await SharedPreferences.getInstance();
   final pbCubit = PocketBaseServiceCubit(pref);
   final notificationCubit = NotificationCubit(pbCubit.state.pb);
-  await notificationCubit.realtimeConnection();
+  await notificationCubit.fetchNotifications();
+
   runApp(
     MultiBlocProvider(
       providers: [
@@ -42,20 +44,8 @@ void main() async {
   );
 }
 
-class MainApp extends StatefulWidget {
+class MainApp extends StatelessWidget {
   const MainApp({super.key});
-
-  @override
-  State<MainApp> createState() => _MainAppState();
-}
-
-class _MainAppState extends State<MainApp> {
-  @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    // Wait for the widget to be fully initialized
-  }
 
   @override
   Widget build(BuildContext context) {

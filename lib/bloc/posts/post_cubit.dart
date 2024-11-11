@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oratio_app/bloc/posts/post_state.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -36,11 +37,9 @@ class PostCubit extends Cubit<PostState> {
   }
 
   Future<void> updatePost(String id, Map<String, dynamic> data) async {
-    emit(PostLoading());
-
     try {
       await _pocketBase.collection('posts').update(id, body: data);
-      await fetchPosts(); // Refresh the post list
+      // Refresh the post list
     } catch (e) {
       emit(PostError(e.toString()));
     }
@@ -55,5 +54,19 @@ class PostCubit extends Cubit<PostState> {
     } catch (e) {
       emit(PostError(e.toString()));
     }
+  }
+
+  Future<void> likePost(
+    String id,
+  ) async {
+    await updatePost(id, {
+      'likes+': [_pocketBase.authStore.model.id]
+    });
+  }
+
+  Future<void> dislikePost(String id) async {
+    await updatePost(id, {
+      'likes-': [_pocketBase.authStore.model.id]
+    });
   }
 }

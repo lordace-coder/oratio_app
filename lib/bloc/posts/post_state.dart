@@ -1,4 +1,5 @@
 import 'package:intl/intl.dart';
+import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/helpers/functions.dart';
 import 'package:pocketbase/pocketbase.dart';
 // ignore: depend_on_referenced_packages
@@ -67,7 +68,7 @@ class PostError extends PostState {
   final String error;
 
   PostError(this.error) {
-    print('error occured loading posts $error');
+    NotificationService.showError('An error occured $error');
   }
 
   @override

@@ -1,4 +1,3 @@
-
 import 'package:bloc/bloc.dart';
 import 'package:pocketbase/pocketbase.dart';
 part 'notifications_state.dart';
@@ -13,6 +12,18 @@ class NotificationCubit extends Cubit<NotificationState> {
       emit(NotificationLoading());
       final records = await _pocketBase.collection('notifications').getList();
       emit(NotificationLoaded(records.items));
+    } catch (e) {
+      emit(NotificationError(e.toString()));
+    }
+  }
+
+  Future<void> deleteNotification(String id) async {
+    try {
+      await _pocketBase.collection('notifications').delete(id);
+      final newState = (state as NotificationLoaded)
+          .notifications
+          .where((item) => item.id != id);
+      emit(NotificationLoaded(newState.toList()));
     } catch (e) {
       emit(NotificationError(e.toString()));
     }

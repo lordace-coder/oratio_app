@@ -1,28 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
+import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
+import 'package:oratio_app/bloc/posts/post_cubit.dart';
 import 'package:oratio_app/bloc/posts/post_state.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+
+import 'package:oratio_app/bloc/prayer_requests/requests_state.dart';
+import 'package:oratio_app/helpers/functions.dart';
+import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/posts/bottom_scaffold.dart';
 import 'package:pocketbase/pocketbase.dart';
 
-class CommunityPostCard extends StatelessWidget {
+class CommunityPostCard extends StatefulWidget {
   const CommunityPostCard({super.key, required this.post});
   final Post post;
 
-  Future uploadComment(BuildContext context, String comment) async {
-    try {
-      final pb = context.read<PocketBaseServiceCubit>().state.pb;
-      await pb.collection('comments').create(body: {
-        'comment': comment,
-        'user': (pb.authStore.model as RecordModel).id
-      });
-    } catch (e) {}
-  }
+  @override
+  State<CommunityPostCard> createState() => _CommunityPostCardState();
+}
+
+class _CommunityPostCardState extends State<CommunityPostCard> {
+  bool? hasLiked;
 
   @override
   Widget build(BuildContext context) {
     final user = context.read<PocketBaseServiceCubit>().state.pb.authStore.model
         as RecordModel;
+
+    hasLiked ??= widget.post.likes.contains(user.id);
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       elevation: 1,
@@ -36,61 +43,67 @@ class CommunityPostCard extends StatelessWidget {
             leading: CircleAvatar(
               radius: 24,
               backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-              child: Text(
-                'SC',
-                style: TextStyle(
-                  color: Theme.of(context).primaryColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              child: Icon(FontAwesomeIcons.church,
+                  color: Theme.of(context).primaryColor),
             ),
             title: Text(
-              post.community!,
+              widget.post.community!,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            subtitle: Text(post.date),
-            trailing: IconButton(
-              icon: const Icon(Icons.more_vert),
-              onPressed: () {},
-            ),
+            subtitle: Text(widget.post.date),
           ),
           // Post Content
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
             child: Text(
-              post.post,
+              widget.post.post,
               style: Theme.of(context).textTheme.bodyLarge,
             ),
           ),
           // Post Image
-          if (post.image!.isNotEmpty)
+          if (widget.post.image!.isNotEmpty)
             Container(
               margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 9),
               height: 200,
               decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
                   color: Theme.of(context).primaryColor.withOpacity(0.1),
-                  image: DecorationImage(image: NetworkImage(post.image!))),
+                  image:
+                      DecorationImage(image: NetworkImage(widget.post.image!))),
             ),
           // Post Actions
+
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
                 _PostAction(
-                  icon: !post.likes.contains(user.id)
-                      ? Icons.favorite_border
-                      : Icons.favorite,
-                  label: post.likes.length.toString(),
-                  onTap: () {},
+                  icon: !hasLiked! ? Icons.favorite_border : Icons.favorite,
+                  label: widget.post.likes.length.toString(),
+                  onTap: () async {
+                    if (hasLiked!) {
+                      // unlike the post
+                      context.read<PostCubit>().dislikePost(
+                            widget.post.id,
+                          );
+                      widget.post.likes.remove(user.id);
+                    } else {
+                      context.read<PostCubit>().likePost(
+                            widget.post.id,
+                          );
+                      widget.post.likes.add(user.id);
+                    }
+                    setState(() {
+                      hasLiked = !hasLiked!;
+                    });
+                  },
                 ),
                 const SizedBox(width: 24),
                 _PostAction(
                   icon: Icons.comment_outlined,
-                  label: post.commentCount.length.toString(),
+                  label: widget.post.commentCount.length.toString(),
                   onTap: () {
-                    print(post.commentCount);
-                    showCommentSheet(context, post);
+                    showCommentSheet(context, widget.post);
                   },
                 ),
                 const SizedBox(width: 24),
@@ -108,11 +121,79 @@ class CommunityPostCard extends StatelessWidget {
   }
 }
 
-class PrayerRequestCard extends StatelessWidget {
-  const PrayerRequestCard({super.key});
+class PrayerRequestCard extends StatefulWidget {
+  const PrayerRequestCard({super.key, required this.data});
+
+  final PrayerRequest data;
+
+  @override
+  State<PrayerRequestCard> createState() => _PrayerRequestCardState();
+}
+
+class _PrayerRequestCardState extends State<PrayerRequestCard> {
+  bool? praying;
+
+  DateFormat format = DateFormat("yyyy-MM-dd HH:mm:ss.SSS'Z'");
+
+  PrayerRequest? _prayerRequest;
+
+  Future addPraying(BuildContext context) async {
+    final pb = context.read<PocketBaseServiceCubit>().state.pb;
+    final bool praying = widget.data.praying.contains(pb.authStore.model.id);
+    try {
+      if (praying) {
+        await pb.collection('prayer_requests').update(widget.data.id, body: {
+          'praying-': [pb.authStore.model.id]
+        });
+        setState(() {
+          _prayerRequest = widget.data;
+          _prayerRequest?.praying.remove(pb.authStore.model.id);
+        });
+        NotificationService.showWarning('You removed your prayer',
+            duration: Durations.extralong4);
+      } else {
+        await pb.collection('prayer_requests').update(widget.data.id, body: {
+          'praying+': [pb.authStore.model.id]
+        });
+        setState(() {
+          _prayerRequest = widget.data;
+          _prayerRequest?.praying.add(pb.authStore.model.id);
+        });
+        NotificationService.showSuccess('Prayer said succesfully',
+            duration: Durations.extralong4);
+      }
+
+      final record = await pb
+          .collection('prayer_requests')
+          .getOne(widget.data.id, expand: 'user');
+    } catch (e) {
+      // display error on ui
+      NotificationService.showError('error occured while sending prayer');
+    }
+  }
+
+  Future uploadComment(BuildContext context, String comment) async {
+    try {
+      final pb = context.read<PocketBaseServiceCubit>().state.pb;
+      final newComment = await pb.collection('comments').create(body: {
+        'user': (pb.authStore.model as RecordModel).id,
+        'comment': comment,
+      });
+
+      pb.collection('prayer_requests').update(widget.data.id, body: {
+        'comment+': [newComment.id]
+      });
+    } catch (e) {
+      // display error on ui
+      print('error occured in getComments $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    praying ??= widget.data.praying.contains(
+        context.read<PocketBaseServiceCubit>().state.pb.authStore.model.id);
+    _prayerRequest ??= widget.data;
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       elevation: 0,
@@ -125,34 +206,38 @@ class PrayerRequestCard extends StatelessWidget {
             contentPadding: const EdgeInsets.all(10),
             leading: CircleAvatar(
               radius: 24,
-              backgroundColor: Colors.orange.withOpacity(0.1),
-              child: const Text(
-                'JD',
+              backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+              child: Text(
+                '${_prayerRequest!.user.getStringValue('first_name')[0]}${_prayerRequest!.user.getStringValue('last_name')[0]}'
+                    .toUpperCase(),
                 style: TextStyle(
-                  color: Colors.orange,
+                  color: Theme.of(context).primaryColor,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-            title: const Text(
-              'John Doe',
-              style: TextStyle(fontWeight: FontWeight.bold),
+            title: Text(
+              _prayerRequest!.user.getStringValue('username'),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Row(
               children: [
                 Icon(Icons.access_time, size: 14, color: Colors.grey[600]),
                 const SizedBox(width: 4),
-                Text('1 hour ago', style: TextStyle(color: Colors.grey[600])),
+                Text(
+                    formatDateTimeToHoursAgo(
+                        format.parse(_prayerRequest!.created)),
+                    style: TextStyle(color: Colors.grey[600])),
                 const SizedBox(width: 8),
                 Icon(Icons.public, size: 14, color: Colors.grey[600]),
               ],
             ),
-            trailing: PopupMenuButton(
-              itemBuilder: (context) => [
-                const PopupMenuItem(child: Text('Report')),
-                const PopupMenuItem(child: Text('Share')),
-              ],
-            ),
+            // trailing: PopupMenuButton(
+            //   itemBuilder: (context) => [
+            //     const PopupMenuItem(child: Text('Report')),
+            //     const PopupMenuItem(child: Text('Share')),
+            //   ],
+            // ),
           ),
           // Prayer Request Content
           Container(
@@ -160,25 +245,11 @@ class PrayerRequestCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: const Text(
-                    'Urgent Prayer Request',
-                    style: TextStyle(
-                      color: Colors.orange,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+                urgentRequest(widget.data.urgent),
                 const SizedBox(height: 12),
-                const Text(
-                  'Please pray for my mother who is undergoing surgery tomorrow morning. 🙏',
-                  style: TextStyle(fontSize: 16),
+                Text(
+                  widget.data.request,
+                  style: const TextStyle(fontSize: 16),
                 ),
               ],
             ),
@@ -189,20 +260,75 @@ class PrayerRequestCard extends StatelessWidget {
             child: Row(
               children: [
                 _PrayerAction(
-                  icon: Icons.favorite_border,
-                  label: 'Praying (42)',
-                  onTap: () {},
+                  icon: !_prayerRequest!.praying.contains(context
+                          .read<PocketBaseServiceCubit>()
+                          .state
+                          .pb
+                          .authStore
+                          .model
+                          .id)
+                      ? Icons.favorite_border
+                      : Icons.favorite,
+                  label: 'Praying ${_prayerRequest!.praying.length}',
+                  onTap: () {
+                    addPraying(context);
+                  },
                 ),
                 const SizedBox(width: 16),
                 _PrayerAction(
                   icon: Icons.comment_outlined,
                   label: 'Comment',
-                  onTap: () {},
+                  onTap: () async {
+                    final result = await showPrayerCommentOptions(context);
+                    if (result != null) {
+                      if (result == 'custom') {
+                        // Handle custom prayer comment
+                        showPrayerCommentSheet(context, widget.data);
+                      } else {
+                        // Handle predefined prayer comment
+                        // result will contain the prayer type string
+                        uploadComment(context, result);
+                      }
+                    }
+                  },
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Container urgentRequest(bool urgent) {
+    if (!urgent) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.green.withOpacity(.1),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Text(
+          'Just talking to God',
+          style: TextStyle(
+            color: AppColors.green,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.orange.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: const Text(
+        'Urgent Prayer Request',
+        style: TextStyle(
+          color: Colors.orange,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }

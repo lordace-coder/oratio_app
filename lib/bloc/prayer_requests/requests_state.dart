@@ -1,12 +1,19 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 // prayer_request.dart
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
+import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:pocketbase/pocketbase.dart';
+
 class PrayerRequest {
   final String id;
   final String request;
-  final Map<String, dynamic> user;
+  final RecordModel user;
   final List<String> comment;
   final List<String> praying;
   final bool urgent;
-
+  final String created;
   PrayerRequest({
     required this.id,
     required this.request,
@@ -14,12 +21,14 @@ class PrayerRequest {
     required this.comment,
     required this.praying,
     required this.urgent,
+    required this.created,
   });
 
   factory PrayerRequest.fromJson(Map<String, dynamic> json) {
     return PrayerRequest(
       id: json['id'] ?? '',
       request: json['request'] ?? '',
+      created: json['request'] ?? '',
       user: json['user'] ?? {},
       comment: List<String>.from(json['comment'] ?? []),
       praying: List<String>.from(json['praying'] ?? []),
@@ -31,6 +40,7 @@ class PrayerRequest {
     return {
       'id': id,
       'request': request,
+      'created': created,
       'user': user,
       'comment': comment,
       'praying': praying,
@@ -41,10 +51,11 @@ class PrayerRequest {
   PrayerRequest copyWith({
     String? id,
     String? request,
-    Map<String, dynamic>? user,
+    RecordModel? user,
     List<String>? comment,
     List<String>? praying,
     bool? urgent,
+    String? created,
   }) {
     return PrayerRequest(
       id: id ?? this.id,
@@ -53,7 +64,49 @@ class PrayerRequest {
       comment: comment ?? this.comment,
       praying: praying ?? this.praying,
       urgent: urgent ?? this.urgent,
+      created: created ?? this.created,
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
+      'id': id,
+      'request': request,
+      'user': user.data,
+      'comment': comment,
+      'praying': praying,
+      'urgent': urgent,
+      'created': created,
+    };
+  }
+
+  @override
+  String toString() {
+    return 'PrayerRequest(id: $id, request: $request, user: $user, comment: $comment, praying: $praying, urgent: $urgent, created: $created)';
+  }
+
+  @override
+  bool operator ==(covariant PrayerRequest other) {
+    if (identical(this, other)) return true;
+
+    return other.id == id &&
+        other.request == request &&
+        other.user == user &&
+        listEquals(other.comment, comment) &&
+        listEquals(other.praying, praying) &&
+        other.urgent == urgent &&
+        other.created == created;
+  }
+
+  @override
+  int get hashCode {
+    return id.hashCode ^
+        request.hashCode ^
+        user.hashCode ^
+        comment.hashCode ^
+        praying.hashCode ^
+        urgent.hashCode ^
+        created.hashCode;
   }
 }
 
@@ -75,5 +128,7 @@ class PrayerRequestLoaded extends PrayerRequestState {
 class PrayerRequestError extends PrayerRequestState {
   final String message;
 
-  PrayerRequestError(this.message);
+  PrayerRequestError(this.message){
+      NotificationService.showError('An error occured $message');
+  }
 }

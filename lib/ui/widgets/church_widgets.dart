@@ -227,8 +227,7 @@ class MassTimeButton extends StatelessWidget {
   }
 }
 
-AppBar createAppBar(
-  BuildContext context,
+AppBar createAppBar(BuildContext context,
     {required String label,
     List<Widget>? actions,
     Color? foregroundColor,
@@ -245,3 +244,127 @@ AppBar createAppBar(
     actions: actions,
   );
 }
+
+void showGiveOptions(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    ),
+    builder: (context) => Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Give',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(FontAwesomeIcons.xmark),
+              ),
+            ],
+          ),
+          const Gap(24),
+          buildGiveOption(
+            context,
+            icon: FontAwesomeIcons.handHoldingDollar,
+            label: 'Give Offering',
+            description: 'Support your parish',
+            onTap: () {
+              Navigator.pop(context);
+              // Handle offering
+            },
+          ),
+          const Gap(16),
+          buildGiveOption(
+            context,
+            icon: FontAwesomeIcons.coins,
+            label: 'Pay Tithes',
+            description: '10% of your income',
+            onTap: () {
+              Navigator.pop(context);
+              // Handle tithes
+            },
+          ),
+          const Gap(16),
+          buildGiveOption(
+            context,
+            icon: FontAwesomeIcons.seedling,
+            label: 'Special Seed',
+            description: 'Give for a specific cause',
+            onTap: () {
+              Navigator.pop(context);
+              // Handle special seed
+            },
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget buildGiveOption(
+  BuildContext context, {
+  required IconData icon,
+  required String label,
+  required String description,
+  required VoidCallback onTap,
+}) {
+  return InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(16),
+    child: Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon),
+          ),
+          const Gap(16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                Text(
+                  description,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.grey.shade600,
+                      ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            FontAwesomeIcons.chevronRight,
+            size: 16,
+            color: Colors.grey.shade400,
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+
