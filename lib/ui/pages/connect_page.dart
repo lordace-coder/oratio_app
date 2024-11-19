@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
+import 'package:oratio_app/networkProvider/users.dart';
+import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 class ConnectPage extends StatefulWidget {
   const ConnectPage({super.key});
@@ -18,80 +23,9 @@ class _ConnectPageState extends State<ConnectPage>
   final ScrollController _scrollController = ScrollController();
   String _selectedFilter = 'All';
   bool _isScrolled = false;
-
-  // Sample user data (same as before)
-  final List<Map<String, dynamic>> _users = [
-    {
-      'name': 'Sarah Johnson',
-      'username': '@sarahj',
-      'followers': '1.2K',
-      'isFollowing': false,
-      'image': 'assets/avatar1.png'
-    },
-    {
-      'name': 'Mike Chen',
-      'username': '@mikechen',
-      'followers': '892',
-      'isFollowing': true,
-      'image': 'assets/avatar2.png'
-    },
-    {
-      'name': 'Sarah Johnson',
-      'username': '@sarahj',
-      'followers': '1.2K',
-      'isFollowing': false,
-      'image': 'assets/avatar1.png'
-    },
-    {
-      'name': 'Mike Chen',
-      'username': '@mikechen',
-      'followers': '892',
-      'isFollowing': true,
-      'image': 'assets/avatar2.png'
-    },
-    {
-      'name': 'Sarah Johnson',
-      'username': '@sarahj',
-      'followers': '1.2K',
-      'isFollowing': false,
-      'image': 'assets/avatar1.png'
-    },
-    {
-      'name': 'Mike Chen',
-      'username': '@mikechen',
-      'followers': '892',
-      'isFollowing': true,
-      'image': 'assets/avatar2.png'
-    },
-    {
-      'name': 'Sarah Johnson',
-      'username': '@sarahj',
-      'followers': '1.2K',
-      'isFollowing': false,
-      'image': 'assets/avatar1.png'
-    },
-    {
-      'name': 'Mike Chen',
-      'username': '@mikechen',
-      'followers': '892',
-      'isFollowing': true,
-      'image': 'assets/avatar2.png'
-    },
-    {
-      'name': 'Sarah Johnson',
-      'username': '@sarahj',
-      'followers': '1.2K',
-      'isFollowing': false,
-      'image': 'assets/avatar1.png'
-    },
-    {
-      'name': 'Mike Chen',
-      'username': '@mikechen',
-      'followers': '892',
-      'isFollowing': true,
-      'image': 'assets/avatar2.png'
-    },
-  ];
+  List<RecordModel>? _users;
+  int page = 1;
+  String? search;
 
   @override
   void initState() {
@@ -107,6 +41,9 @@ class _ConnectPageState extends State<ConnectPage>
 
     _scrollController.addListener(_onScroll);
     _controller.forward();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      getUsers();
+    });
   }
 
   void _onScroll() {
@@ -114,6 +51,33 @@ class _ConnectPageState extends State<ConnectPage>
       setState(() => _isScrolled = true);
     } else if (_scrollController.offset <= 0 && _isScrolled) {
       setState(() => _isScrolled = false);
+    }
+  }
+
+  Future getUsers({String? filter}) async {
+    if (filter != null) setState(() => _selectedFilter = filter);
+
+    final q = search != null
+        ? '(username ~ "$search" || email ~ "$search" || first_name ~ "$search" || last_name ~ "$search") && priest = ${_selectedFilter == 'Priest'}'
+        : 'priest = ${filter == 'Priest'}';
+    try {
+      final newData = await listUsers(context, page: page, filter: q);
+      _users = [...newData];
+      setState(() {});
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  void handleFollowUser(String id) {
+    try {
+      final user = _users!.firstWhere((test) => test.id == id);
+      setState(() {
+        user.data['following'] = true;
+      });
+      followUser(context, targetUserId: id);
+    } catch (e) {
+      // show eror here
     }
   }
 
@@ -284,6 +248,10 @@ class _ConnectPageState extends State<ConnectPage>
                         ),
                         child: TextField(
                           controller: _searchController,
+                          onChanged: (query) {
+                            search = query;
+                            getUsers();
+                          },
                           decoration: InputDecoration(
                             hintText: 'Search users...',
                             prefixIcon:
@@ -321,7 +289,7 @@ class _ConnectPageState extends State<ConnectPage>
                           label: Text(filter),
                           selected: _selectedFilter == filter,
                           onSelected: (selected) {
-                            setState(() => _selectedFilter = filter);
+                            getUsers(filter: filter);
                           },
                           selectedColor: Theme.of(context).primaryColor,
                           labelStyle: TextStyle(
@@ -340,38 +308,47 @@ class _ConnectPageState extends State<ConnectPage>
             ),
 
             // User List (same as before)
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  final user = _users[index];
-                  return TweenAnimationBuilder(
-                    duration: Duration(milliseconds: 400 + (index * 100)),
-                    tween: Tween<double>(begin: 0, end: 1),
-                    builder: (context, double value, child) {
-                      return Transform.translate(
-                        offset: Offset(0, 50 * (1 - value)),
-                        child: Opacity(
-                          opacity: value,
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: UserCard(
-                      name: user['name'],
-                      username: user['username'],
-                      followers: user['followers'],
-                      isFollowing: user['isFollowing'],
-                      onFollowTap: () {
-                        setState(() {
-                          user['isFollowing'] = !user['isFollowing'];
-                        });
+            if (_users != null)
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final user = _users![index];
+                    return TweenAnimationBuilder(
+                      duration: Duration(milliseconds: 400 + (index * 100)),
+                      tween: Tween<double>(begin: 0, end: 1),
+                      builder: (context, double value, child) {
+                        return Transform.translate(
+                          offset: Offset(0, 50 * (1 - value)),
+                          child: Opacity(
+                            opacity: value,
+                            child: child,
+                          ),
+                        );
                       },
-                    ),
-                  );
-                },
-                childCount: _users.length,
+                      child: UserCard(
+                        id: user.id,
+                        name: getFullName(user),
+                        username: user.getStringValue('username'),
+                        followers:
+                            user.getListValue('followers').length.toString(),
+                        isFollowing: isFollowing(
+                            context
+                                .read<PocketBaseServiceCubit>()
+                                .state
+                                .pb
+                                .authStore
+                                .model
+                                .id,
+                            user.getListValue('followers')),
+                        onFollowTap: () {
+                          handleFollowUser(user.id);
+                        },
+                      ),
+                    );
+                  },
+                  childCount: _users!.length,
+                ),
               ),
-            ),
           ],
         ),
       ),
@@ -445,7 +422,7 @@ class UserCard extends StatelessWidget {
   final String followers;
   final bool isFollowing;
   final VoidCallback onFollowTap;
-
+  final String id;
   const UserCard({
     super.key,
     required this.name,
@@ -453,67 +430,75 @@ class UserCard extends StatelessWidget {
     required this.followers,
     required this.isFollowing,
     required this.onFollowTap,
+    required this.id,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16),
-        leading: CircleAvatar(
-          radius: 28,
-          backgroundColor: Colors.grey[200],
-          child: Text(
-            name[0],
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        title: Text(
-          name,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              username,
-              style: TextStyle(color: Colors.grey[600]),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '$followers followers',
-              style: TextStyle(color: Colors.grey[600]),
+    return InkWell(
+      onTap: () {
+        context.pushNamed(RouteNames.profilepagevisitor,
+            pathParameters: {'id': id});
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
-        trailing: ElevatedButton(
-          onPressed: onFollowTap,
-          style: ElevatedButton.styleFrom(
-            backgroundColor:
-                isFollowing ? Colors.grey[200] : Theme.of(context).primaryColor,
-            foregroundColor: isFollowing ? Colors.black87 : Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+        child: ListTile(
+          contentPadding: const EdgeInsets.all(16),
+          leading: CircleAvatar(
+            radius: 28,
+            backgroundColor: Colors.grey[200],
+            child: Text(
+              name[0],
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
-          child: Text(isFollowing ? 'Following' : 'Follow'),
+          title: Text(
+            name,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                username,
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '$followers followers',
+                style: TextStyle(color: Colors.grey[600]),
+              ),
+            ],
+          ),
+          trailing: ElevatedButton(
+            onPressed: onFollowTap,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isFollowing
+                  ? Colors.grey[200]
+                  : Theme.of(context).primaryColor,
+              foregroundColor: isFollowing ? Colors.black87 : Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            child: Text(isFollowing ? 'Following' : 'Follow'),
+          ),
         ),
       ),
     );

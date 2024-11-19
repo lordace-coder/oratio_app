@@ -351,7 +351,6 @@ class _NotificationWidgetState extends State<_NotificationWidget>
 // [Previous code remains the same up until the _getTheme method]
 
   ThemeData _getTheme(NotificationType type) {
-    final theme = Theme.of(context);
     return switch (type) {
       NotificationType.success => ThemeData(
           primaryColor: Colors.green,

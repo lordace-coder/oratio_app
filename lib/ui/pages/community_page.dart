@@ -172,31 +172,41 @@ class _CommunityPageState extends State<CommunityPage> {
                       ),
 
                       // Featured Communities Section
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Featured Communities',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const Gap(16),
-                            SizedBox(
-                              height: 160,
-                              child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: 5,
-                                itemBuilder: (context, index) =>
-                                    buildFeaturedCard(),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      FutureBuilder<List<PrayerCommunity>>(
+                          future: getFeaturedCommunities(context),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                    ConnectionState.done &&
+                                snapshot.data!.isNotEmpty) {
+                              return Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Featured Communities',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const Gap(16),
+                                    SizedBox(
+                                      height: 160,
+                                      child: ListView.builder(
+                                        scrollDirection: Axis.horizontal,
+                                        itemCount: snapshot.data?.length,
+                                        itemBuilder: (context, index) =>
+                                            buildFeaturedCard(),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            } else {
+                              return Container();
+                            }
+                          }),
                       Column(
                         children: [
                           ...snapshot.data

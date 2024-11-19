@@ -1,13 +1,17 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/helpers/functions.dart';
+import 'package:oratio_app/networkProvider/requests.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/church_widgets.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,10 +23,13 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   bool showBalance = false;
   final _pageController = PageController();
-  bool isPriest = true;
-
+  String bal = '₦0.00';
   @override
   Widget build(BuildContext context) {
+    final user = context.read<PocketBaseServiceCubit>().state.pb.authStore.model
+        as RecordModel;
+    bool isPriest = user.getBoolValue('priest');
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -39,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: RefreshIndicator.adaptive(
             color: Theme.of(context).primaryColor,
             onRefresh: () async {
-              await Future.delayed(Durations.extralong4);
+              setState(() {});
             },
             child: CustomScrollView(
               slivers: [
@@ -86,16 +93,34 @@ class _HomeScreenState extends State<HomeScreen> {
                               ],
                             ),
                             const Gap(12),
-                            Text(
-                              showBalance ? '₦ 5,000.00' : '• • • • • •',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .headlineMedium
-                                  ?.copyWith(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                            ),
+                            FutureBuilder<String>(
+                                initialData: bal,
+                                future: getUserBalance(
+                                  user.id,
+                                  context
+                                      .read<PocketBaseServiceCubit>()
+                                      .state
+                                      .pb,
+                                ),
+                                builder: (context, snapshot) {
+                                  if (snapshot.hasData) {
+                                    bal = snapshot.data!;
+                                    return Text(
+                                      showBalance
+                                          ? '${snapshot.data}'
+                                          : '• • • • • •',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headlineMedium
+                                          ?.copyWith(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    );
+                                  } else {
+                                    return Container();
+                                  }
+                                }),
                             const Gap(24),
                             Row(
                               children: [
@@ -103,7 +128,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                   child: _buildActionButton(
                                     icon: FontAwesomeIcons.plus,
                                     label: 'Add Funds',
-                                    onTap: () => collectPayment(context),
+                                    onTap: () async {
+                                      await collectPayment(context);
+                                      setState(() {});
+                                    },
                                   ),
                                 ),
                                 const Gap(12),

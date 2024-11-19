@@ -4,186 +4,214 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
+import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/helpers/functions.dart';
+import 'package:oratio_app/networkProvider/users.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class ProfileVisitorPage extends StatelessWidget {
-  const ProfileVisitorPage({super.key});
+  const ProfileVisitorPage({super.key, required this.id});
+  final String id;
 
   @override
   Widget build(BuildContext context) {
-    final user = (context
-        .read<PocketBaseServiceCubit>()
-        .state
-        .pb
-        .authStore
-        .model as RecordModel);
+    context.read<ProfileDataCubit>().visitProfile(id);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
       body: RefreshIndicator.adaptive(
-        onRefresh: () async {},
-        child: CustomScrollView(
-          slivers: [
-            // Custom App Bar with Gradient and Profile Info
-            SliverToBoxAdapter(
-              child: Container(
-                height: 300,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      const Color(0xFF6C63FF),
-                      AppColors.primary,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                ),
-                child: SafeArea(
-                  child: Stack(
-                    children: [
-                      // Back Button
-                      Positioned(
-                        top: 16,
-                        left: 16,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: IconButton(
-                            onPressed: () => context.pop(),
-                            icon: const Icon(
-                              FontAwesomeIcons.chevronLeft,
-                              color: Colors.white,
-                              size: 18,
-                            ),
-                          ),
-                        ),
+        onRefresh: () async {
+          await context.read<ProfileDataCubit>().visitProfile(id);
+        },
+        child: BlocConsumer<ProfileDataCubit, ProfileDataState>(
+          listener: (context, state) {},
+          builder: (context, state) {
+            if (state is ProfileDataLoading || state is ProfileDataInitial) {
+              return Container(
+                child: const Text('loading'),
+              );
+            }
+            if (state is ProfileDataLoaded) {
+              final data = state.guestProfile;
+              return CustomScrollView(slivers: [
+                // Custom App Bar with Gradient and Profile Info
+                SliverToBoxAdapter(
+                  child: Container(
+                    height: 300,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFF6C63FF),
+                          AppColors.primary,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-                      // Profile Info
-                      Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(4),
+                    ),
+                    child: SafeArea(
+                      child: Stack(
+                        children: [
+                          // Back Button
+                          Positioned(
+                            top: 16,
+                            left: 16,
+                            child: Container(
                               decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border:
-                                    Border.all(color: Colors.white, width: 2),
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              // display image here
-                              child: const CircleAvatar(
-                                radius: 50,
-                                backgroundColor: Color(0xFF8B80FF),
-                                child: Icon(
-                                  FontAwesomeIcons.userAstronaut,
+                              child: IconButton(
+                                onPressed: () => context.pop(),
+                                icon: const Icon(
+                                  FontAwesomeIcons.chevronLeft,
                                   color: Colors.white,
-                                  size: 40,
+                                  size: 18,
                                 ),
                               ),
                             ),
-                            const Gap(16),
-                            Text(
-                              "${user.getStringValue('first_name')} ${user.getStringValue('last_name')}",
-                              style: const TextStyle(
-                                fontSize: 24,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                            const Gap(24),
-                            Row(
+                          ),
+                          // Profile Info
+                          Center(
+                            child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                _buildActionButton("Edit Profile",
-                                    FontAwesomeIcons.penToSquare, () {}),
+                                Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                        color: Colors.white, width: 2),
+                                  ),
+                                  // display image here
+                                  child: const CircleAvatar(
+                                    radius: 50,
+                                    backgroundColor: Color(0xFF8B80FF),
+                                    child: Icon(
+                                      FontAwesomeIcons.userAstronaut,
+                                      color: Colors.white,
+                                      size: 40,
+                                    ),
+                                  ),
+                                ),
                                 const Gap(16),
-                                _buildActionButton("Activity",
-                                    FontAwesomeIcons.clockRotateLeft, () {}),
+                                Text(
+                                  getFullName(data!.user),
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                Text(
+                                  data.user.getStringValue('username'),
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w300,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                const Gap(12),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    _buildActionButton("Connect",
+                                        FontAwesomeIcons.penToSquare, () {}),
+                                    const Gap(16),
+                                    _buildActionButton(
+                                        "Activity",
+                                        FontAwesomeIcons.clockRotateLeft,
+                                        () {}),
+                                  ],
+                                ),
                               ],
                             ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-
-            // Profile Sections
-            SliverToBoxAdapter(
-              child: Transform.translate(
-                offset: const Offset(0, 0),
-                child: Column(
-                  children: [
-                    _buildSection(
-                      "Parish You're Attending",
-                      FontAwesomeIcons.church,
-                      [
-                        _buildParishItem("St John's Parish"),
-                        _buildParishItem("St Mary's Parish"),
-                        _buildParishItem("St Peter's Parish"),
-                      ],
-                    ),
-                    _buildSection(
-                      "Contact Information",
-                      FontAwesomeIcons.addressBook,
-                      [
-                        _buildContactItem("09012345678"),
-                        _buildAddButton("Add Contact Information"),
-                      ],
-                    ),
-                    _buildSection(
-                      "Select Language",
-                      FontAwesomeIcons.language,
-                      [
-                        _buildLanguageItem("English - US"),
-                      ],
-                    ),
-                    const Gap(16),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Column(
-                        children: [
-                          _buildGradientButton(
-                            "Customer Service",
-                            FontAwesomeIcons.headset,
-                            const Color(0xFF6C63FF),
-                            AppColors.primary,
-                            () {
-                              openWhatsApp(
-                                  phoneNumber: '+2349061299286',
-                                  message: 'Im looking for customer support');
-                            },
-                          ),
-                          const Gap(12),
-                          _buildGradientButton(
-                            "Log Out",
-                            FontAwesomeIcons.rightFromBracket,
-                            const Color(0xFFFF6B6B),
-                            const Color(0xFFFF3131),
-                            () {
-                              context
-                                  .read<PocketBaseServiceCubit>()
-                                  .state
-                                  .pb
-                                  .authStore
-                                  .clear();
-                            },
                           ),
                         ],
                       ),
                     ),
-                    const Gap(32),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-          ],
+
+                SliverToBoxAdapter(
+                  child: Transform.translate(
+                    offset: const Offset(0, 0),
+                    child: Column(
+                      children: [
+                        _buildSection(
+                          "Parish You're Attending",
+                          FontAwesomeIcons.church,
+                          [
+                            ...data.parish.map((item) =>
+                                _buildParishItem(item.getStringValue('name')))
+                          ],
+                        ),
+                        _buildSection(
+                          "Contact Information",
+                          FontAwesomeIcons.addressBook,
+                          [
+                            _buildContactItem("09012345678"),
+                            _buildAddButton("Add Contact Information"),
+                          ],
+                        ),
+                        _buildSection(
+                          "Select Language",
+                          FontAwesomeIcons.language,
+                          [
+                            _buildLanguageItem("English - US"),
+                          ],
+                        ),
+                        const Gap(16),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Column(
+                            children: [
+                              _buildGradientButton(
+                                "Customer Service",
+                                FontAwesomeIcons.headset,
+                                const Color(0xFF6C63FF),
+                                AppColors.primary,
+                                () {
+                                  openWhatsApp(
+                                      phoneNumber: '+2349061299286',
+                                      message:
+                                          'Im looking for customer support');
+                                },
+                              ),
+                              const Gap(12),
+                              _buildGradientButton(
+                                "Log Out",
+                                FontAwesomeIcons.rightFromBracket,
+                                const Color(0xFFFF6B6B),
+                                const Color(0xFFFF3131),
+                                () {
+                                  context
+                                      .read<PocketBaseServiceCubit>()
+                                      .state
+                                      .pb
+                                      .authStore
+                                      .clear();
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Gap(32),
+                      ],
+                    ),
+                  ),
+                ),
+              ]);
+            }
+
+            return Container(
+              child: const Text('data'),
+            );
+
+            // Profile Sections
+          },
         ),
       ),
     );

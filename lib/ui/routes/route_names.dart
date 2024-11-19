@@ -22,7 +22,7 @@ class RouteNames {
   static String prayerPage = 'prayerPage';
   static String connect = 'connect';
   static String settingsPage = 'settingsPage';
-
+  static String createPrayerRequest = 'createPrayerRequest';
   // priest pages
   static String dashboard = 'dashboardPage';
 }

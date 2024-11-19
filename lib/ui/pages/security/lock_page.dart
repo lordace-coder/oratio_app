@@ -31,8 +31,9 @@ class _LockScreenState extends State<LockScreen> {
 
         AppLock.of(context)!.didUnlock();
       }
-    } on PlatformException {
+    } on PlatformException catch (e) {
       // user hasnt settup password on device
+      print('error $e');
     }
   }
 
@@ -55,6 +56,12 @@ class _LockScreenState extends State<LockScreen> {
               'Login to Continue',
               style: TextStyle(color: Colors.black45),
             ),
+            const Gap(10),
+            TextButton(
+                onPressed: () {
+                  unlockApp();
+                },
+                child: const Text('Click here to unlock app')),
             Expanded(
                 child: Lottie.asset('assets/lottie/fingerprint animation.json'))
           ],

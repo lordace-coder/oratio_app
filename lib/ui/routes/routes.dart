@@ -7,6 +7,7 @@ import 'package:oratio_app/ui/pages/auth/auth_wrapper.dart';
 import 'package:oratio_app/ui/pages/auth/forgot_pw_page.dart';
 import 'package:oratio_app/ui/pages/bible_reading_page.dart';
 import 'package:oratio_app/ui/pages/chat_page.dart';
+import 'package:oratio_app/ui/pages/create_prayer_request_page.dart';
 import 'package:oratio_app/ui/pages/profile_page.dart';
 import 'package:oratio_app/ui/pages/schedules_page.dart';
 import 'package:oratio_app/ui/pages/transaction_details.dart';
@@ -20,12 +21,8 @@ final appRouter = GoRouter(
   redirect: (context, state) {
     final pb = context.read<PocketBaseServiceCubit>().state.pb;
     if (!pb.authStore.isValid && !state.fullPath!.contains('auth')) {
-      print(state.fullPath);
       return '/auth/login';
     }
-
-    print([state.fullPath, pb.authStore.isValid]);
-
     return null;
   },
   routes: [
@@ -43,10 +40,12 @@ final appRouter = GoRouter(
             builder: (context, state) => const SettingsPage(),
           ),
           GoRoute(
-            path: '/profilevisitor',
+            path: '/profilevisitor/:id',
             name: RouteNames.profilepagevisitor,
-            builder: (context, state) =>
-                const AuthListener(child: ProfileVisitorPage()),
+            builder: (context, state) => AuthListener(
+                child: ProfileVisitorPage(
+              id: state.pathParameters['id'].toString(),
+            )),
           ),
           GoRoute(
             path: '/connect',
@@ -113,14 +112,22 @@ final appRouter = GoRouter(
             builder: (context, state) => const MassBookingPage(),
           ),
           GoRoute(
-            path: '/parishdetails',
+            path: '/parishdetails:id',
             name: RouteNames.parishlanding,
-            builder: (context, state) => const ParishLandingPage(),
+            builder: (context, state) => ParishLandingPage(
+              parishId: state.pathParameters['id'].toString(),
+            ),
           ),
           GoRoute(
             path: '/massDetail',
             name: RouteNames.massDetail,
             builder: (context, state) => const MassDetailPage(),
+          ),
+
+          GoRoute(
+            path: '/${RouteNames.createPrayerRequest}',
+            name: RouteNames.createPrayerRequest,
+            builder: (context, state) => const CreatePrayerRequestPage(),
           ),
           GoRoute(
             path: '/${RouteNames.transactionsPage}',

@@ -3,25 +3,34 @@ import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
+import 'package:oratio_app/networkProvider/paystack_payment.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
+import 'package:pocketbase/pocketbase.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/services.dart';
 
 void handleAccountFunding(
     BuildContext context, int amount, String email) async {
-  Uri uri = Uri.parse(
-      'https://bookmass.pythonanywhere.com/payment-page/$email/$amount');
-
-  // launch url to payment inside the app
-  if (await canLaunchUrl(uri)) {
-    launchUrl(uri, mode: LaunchMode.inAppWebView);
-  }
+  final orderId = email + DateTime.now().toIso8601String();
+  await PaystackPaymentService(context.read<PocketBaseServiceCubit>().state.pb)
+      .makePayment(
+          email: email,
+          amount: amount.ceilToDouble(),
+          context: context,
+          orderId: orderId,
+          onSuccess: () {});
 }
 
-void collectPayment(BuildContext context) async {
+Future<void> collectPayment(BuildContext context) async {
   TextEditingController controller = TextEditingController();
-  String email = 'lordyacey@gmail.com';
+  String email = (context
+          .read<PocketBaseServiceCubit>()
+          .state
+          .pb
+          .authStore
+          .model as RecordModel)
+      .getStringValue('email');
 
   showDialog(
     context: context,

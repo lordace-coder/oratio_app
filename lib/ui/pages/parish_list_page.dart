@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:oratio_app/networkProvider/requests.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 class ParishListPage extends StatefulWidget {
   const ParishListPage({super.key});
@@ -16,7 +19,10 @@ class _ParishListPageState extends State<ParishListPage>
   // Controller for search bar animations
   late AnimationController _animationController;
   late Animation<double> _searchBarAnimation;
+  final controller = TextEditingController();
   bool _isHovered = false;
+  bool _loading = false;
+  List<RecordModel> parish = [];
 
   @override
   void initState() {
@@ -27,6 +33,9 @@ class _ParishListPageState extends State<ParishListPage>
       vsync: this,
     );
 
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      fetchParishList();
+    });
     // Create curved animation for smooth effect
     _searchBarAnimation = CurvedAnimation(
       parent: _animationController,
@@ -37,6 +46,36 @@ class _ParishListPageState extends State<ParishListPage>
     _animationController.forward();
   }
 
+  Future fetchParishList() async {
+    setState(() {
+      _loading = true;
+    });
+    try {
+      parish = await getParishList(context, onError: () {
+        NotificationService.showError('An error occured loading parishe\'s');
+      });
+    } catch (e) {
+      print(e);
+    }
+    setState(() {
+      _loading = false;
+    });
+  }
+
+  Future handleSearch(String q) async {
+    setState(() {
+      _loading = true;
+    });
+    try {
+      parish = await findParish(context, search: q);
+    } catch (e) {
+      print('searching error $e');
+    }
+    setState(() {
+      _loading = false;
+    });
+  }
+
   @override
   void dispose() {
     _animationController.dispose();
@@ -45,7 +84,6 @@ class _ParishListPageState extends State<ParishListPage>
 
   @override
   Widget build(BuildContext context) {
-    final controller = TextEditingController();
     // Get screen size for responsive layout
     final screenSize = MediaQuery.of(context).size;
 
@@ -54,97 +92,94 @@ class _ParishListPageState extends State<ParishListPage>
       body: SafeArea(
         // Handle potential overflow with error boundary
         child: ErrorBoundary(
-          child: CustomScrollView(
-            physics: const BouncingScrollPhysics(), // Smooth scrolling physics
-            slivers: [
-              // Sliver app bar with search
-              SliverToBoxAdapter(
-                child: Container(
-                  padding: const EdgeInsets.all(8), // Reduced padding
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 5,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      _buildAppBar(context),
-                      const Gap(8), // Reduced gap
-                      // Animate search bar entrance
-                      SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(0, -0.5),
-                          end: Offset.zero,
-                        ).animate(_searchBarAnimation),
-                        child: FadeTransition(
-                          opacity: _searchBarAnimation,
-                          child: _buildSearchBar(controller),
+          child: RefreshIndicator.adaptive(
+            onRefresh: () async {
+              await fetchParishList();
+            },
+            child: CustomScrollView(
+              physics:
+                  const BouncingScrollPhysics(), // Smooth scrolling physics
+              slivers: [
+                // Sliver app bar with search
+                SliverToBoxAdapter(
+                  child: Container(
+                    padding: const EdgeInsets.all(8), // Reduced padding
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 5,
+                          offset: const Offset(0, 2),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // Quick filters with horizontal scroll
-              SliverToBoxAdapter(
-                child: SizedBox(
-                  height: 50, // Fixed height to prevent layout issues
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                    children: [
-                      _buildFilterChip('Nearest', true),
-                      _buildFilterChip('Popular', false),
-                      _buildFilterChip('Recent', false),
-                      _buildFilterChip('Favorites', false),
-                    ],
-                  ),
-                ),
-              ),
-              // Church list with staggered animations
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => AnimatedBuilder(
-                    animation: _animationController,
-                    builder: (context, child) {
-                      // Stagger the animations of list items
-                      final itemAnimation = Tween<double>(
-                        begin: 0.0,
-                        end: 1.0,
-                      ).animate(
-                        CurvedAnimation(
-                          parent: _animationController,
-                          curve: Interval(
-                            (index * 0.1).clamp(0.0, 1.0),
-                            ((index + 1) * 0.1).clamp(0.0, 1.0),
-                            curve: Curves.easeOut,
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        _buildAppBar(context),
+                        const Gap(8), // Reduced gap
+                        // Animate search bar entrance
+                        SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, -0.5),
+                            end: Offset.zero,
+                          ).animate(_searchBarAnimation),
+                          child: FadeTransition(
+                            opacity: _searchBarAnimation,
+                            child: _buildSearchBar(controller),
                           ),
                         ),
-                      );
-
-                      return FadeTransition(
-                        opacity: itemAnimation,
-                        child: SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0.2, 0),
-                            end: Offset.zero,
-                          ).animate(itemAnimation),
-                          child: _buildChurchCard(context),
-                        ),
-                      );
-                    },
+                      ],
+                    ),
                   ),
-                  childCount: 10,
                 ),
-              ),
-            ],
+                // Church list with staggered animations
+                if (!_loading && parish.isNotEmpty)
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => AnimatedBuilder(
+                        animation: _animationController,
+                        builder: (context, child) {
+                          // Stagger the animations of list items
+                          final itemAnimation = Tween<double>(
+                            begin: 0.0,
+                            end: 1.0,
+                          ).animate(
+                            CurvedAnimation(
+                              parent: _animationController,
+                              curve: Interval(
+                                (index * 0.1).clamp(0.0, 1.0),
+                                ((index + 1) * 0.1).clamp(0.0, 1.0),
+                                curve: Curves.easeOut,
+                              ),
+                            ),
+                          );
+
+                          return FadeTransition(
+                            opacity: itemAnimation,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0.2, 0),
+                                end: Offset.zero,
+                              ).animate(itemAnimation),
+                              child: _buildChurchCard(context, parish[index]),
+                            ),
+                          );
+                        },
+                      ),
+                      childCount: parish.length,
+                    ),
+                  )
+                else if (_loading)
+                  const SliverToBoxAdapter(
+                    child: Text('loading'),
+                  )
+                else
+                  const SliverToBoxAdapter(
+                    child: Text('No Parish avaliable'),
+                  )
+              ],
+            ),
           ),
         ),
       ),
@@ -152,7 +187,9 @@ class _ParishListPageState extends State<ParishListPage>
       floatingActionButton: ScaleTransition(
         scale: _searchBarAnimation,
         child: FloatingActionButton(
-          onPressed: () {},
+          onPressed: () {
+            context.pushNamed(RouteNames.mass);
+          },
           backgroundColor: Theme.of(context).primaryColor,
           child: const Icon(Icons.map_outlined, color: Colors.white),
         ),
@@ -174,25 +211,17 @@ class _ParishListPageState extends State<ParishListPage>
               ),
               const Gap(8), // Reduced gap
               // Flexible text to prevent overflow
-              Expanded(
+              const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Mass Centers',
                       style: TextStyle(
                         fontSize: 20, // Reduced font size
                         fontWeight: FontWeight.bold,
                       ),
                       overflow: TextOverflow.ellipsis, // Handle text overflow
-                    ),
-                    Text(
-                      '48 churches nearby',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 12, // Reduced font size
-                      ),
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -222,6 +251,10 @@ class _ParishListPageState extends State<ParishListPage>
 
   Widget _buildSearchBar(TextEditingController controller) {
     return TextField(
+      onChanged: (val) {
+        // TODO HANDLE SEACRH
+        handleSearch(val);
+      },
       controller: controller,
       decoration: InputDecoration(
         hintText: 'Search churches...',
@@ -328,10 +361,12 @@ class _ParishListPageState extends State<ParishListPage>
     );
   }
 
-  Widget _buildChurchCard(BuildContext context) {
+  Widget _buildChurchCard(BuildContext context, RecordModel church) {
     return GestureDetector(
       onTap: () {
-        context.pushNamed(RouteNames.parishlanding);
+        context.pushNamed(RouteNames.parishlanding, pathParameters: {
+          'id': church.id,
+        });
       },
       child: Card(
         margin: const EdgeInsets.symmetric(
@@ -370,7 +405,7 @@ class _ParishListPageState extends State<ParishListPage>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'St. Mary\'s Cathedral',
+                      church.getStringValue('name').toUpperCase(),
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -386,7 +421,7 @@ class _ParishListPageState extends State<ParishListPage>
                         const Gap(2),
                         Expanded(
                           child: Text(
-                            '123 Church Street, City',
+                            church.getStringValue('location'),
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey[600],
@@ -397,23 +432,14 @@ class _ParishListPageState extends State<ParishListPage>
                       ],
                     ),
                     const Gap(4),
-                    Row(
-                      children: [
-                        _buildInfoChip(Icons.access_time, '5 min'),
-                        const Gap(4),
-                        _buildInfoChip(Icons.calendar_today, '4 masses'),
-                      ],
-                    ),
+                    // Row(
+                    //   children: [
+                    //     _buildInfoChip(Icons.access_time, '5 min'),
+                    //     const Gap(4),
+                    //     _buildInfoChip(Icons.calendar_today, '4 masses'),
+                    //   ],
+                    // ),
                   ],
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.favorite_border, size: 16),
-                onPressed: () {},
-                padding: const EdgeInsets.all(4),
-                constraints: const BoxConstraints(
-                  minWidth: 32,
-                  minHeight: 32,
                 ),
               ),
             ],

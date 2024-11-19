@@ -6,17 +6,21 @@ import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/bloc/notifications_cubit/notifications_cubit.dart';
 import 'package:oratio_app/bloc/posts/post_cubit.dart';
 import 'package:oratio_app/bloc/prayer_requests/requests_cubit.dart';
+import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/ui/pages/security/lock_page.dart';
 import 'package:oratio_app/ui/routes/routes.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final pref = await SharedPreferences.getInstance();
   final pbCubit = PocketBaseServiceCubit(pref);
   final notificationCubit = NotificationCubit(pbCubit.state.pb);
+  try{
   await notificationCubit.fetchNotifications();
+  }catch(e){}
 
   runApp(
     MultiBlocProvider(
@@ -26,6 +30,9 @@ void main() async {
         ),
         BlocProvider(
           create: (context) => notificationCubit,
+        ),
+        BlocProvider<ProfileDataCubit>(
+          create: (context) => ProfileDataCubit(pbCubit.state.pb),
         ),
         BlocProvider(
           create: (context) => PrayerRequestCubit(pbCubit.state.pb),
@@ -55,7 +62,7 @@ class MainApp extends StatelessWidget {
       builder: (context, child) => AppLock(
         builder: (context, arg) => child!,
         lockScreenBuilder: (context) => const LockScreen(),
-        backgroundLockLatency: const Duration(seconds: 30),
+        backgroundLockLatency: const Duration(seconds: 6),
       ),
       color: AppColors.primary,
       routerConfig: appRouter,
