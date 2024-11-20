@@ -118,11 +118,6 @@ final appRouter = GoRouter(
               parishId: state.pathParameters['id'].toString(),
             ),
           ),
-          GoRoute(
-            path: '/massDetail',
-            name: RouteNames.massDetail,
-            builder: (context, state) => const MassDetailPage(),
-          ),
 
           GoRoute(
             path: '/${RouteNames.createPrayerRequest}',

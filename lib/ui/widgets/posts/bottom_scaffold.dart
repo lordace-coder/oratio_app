@@ -473,7 +473,16 @@ class CommentItem extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      comment.expand['user']![0].getStringValue('username'),
+                      comment.expand['user'] != null
+                          ? comment.expand['user']![0]
+                              .getStringValue('username')
+                          : context
+                              .read<PocketBaseServiceCubit>()
+                              .state
+                              .pb
+                              .authStore
+                              .model
+                              .getStringValue('username'),
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                       ),

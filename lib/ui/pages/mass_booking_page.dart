@@ -1,15 +1,19 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import 'package:oratio_app/bloc/booking_bloc/state.dart';
+import 'package:pocketbase/pocketbase.dart';
+
+import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
+import 'package:oratio_app/ui/pages/mass_detail_page.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/buttons.dart';
 import 'package:oratio_app/ui/widgets/church_widgets.dart';
-
-enum SelectedDateType { today, tomorrow, custom }
-
-enum SelectedTimeType { morning, lateMorning, noon, afternoon }
 
 class MassBookingPage extends StatefulWidget {
   const MassBookingPage({super.key});
@@ -22,15 +26,56 @@ class _MassBookingPageState extends State<MassBookingPage> {
   SelectedDateType? massDate;
   SelectedTimeType? massTime;
   final controller = TextEditingController();
-
+  DateTime? selectedDate;
+  RecordModel? selectedChurch;
   bool selectedDateById(int id) =>
       massDate != null && SelectedDateType.values[id - 1] == massDate;
 
   bool selectedTimeById(int id) =>
       massTime != null && SelectedTimeType.values[id - 1] == massTime;
+  String formattedDate = '';
+
+  void selectChurch(RecordModel selection) {
+    if (selectedChurch != null) {
+      if (selectedChurch!.id == selection.id) {
+        setState(() {
+          selectedChurch = null;
+        });
+        return;
+      }
+    }
+    setState(() {
+      selectedChurch = selection;
+    });
+  }
+
+  void handleBookNow() {
+    final bookingData = MassBookingData(
+        massDate: massDate!,
+        selectedDate: selectedDate,
+        massTime: massTime!,
+        selectedChurch: selectedChurch!);
+    Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => MassDetailPage(
+              data: bookingData,
+            )));
+  }
 
   @override
   Widget build(BuildContext context) {
+    final format = DateFormat('MMM d');
+    if (selectedDate != null) {
+      formattedDate = format.format(selectedDate!);
+    }
+    DateTime now = DateTime.now();
+    DateTime tmmrw = DateTime(
+      now.year,
+      now.month,
+      now.day + 1,
+      now.hour,
+      now.minute,
+      now.second,
+    );
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: createAppBar(
@@ -92,23 +137,44 @@ class _MassBookingPageState extends State<MassBookingPage> {
                           _DateOption(
                             isSelected: selectedDateById(1),
                             label: 'Today',
-                            date: 'Oct 1',
+                            date: format.format(now),
                             onTap: () => setState(
                                 () => massDate = SelectedDateType.today),
                           ),
                           _DateOption(
                             isSelected: selectedDateById(2),
                             label: 'Tomorrow',
-                            date: 'Oct 2',
+                            date: format.format(tmmrw),
                             onTap: () => setState(
                                 () => massDate = SelectedDateType.tomorrow),
                           ),
                           _DateOption(
                             isSelected: selectedDateById(3),
                             label: 'Custom',
-                            date: '...',
-                            onTap: () => setState(
-                                () => massDate = SelectedDateType.custom),
+                            date: selectedDate == null
+                                ? '...'
+                                : " $formattedDate",
+                            onTap: () async {
+                              DateTime nextMonth = DateTime(
+                                now.year,
+                                now.month + 1,
+                                now.day,
+                                now.hour,
+                                now.minute,
+                                now.second,
+                              );
+
+                              final day = await showDatePicker(
+                                  initialDate: selectedDate,
+                                  context: context,
+                                  firstDate: now,
+                                  lastDate: nextMonth);
+                              if (day != null) {
+                                setState(
+                                    () => massDate = SelectedDateType.custom);
+                                selectedDate = day;
+                              }
+                            },
                           ),
                         ],
                       ),
@@ -179,8 +245,9 @@ class _MassBookingPageState extends State<MassBookingPage> {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: BookingButton(
-            isEnabled: massDate != null && massTime != null,
-            onPressed: () => context.pushNamed(RouteNames.massDetail),
+            isEnabled:
+                massDate != null && massTime != null && selectedChurch != null,
+            onPressed: handleBookNow,
           ),
         ),
       ),
@@ -215,7 +282,28 @@ class _MassBookingPageState extends State<MassBookingPage> {
         const Gap(12),
         CustomSearchBar(controller: controller),
         const Gap(24),
-        const NoParishYet(),
+        BlocConsumer<ProfileDataCubit, ProfileDataState>(
+          listener: (context, state) {},
+          builder: (context, state) {
+            if (state is ProfileDataLoaded) {
+              if (state.profile.parish.isNotEmpty) {
+                return Column(
+                  children: [
+                    ...state.profile.parish.map((i) =>
+                        buildChurchItem(context, i, () {
+                          selectChurch(i);
+                        },
+                            selectedChurch != null
+                                ? i.id == selectedChurch!.id
+                                : false))
+                  ],
+                );
+              }
+            }
+            context.read<ProfileDataCubit>().getMyProfile();
+            return const NoParishYet();
+          },
+        )
       ],
     );
   }
@@ -403,4 +491,92 @@ class NoParishYet extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget buildChurchItem(BuildContext context, RecordModel church,
+    Function()? onTap, bool selected) {
+  return GestureDetector(
+    onTap: onTap,
+    child: Card(
+      margin: const EdgeInsets.symmetric(
+          horizontal: 8, vertical: 4), // Reduced margins
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8),
+        side: BorderSide(color: Colors.grey[200]!),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8), // Reduced padding
+        child: Row(
+          children: [
+            // Church image with error handling
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                'https://via.placeholder.com/60', // Reduced size
+                width: 60,
+                height: 60,
+                fit: BoxFit.cover,
+                // Handle image load errors
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    width: 60,
+                    height: 60,
+                    color: Colors.grey[300],
+                    child: Icon(Icons.church, color: Colors.grey[400]),
+                  );
+                },
+              ),
+            ),
+            const Gap(8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    church.getStringValue('name').toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[900],
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const Gap(2),
+                  Row(
+                    children: [
+                      Icon(Icons.location_on,
+                          size: 12, color: Colors.grey[600]),
+                      const Gap(2),
+                      Expanded(
+                        child: Text(
+                          church.getStringValue('location'),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Gap(4),
+                  // Row(
+                  //   children: [
+                  //     _buildInfoChip(Icons.access_time, '5 min'),
+                  //     const Gap(4),
+                  //     _buildInfoChip(Icons.calendar_today, '4 masses'),
+                  //   ],
+                  // ),
+                ],
+              ),
+            ),
+            const Gap(10),
+            TextButton(
+                onPressed: onTap, child: Text(selected ? 'Selected' : 'Select'))
+          ],
+        ),
+      ),
+    ),
+  );
 }

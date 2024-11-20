@@ -13,6 +13,7 @@ class ProfileDataCubit extends Cubit<ProfileDataState> {
 
   Future getMyProfile() async {
     emit(ProfileDataLoading());
+
     try {
       final profile = Profile(
           user: pb.authStore.model,
@@ -23,10 +24,16 @@ class ProfileDataCubit extends Cubit<ProfileDataState> {
       final parishAttending = await pb.collection('parish').getFullList(
           filter:
               'members ~ "${profile.userId}" || priest = "${profile.userId}"');
-
       final communities = await pb.collection('prayer_community').getFullList(
+          fields: "community",
           filter:
               'members ~ "${profile.userId}" || leader = "${profile.userId}"');
+      profile.community = communities;
+      print(profile.community);
+
+      profile.parish = parishAttending;
+      profile.contact =
+          (pb.authStore.model as RecordModel).getStringValue("phone_number");
       emit(ProfileDataLoaded(
         profile: profile,
       ));
