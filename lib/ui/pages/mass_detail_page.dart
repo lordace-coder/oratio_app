@@ -64,7 +64,7 @@ class _MassDetailPageState extends State<MassDetailPage>
         builder: (context, scrollController) => MassBookBottomSheet(
           scrollController: scrollController,
           slideAnimation: _slideAnimation,
-          fadeAnimation: _fadeAnimation,
+          fadeAnimation: _fadeAnimation, data: widget.data,
         ),
       ),
     );

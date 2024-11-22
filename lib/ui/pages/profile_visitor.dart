@@ -7,6 +7,8 @@ import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/networkProvider/users.dart';
+import 'package:oratio_app/ui/pages/chat_page.dart';
+import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 
@@ -17,7 +19,12 @@ class ProfileVisitorPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     context.read<ProfileDataCubit>().visitProfile(id);
-
+    final currentUser = context
+        .read<PocketBaseServiceCubit>()
+        .state
+        .pb
+        .authStore
+        .model as RecordModel;
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
       body: RefreshIndicator.adaptive(
@@ -28,9 +35,7 @@ class ProfileVisitorPage extends StatelessWidget {
           listener: (context, state) {},
           builder: (context, state) {
             if (state is ProfileDataLoading || state is ProfileDataInitial) {
-              return Container(
-                child: const Text('loading'),
-              );
+              return const Center(child: CircularProgressIndicator.adaptive());
             }
             if (state is ProfileDataLoaded) {
               final data = state.guestProfile;
@@ -117,8 +122,23 @@ class ProfileVisitorPage extends StatelessWidget {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    _buildActionButton("Connect",
-                                        FontAwesomeIcons.penToSquare, () {}),
+                                    //check if users have already connected ,then allow them to chat each other
+                                    data.user
+                                            .getListValue('followers')
+                                            .contains(currentUser.id)
+                                        ? _buildActionButton(
+                                            "Message", FontAwesomeIcons.message,
+                                            () {
+                                            Navigator.of(context)
+                                                .push(MaterialPageRoute(
+                                                    builder: (_) => ChatPage(
+                                                          profile: data,
+                                                        )));
+                                          })
+                                        : _buildActionButton(
+                                            "Connect",
+                                            FontAwesomeIcons.penToSquare,
+                                            () {}),
                                     const Gap(16),
                                     _buildActionButton(
                                         "Activity",

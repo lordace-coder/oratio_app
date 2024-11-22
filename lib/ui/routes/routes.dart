@@ -100,11 +100,9 @@ final appRouter = GoRouter(
             ),
           ),
           GoRoute(
-            path: '/paymentsuccesfull/:status',
+            path: '/paymentsuccesfull',
             name: RouteNames.paymentSuccesful,
-            builder: (context, state) => const PaymentSuccesful(
-              paymentStatus: PaymentStatus.succesful,
-            ),
+            builder: (context, state) => const PaymentSuccesful(),
           ),
           GoRoute(
             path: '/mass',
@@ -134,11 +132,7 @@ final appRouter = GoRouter(
             name: RouteNames.schedule,
             builder: (context, state) => const SchedulesPage(),
           ),
-          GoRoute(
-            path: '/${RouteNames.chatDetailPage}',
-            name: RouteNames.chatDetailPage,
-            builder: (context, state) => const ChatPage(),
-          ),
+
           GoRoute(
             path: '/${RouteNames.transactionDetails}',
             name: RouteNames.transactionDetails,

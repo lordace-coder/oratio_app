@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:oratio_app/bloc/blocs.dart';
+import 'package:oratio_app/bloc/chat_cubit/chat_cubit.dart';
+import 'package:oratio_app/services/chat/chat_service.dart';
+import 'package:oratio_app/ui/pages/chat_page.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/widgets/live_streams.dart';
 
@@ -21,6 +26,8 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    final pb = context.read<PocketBaseServiceCubit>().state.pb;
+
     _scrollController.addListener(() {
       setState(() {
         _showFloatingButton = _scrollController.offset > 200;
@@ -30,6 +37,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.read<ChatCubit>().loadRecentChats();
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
@@ -78,23 +86,39 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: AnimationLimiter(
-                    child: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) =>
-                            AnimationConfiguration.staggeredList(
-                          position: index,
-                          duration: const Duration(milliseconds: 375),
-                          child: SlideAnimation(
-                            verticalOffset: 50.0,
-                            child: FadeInAnimation(
-                              child: ChatItem(index: index),
+                  sliver: BlocBuilder<ChatCubit, ChatState>(
+                    builder: (context, state) {
+                      print(state.props);
+                      if (state is ChatLoading) {
+                        return const SliverToBoxAdapter(
+                            child: CircularProgressIndicator());
+                      } else if (state is ChatsLoaded) {
+                        return AnimationLimiter(
+                          child: SliverList(
+                            delegate: SliverChildBuilderDelegate(
+                              (context, index) =>
+                                  AnimationConfiguration.staggeredList(
+                                position: index,
+                                duration: const Duration(milliseconds: 375),
+                                child: SlideAnimation(
+                                  verticalOffset: 50.0,
+                                  child: FadeInAnimation(
+                                    child: ChatItem(
+                                      index: index,
+                                      chatPreview: state.chats[index],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              childCount: state.chats.length,
                             ),
                           ),
-                        ),
-                        childCount: 10,
-                      ),
-                    ),
+                        );
+                      } else if (state is ChatError) {
+                        return SliverToBoxAdapter(child: Text(state.message));
+                      }
+                      return const SliverToBoxAdapter();
+                    },
                   ),
                 ),
               ],
@@ -183,8 +207,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
 class ChatItem extends StatefulWidget {
   final int index;
+  final ChatPreview chatPreview;
 
-  const ChatItem({super.key, required this.index});
+  const ChatItem({super.key, required this.index, required this.chatPreview});
 
   @override
   State<ChatItem> createState() => _ChatItemState();
@@ -219,7 +244,13 @@ class _ChatItemState extends State<ChatItem>
       onTapDown: (_) => _controller.forward(),
       onTapUp: (_) => _controller.reverse(),
       onTapCancel: () => _controller.reverse(),
-      onTap: () => context.pushNamed('chatDetailPage'),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ChatPage(
+            profile: widget.chatPreview.profile,
+          ),
+        ),
+      ),
       child: AnimatedBuilder(
         animation: _scaleAnimation,
         builder: (context, child) => Transform.scale(
@@ -282,7 +313,8 @@ class _ChatItemState extends State<ChatItem>
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'User ${widget.index}',
+                            widget.chatPreview.profile.user
+                                .getStringValue('username'),
                             style: Theme.of(context)
                                 .textTheme
                                 .titleMedium
@@ -306,7 +338,7 @@ class _ChatItemState extends State<ChatItem>
                         children: [
                           Expanded(
                             child: Text(
-                              'This is a preview of the last message sent in the conversation...',
+                              widget.chatPreview.preview,
                               style: Theme.of(context)
                                   .textTheme
                                   .bodyMedium
@@ -319,7 +351,7 @@ class _ChatItemState extends State<ChatItem>
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          if (widget.index % 2 == 0)
+                          if (widget.chatPreview.unreadCount > 0)
                             Container(
                               margin: const EdgeInsets.only(left: 8),
                               padding: const EdgeInsets.symmetric(
@@ -331,7 +363,7 @@ class _ChatItemState extends State<ChatItem>
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
-                                '${widget.index}',
+                                '${widget.chatPreview.unreadCount}',
                                 style: TextStyle(
                                   color:
                                       Theme.of(context).colorScheme.onPrimary,

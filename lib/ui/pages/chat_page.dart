@@ -1,15 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
 import 'package:open_filex/open_filex.dart';
+import 'package:oratio_app/bloc/blocs.dart';
+import 'package:oratio_app/bloc/chat_cubit/chat_cubit.dart';
+import 'package:oratio_app/bloc/posts/post_cubit.dart';
+import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
+import 'package:oratio_app/networkProvider/users.dart';
+import 'package:oratio_app/services/chat/chat_service.dart';
 import 'package:oratio_app/ui/themes.dart';
+import 'package:pocketbase/pocketbase.dart';
 import 'package:uuid/uuid.dart';
 
 class ChatPage extends StatefulWidget {
-  const ChatPage({super.key});
+  const ChatPage({super.key, required this.profile});
+  final Profile profile;
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -17,42 +26,46 @@ class ChatPage extends StatefulWidget {
 
 class _ChatPageState extends State<ChatPage> {
   List<types.Message> _messages = [];
-  final _user = const types.User(
-    id: '82091008-a484-4a89-ae75-a22bf8d6f3ac',
-    firstName: 'John',
-    lastName: 'Doe',
-  );
+  late RecordModel currentUser;
 
-  // Simulated other user for demo
-  final _otherUser = const types.User(
-    id: 'other-user-id',
-    firstName: 'Jane',
-    lastName: 'Smith',
-  );
+  late types.User _user;
+  late types.User _otherUser;
 
   @override
   void initState() {
     super.initState();
-    _loadMessages();
+    currentUser = context
+        .read<PocketBaseServiceCubit>()
+        .state
+        .pb
+        .authStore
+        .model as RecordModel;
+    _user = types.User(
+      id: currentUser.id,
+      firstName: currentUser.getStringValue('first_name'),
+      lastName: currentUser.getStringValue('last_name'),
+    );
+    _otherUser = types.User(
+        id: widget.profile.userId,
+        firstName: widget.profile.user.getStringValue('first_name'),
+        lastName: widget.profile.user.getStringValue('last_name'));
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadMessages());
   }
 
-  void _loadMessages() {
-    // Simulating some initial messages
-    final messages = [
-      types.TextMessage(
-        author: _otherUser,
-        createdAt: DateTime.now().millisecondsSinceEpoch,
-        id: const Uuid().v4(),
-        text: 'Hello! How are you?',
-      ),
-      types.TextMessage(
-        author: _user,
-        createdAt: DateTime.now().millisecondsSinceEpoch,
-        id: const Uuid().v4(),
-        text: 'Hi! I\'m doing great, thanks!',
-      ),
-    ];
+  Future<void> _loadMessages() async {
+    final pb = context.read<PocketBaseServiceCubit>().state.pb;
+    // FETCH MESSAGES
+    final response =
+        await pb.collection('messages').getFullList(sort: '-created');
 
+    final messages = <types.Message>[];
+    for (var item in response) {
+      messages.add(types.TextMessage(
+          author:
+              item.getStringValue('sender') == _user.id ? _user : _otherUser,
+          id: item.id,
+          text: item.getStringValue('message')));
+    }
     setState(() {
       _messages = messages;
     });
@@ -65,7 +78,10 @@ class _ChatPageState extends State<ChatPage> {
       id: const Uuid().v4(),
       text: message.text,
     );
-
+    context
+        .read<ChatCubit>()
+        .sendMessage(message: message.text, receiverId: widget.profile.userId);
+    //  LOAD MESSAGES AGAIN OR JUST ADD NEW TEXT TO MESSAGE
     _addMessage(textMessage);
   }
 
@@ -200,7 +216,7 @@ class _ChatPageState extends State<ChatPage> {
               radius: 20,
               backgroundColor: Theme.of(context).colorScheme.primary,
               child: Text(
-                _otherUser.firstName![0],
+                widget.profile.user.getStringValue('username')[0].toUpperCase(),
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.onPrimary,
                 ),
@@ -211,7 +227,7 @@ class _ChatPageState extends State<ChatPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '${_otherUser.firstName} ${_otherUser.lastName}',
+                  getFullName(widget.profile.user),
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gap/gap.dart';
+import 'package:go_router/go_router.dart';
+import 'package:oratio_app/helpers/functions.dart';
 
 class TransactionModal extends StatelessWidget {
   final TextEditingController controller;
@@ -161,6 +163,7 @@ class TransactionModal extends StatelessWidget {
                     return;
                   }
                   handleTransaction(context, amt);
+                  Navigator.of(context).pop();
                 },
                 style: ElevatedButton.styleFrom(
                   padding:
@@ -187,7 +190,7 @@ class TransactionModal extends StatelessWidget {
   }
 }
 
-Future<String?>? getAmountModal(
+Future<String?>? showTransactionModal(
     BuildContext context, TransactionDetail detail) async {
   String? amt;
   await showDialog(

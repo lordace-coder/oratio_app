@@ -1,26 +1,45 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
+import 'package:oratio_app/bloc/booking_bloc/state.dart';
+import 'package:oratio_app/helpers/snackbars.dart';
+import 'package:oratio_app/helpers/transaction_modal.dart';
+import 'package:oratio_app/networkProvider/booking_requests.dart';
+import 'package:oratio_app/networkProvider/requests.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/inputs.dart';
 import 'package:pocketbase/pocketbase.dart';
 
-class MassBookBottomSheet extends StatelessWidget {
+
+
+class MassBookBottomSheet extends StatefulWidget {
   final Animation<Offset> slideAnimation;
   final Animation<double> fadeAnimation;
   final ScrollController scrollController;
-  RecordModel? donation;
+  final MassBookingData data;
 
-  MassBookBottomSheet({
+  const MassBookBottomSheet({
     super.key,
     required this.slideAnimation,
     required this.fadeAnimation,
     required this.scrollController,
+    required this.data,
   });
 
+  @override
+  State<MassBookBottomSheet> createState() => _MassBookBottomSheetState();
+}
+
+class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
+  RecordModel? donation;
+
   final TextEditingController intention = TextEditingController();
+
   final TextEditingController attendees = TextEditingController();
 
   @override
@@ -31,7 +50,7 @@ class MassBookBottomSheet extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: ListView(
-        controller: scrollController,
+        controller: widget.scrollController,
         padding: EdgeInsets.fromLTRB(
           20,
           16,
@@ -180,45 +199,127 @@ class MassBookBottomSheet extends StatelessWidget {
   }
 
   Widget _buildActionButtons(BuildContext context) {
+    final pb = context.read<PocketBaseServiceCubit>().state.pb;
     return Column(
       children: [
-        SubmitButtonV1(
-          ontap: () {
-            context.pushNamed(
-              RouteNames.paymentSuccesful,
-              pathParameters: {'status': ''},
-            );
-          },
-          radius: 12,
-          backgroundcolor: AppColors.primary,
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  FontAwesomeIcons.handHoldingHeart,
-                  color: Colors.white,
-                  size: 16,
-                ),
-                Gap(8),
-                Text(
-                  'Donate Now',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+        FutureBuilder<String>(
+            future: getUserBalance(
+              pb.authStore.model.id,
+              pb,
+            ),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData) {
+                return Container();
+              }
+              return SubmitButtonV1(
+                ontap: () async {
+                  try {
+                    final amt = await showTransactionModal(
+                        context,
+                        TransactionDetail("Donate",
+                            handleTransaction: (context, data) {},
+                            onChange: (val) {},
+                            icon: const Icon(FontAwesomeIcons.cashRegister),
+                            title: 'Donate',
+                            detail: 'Make a donation for the mass'));
+                    // validate amount before creating donation
+                    final parsedAmt = double.tryParse('$amt');
+                    if (parsedAmt == null) {
+                      return showError(context,
+                          message: 'Invalid amount entered');
+                    }
+                    // check for sufficient balance
+                    if (parsedAmt >
+                        double.tryParse(
+                            '${snapshot.data}'.replaceAll('₦', ''))!) {
+                      return showError(context,
+                          message:
+                              'Insufficient balance \n please fund account and try again');
+                    }
+                    if (parsedAmt < 200) {
+                      return showError(context,
+                          message: 'Donation amount cant be below ₦200');
+                    }
+                    final res = await handleDonation(pb,
+                        {'amount': parsedAmt, 'userId': pb.authStore.model.id});
+                    if (res == null) {
+                      throw Exception(['Invalid donation data']);
+                    }
+                    setState(() {
+                      donation = RecordModel.fromJson(res);
+                    });
+                    showSuccess(context,
+                        message: 'You have succesfully donated ₦$parsedAmt');
+                    return;
+                  } catch (e) {
+                    print(
+                        [(e as DioException).response, e.requestOptions.data]);
+                    return showError(context, message: 'Error occured $e');
+                  }
+                },
+                radius: 12,
+                backgroundcolor: AppColors.primary,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        FontAwesomeIcons.handHoldingHeart,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                      Gap(8),
+                      Text(
+                        'Donate Now',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
-        ),
+              );
+            }),
         const Gap(12),
         SubmitButtonV1(
-          ontap: () {
+          ontap: () async {
+            final userId = context
+                .read<PocketBaseServiceCubit>()
+                .state
+                .pb
+                .authStore
+                .model
+                .id;
             if (donation != null) {
-              // handle booking
+              // validate form fields
+              if (intention.text.isEmpty) {
+                return showError(context,
+                    message: 'Mass Intention cant be empty');
+              }
+              if (attendees.text.isEmpty) {
+                return showError(context, message: 'Add at least one attendee');
+              }
+              // form is valid
+              try {
+                final res = await pb.collection("mass_booking").create(body: {
+                  "time": widget.data.selectedDate.toString(),
+                  "parish": widget.data.selectedChurch.id,
+                  "intention": intention.text.trim(),
+                  "attendees": attendees.text.trim(),
+                  "user": userId,
+                  "donation": donation!.id,
+                });
+                showSuccess(context,
+                    message: 'Mass Booking completed succesfully');
+                context.pushNamed(RouteNames.paymentSuccesful);
+              } catch (e) {
+                final err = e as ClientException;
+                showError(context,
+                    message: 'Error occured ${err.response['message']}');
+              }
             }
           },
           radius: 12,
