@@ -19,7 +19,6 @@ class ChatService {
             expand: 'sender,reciever',
             sort: '-created',
           );
-      print(messages);
       final chatMap = <String, ChatPreview>{};
 
       for (final RecordModel message in messages.items) {
@@ -28,6 +27,11 @@ class ChatService {
         final RecordModel otherParticipant = isSender
             ? message.expand['reciever']![0]
             : message.expand['sender']![0];
+        print([
+          message.expand['sender']![0].id,
+          currentUserId,
+          otherParticipant.id
+        ]);
 
         final String otherParticipantId = otherParticipant.id;
 

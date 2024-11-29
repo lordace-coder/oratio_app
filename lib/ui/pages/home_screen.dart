@@ -26,9 +26,16 @@ class _HomeScreenState extends State<HomeScreen> {
   String bal = '₦0.00';
   @override
   Widget build(BuildContext context) {
+    context
+        .read<PocketBaseServiceCubit>()
+        .state
+        .pb
+        .collection('users')
+        .authRefresh();
     final user = context.read<PocketBaseServiceCubit>().state.pb.authStore.model
         as RecordModel;
     bool isPriest = user.getBoolValue('priest');
+    print('is priest $isPriest');
 
     return Scaffold(
       body: Container(

@@ -214,10 +214,11 @@ class _FeedsListScreenState extends State<FeedsListScreen>
               },
               child:
                   ListView(padding: const EdgeInsets.only(top: 8), children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                  child: buildStorySection(context),
-                ),
+                // TODO build story section (updates)
+                // Padding(
+                //   padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                //   child: buildStorySection(context),
+                // ),
                 BlocConsumer<PostCubit, PostState>(
                   listener: (context, state) {
                     // TODO: implement listener

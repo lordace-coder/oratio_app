@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/bloc/chat_cubit/chat_cubit.dart';
+import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/services/chat/chat_service.dart';
 import 'package:oratio_app/ui/pages/chat_page.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
@@ -91,7 +92,10 @@ class _ChatScreenState extends State<ChatScreen> {
                       print(state.props);
                       if (state is ChatLoading) {
                         return const SliverToBoxAdapter(
-                            child: CircularProgressIndicator());
+                          child: Center(
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
                       } else if (state is ChatsLoaded) {
                         return AnimationLimiter(
                           child: SliverList(
@@ -323,7 +327,8 @@ class _ChatItemState extends State<ChatItem>
                                 ),
                           ),
                           Text(
-                            '${widget.index}m ago',
+                            formatDateTimeToHoursAgo(
+                                widget.chatPreview.lastMessageAt),
                             style:
                                 Theme.of(context).textTheme.bodySmall?.copyWith(
                                       color: Theme.of(context)

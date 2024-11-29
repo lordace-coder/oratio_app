@@ -30,9 +30,9 @@ class ProfilePage extends StatelessWidget {
           listener: (context, state) {},
           builder: (context, state) {
             if (state is ProfileDataLoading || state is ProfileDataInitial) {
-              return Container(
-                child: const Text('loading'),
-              );
+              return const SizedBox(
+                  height: 300,
+                  child: Center(child: CircularProgressIndicator.adaptive()));
             }
             if (state is ProfileDataLoaded) {
               final data = state.profile;
@@ -117,18 +117,6 @@ class ProfilePage extends StatelessWidget {
                                   ),
                                 ),
                                 const Gap(12),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    _buildActionButton("Connect",
-                                        FontAwesomeIcons.penToSquare, () {}),
-                                    const Gap(16),
-                                    _buildActionButton(
-                                        "Activity",
-                                        FontAwesomeIcons.clockRotateLeft,
-                                        () {}),
-                                  ],
-                                ),
                               ],
                             ),
                           ),

@@ -42,7 +42,6 @@ class ChatCubit extends Cubit<ChatState> {
 
   // Fetch recent chats
   Future<void> loadRecentChats() async {
-  
     try {
       emit(ChatLoading());
       final chats = await _chatService.getRecentChats();
@@ -59,12 +58,7 @@ class ChatCubit extends Cubit<ChatState> {
     required String message,
   }) async {
     final currentUserId = _pb.authStore.model.id;
-    print({
-      'sender': currentUserId,
-      'receiver': receiverId,
-      'message': message,
-      'read': false,
-    });
+
     try {
       //   final currentUserId = _pb.authStore.model.id;
       // print({
@@ -96,10 +90,12 @@ class ChatCubit extends Cubit<ChatState> {
     try {
       final currentUserId = _pb.authStore.model.id;
 
+      print(
+          'filter ${'receiver = "$currentUserId" && sender = "$otherParticipantId" && read = false'}');
       // Get unread messages
       final result = await _pb.collection('messages').getList(
             filter:
-                'receiver = "$currentUserId" && sender.id = "$otherParticipantId" && read = false',
+                'reciever = "$currentUserId" && sender = "$otherParticipantId" && read = false',
           );
 
       // Mark each message as read
@@ -119,20 +115,28 @@ class ChatCubit extends Cubit<ChatState> {
   // Stream real-time updates for new messages
   void subscribeToMessages() {
     final currentUserId = _pb.authStore.model.id;
+    final t = _pb.collection('messages').subscribe(
+      '*',
+      (e) {
+        print('updated');
+        if (e.action == 'create') {
+          // Check if the message involves the current user
 
-    _pb.collection('messages').subscribe('*', (e) {
-      if (e.action == 'create') {
-        // Check if the message involves the current user
-        if (e.record == null) {
-          return;
+          if (e.record == null) {
+            return;
+          }
+          final message = e.record!;
+          if (message.data['sender'] == currentUserId ||
+              message.data['receiver'].toString().contains(currentUserId)) {
+            loadRecentChats(); // Refresh chat list when new message arrives
+          }
+          // TODO show message popup without local notification only if user is the reciever
+          print([e.record, 'notification']);
+          loadRecentChats();
         }
-        final message = e.record!;
-        if (message.data['sender'] == currentUserId ||
-            message.data['receiver'].toString().contains(currentUserId)) {
-          loadRecentChats(); // Refresh chat list when new message arrives
-        }
-      }
-    });
+      },
+      filter: 'sender.id = "$currentUserId" || reciever.id = "$currentUserId"',
+    );
   }
 
   @override

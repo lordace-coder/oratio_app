@@ -1,39 +1,106 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'dart:async';
+import 'dart:io';
 import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/bloc/chat_cubit/chat_cubit.dart';
 import 'package:oratio_app/bloc/notifications_cubit/notifications_cubit.dart';
 import 'package:oratio_app/bloc/posts/post_cubit.dart';
 import 'package:oratio_app/bloc/prayer_requests/requests_cubit.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
+import 'package:oratio_app/networkProvider/constants.dart';
 import 'package:oratio_app/services/chat/chat_service.dart';
 import 'package:oratio_app/ui/pages/security/lock_page.dart';
 import 'package:oratio_app/ui/routes/routes.dart';
 import 'package:oratio_app/ui/themes.dart';
+import 'package:pocketbase/pocketbase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_native_splash/flutter_native_splash.dart' as splash;
+
+class ConnectivityCubit extends Cubit<bool> {
+  final Connectivity _connectivity = Connectivity();
+  StreamSubscription? connectivitySubscription;
+
+  ConnectivityCubit() : super(true) {
+    monitorConnection();
+  }
+
+  void monitorConnection() {
+    connectivitySubscription =
+        _connectivity.onConnectivityChanged.listen((result) async {
+      if (result == ConnectivityResult.none) {
+        emit(false);
+      } else {
+        final bool hasInternet = await _checkInternetConnection();
+        emit(hasInternet);
+      }
+    });
+  }
+
+  Future<bool> _checkInternetConnection() async {
+    try {
+      final result = await InternetAddress.lookup('google.com');
+      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  @override
+  Future<void> close() {
+    connectivitySubscription?.cancel();
+    return super.close();
+  }
+}
 
 void main() async {
   var binding = WidgetsFlutterBinding.ensureInitialized();
-  splash.FlutterNativeSplash.preserve(widgetsBinding: binding);
+
   final pref = await SharedPreferences.getInstance();
-  final pbCubit = PocketBaseServiceCubit(pref);
+
+  PocketBase? pb;
+  try {
+    pb = PocketBase(AppData.baseUrl,
+        authStore: AsyncAuthStore(
+          save: (String data) async => pref.setString('pb_auth', data),
+          initial: pref.getString('pb_auth'),
+        ));
+  } catch (e) {
+    debugPrint('PocketBase initialization error: $e');
+  }
+
+  final pbCubit = PocketBaseServiceCubit(pb!);
   final notificationCubit = NotificationCubit(pbCubit.state.pb);
   try {
     await notificationCubit.fetchNotifications();
-  } catch (e) {}
-  splash.FlutterNativeSplash.remove();
+  } catch (e) {
+    debugPrint('Notification fetch error: $e');
+  }
+
   ChatService chatService = ChatService(pbCubit.state.pb);
+
   runApp(
     MultiBlocProvider(
       providers: [
         BlocProvider(
+          create: (context) => ConnectivityCubit(),
+        ),
+        BlocProvider(
           create: (context) => pbCubit,
         ),
         BlocProvider(
-          create: (context) =>
-              ChatCubit(chatService, pbCubit.state.pb)..loadRecentChats(),
+          create: (context) {
+            final chat = ChatCubit(chatService, pbCubit.state.pb);
+            try {
+              chat.loadRecentChats();
+              chat.subscribeToMessages();
+            } catch (e) {
+              debugPrint('Chat initialization error: $e');
+            }
+            return chat;
+          },
+          lazy: false,
         ),
         BlocProvider(
           create: (context) => notificationCubit,
@@ -48,7 +115,11 @@ void main() async {
           lazy: false,
           create: (context) {
             final postCubit = PostCubit(pbCubit.state.pb);
-            postCubit.fetchPosts();
+            try {
+              postCubit.fetchPosts();
+            } catch (e) {
+              debugPrint('Post fetch error: $e');
+            }
             return postCubit;
           },
         ),
@@ -57,7 +128,6 @@ void main() async {
     ),
   );
 }
-
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
 
@@ -67,7 +137,62 @@ class MainApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Book Mass',
       builder: (context, child) => AppLock(
-        builder: (context, arg) => child!,
+        builder: (context, arg) => ScaffoldMessenger(
+          child: BlocListener<ConnectivityCubit, bool>(
+            listener: (context, hasConnection) {
+              if (hasConnection) {
+                // Refresh data when connection is restored
+                try {
+                  context.read<ChatCubit>().loadRecentChats();
+                  context.read<NotificationCubit>().fetchNotifications();
+                  context.read<PostCubit>().fetchPosts();
+                } catch (e) {
+                  debugPrint('Data refresh error: $e');
+                }
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('No internet connection'),
+                    duration: Duration(seconds: 3),
+                  ),
+                );
+              }
+            },
+            child: BlocBuilder<ConnectivityCubit, bool>(
+              builder: (context, hasConnection) {
+                if (!hasConnection) {
+                  return Scaffold(
+                    body: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.wifi_off,
+                              size: 48, color: AppColors.primary),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'No Internet Connection',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: () {
+                              context
+                                  .read<ConnectivityCubit>()
+                                  .monitorConnection();
+                            },
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                return child!;
+              },
+            ),
+          ),
+        ),
         lockScreenBuilder: (context) => const LockScreen(),
         backgroundLockLatency: const Duration(seconds: 6),
       ),

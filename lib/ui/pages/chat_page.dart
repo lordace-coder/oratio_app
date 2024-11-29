@@ -27,19 +27,16 @@ class ChatPage extends StatefulWidget {
 class _ChatPageState extends State<ChatPage> {
   List<types.Message> _messages = [];
   late RecordModel currentUser;
-
+  late PocketBase pb;
   late types.User _user;
   late types.User _otherUser;
 
   @override
   void initState() {
     super.initState();
-    currentUser = context
-        .read<PocketBaseServiceCubit>()
-        .state
-        .pb
-        .authStore
-        .model as RecordModel;
+    pb = context.read<PocketBaseServiceCubit>().state.pb;
+
+    currentUser = pb.authStore.model as RecordModel;
     _user = types.User(
       id: currentUser.id,
       firstName: currentUser.getStringValue('first_name'),
@@ -49,11 +46,11 @@ class _ChatPageState extends State<ChatPage> {
         id: widget.profile.userId,
         firstName: widget.profile.user.getStringValue('first_name'),
         lastName: widget.profile.user.getStringValue('last_name'));
+    subscribeToMessages();
     WidgetsBinding.instance.addPostFrameCallback((_) => _loadMessages());
   }
 
   Future<void> _loadMessages() async {
-    final pb = context.read<PocketBaseServiceCubit>().state.pb;
     // FETCH MESSAGES
     final response =
         await pb.collection('messages').getFullList(sort: '-created');
@@ -69,6 +66,8 @@ class _ChatPageState extends State<ChatPage> {
     setState(() {
       _messages = messages;
     });
+    await Future.delayed(Durations.extralong4);
+    context.read<ChatCubit>().markMessagesAsRead(_otherUser.id);
   }
 
   void _handleSendPressed(types.PartialText message) {
@@ -85,10 +84,53 @@ class _ChatPageState extends State<ChatPage> {
     _addMessage(textMessage);
   }
 
+  void subscribeToMessages() {
+    pb.collection('messages').subscribe(
+      '*',
+      (e) {
+        print('updated inchat');
+        if (e.action == 'create') {
+          // Check if the message involves the current user
+
+          if (e.record == null) {
+            return;
+          }
+          final message = e.record!;
+          // TODO update ui with new message
+          final newMsg = types.TextMessage(
+              author: _otherUser,
+              id: message.id,
+              text: message.getStringValue('message'));
+          if (mounted) {
+            _addMessage(newMsg);
+          }
+
+          print([e.record, 'new message in current chat']);
+        }
+      },
+      filter: 'reciever.id = "${currentUser.id}"',
+    );
+  }
+
+  void unsubscribeToMessages() {
+    try {
+      pb.collection('messages').unsubscribe('*');
+    } catch (e) {
+      print('unsubscribe error $e');
+    }
+  }
+
   void _addMessage(types.Message message) {
     setState(() {
       _messages.insert(0, message);
     });
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    unsubscribeToMessages();
+    super.dispose();
   }
 
   void _handleAttachmentPressed() {
