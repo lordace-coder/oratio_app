@@ -4,6 +4,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:async';
 import 'dart:io';
+import 'package:hive/hive.dart';
+import 'package:oratio_app/bloc/chat_cubit/message_cubit.dart';
+import 'package:oratio_app/services/chat/db/chat_hive.dart';
+
+import 'package:path_provider/path_provider.dart';
 import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/bloc/chat_cubit/chat_cubit.dart';
 import 'package:oratio_app/bloc/notifications_cubit/notifications_cubit.dart';
@@ -56,6 +61,11 @@ class ConnectivityCubit extends Cubit<bool> {
 
 void main() async {
   var binding = WidgetsFlutterBinding.ensureInitialized();
+  final appDocumentDirectory = await getApplicationDocumentsDirectory();
+
+  Hive.init(appDocumentDirectory.path);
+  Hive.registerAdapter(
+      MessageModelAdapter()); // Generate this using build_runner
 
   final pref = await SharedPreferences.getInstance();
 
@@ -69,8 +79,11 @@ void main() async {
   } catch (e) {
     debugPrint('PocketBase initialization error: $e');
   }
-
-  final pbCubit = PocketBaseServiceCubit(pb!);
+  final repository = MessageRepository(
+    pocketBase: pb!,
+    messageBox: await Hive.openBox<MessageModel>('messages'),
+  );
+  final pbCubit = PocketBaseServiceCubit(pb);
   final notificationCubit = NotificationCubit(pbCubit.state.pb);
   try {
     await notificationCubit.fetchNotifications();
@@ -85,6 +98,12 @@ void main() async {
       providers: [
         BlocProvider(
           create: (context) => ConnectivityCubit(),
+        ),
+        BlocProvider(
+          create: (context) => MessageCubit(
+            pb: pb!,
+            repository: repository,
+          ),
         ),
         BlocProvider(
           create: (context) => pbCubit,
@@ -128,6 +147,7 @@ void main() async {
     ),
   );
 }
+
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
 

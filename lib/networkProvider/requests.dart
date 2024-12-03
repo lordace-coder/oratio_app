@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
@@ -159,4 +160,24 @@ Future<List<RecordModel>> findParish(BuildContext context,
 
 Future createPrayerRequest(PocketBase pb, Map<String, dynamic> data) async {
   await pb.collection('prayer_requests').create(body: data);
+}
+
+Future<void> sendOffering(BuildContext context,
+    {required Map<String, String> data}) async {
+  // create offering
+  try {
+    await context
+        .read<PocketBaseServiceCubit>()
+        .state
+        .pb
+        .collection("offerings")
+        .create(body: data);
+    NotificationService.showSuccess("Offering recieved, Remain blessed");
+  } catch (e) {
+    print(e);
+    NotificationService.showError(
+      "Error occured while paying offering",
+      duration: Durations.extralong4,
+    );
+  }
 }

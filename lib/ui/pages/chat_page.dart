@@ -8,6 +8,7 @@ import 'package:mime/mime.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/bloc/chat_cubit/chat_cubit.dart';
+import 'package:oratio_app/bloc/chat_cubit/message_cubit.dart';
 import 'package:oratio_app/bloc/posts/post_cubit.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/networkProvider/users.dart';
@@ -52,8 +53,11 @@ class _ChatPageState extends State<ChatPage> {
 
   Future<void> _loadMessages() async {
     // FETCH MESSAGES
-    final response =
-        await pb.collection('messages').getFullList(sort: '-created');
+    final response = await pb.collection('messages').getFullList(
+          sort: '-created',
+          filter:
+              'reciever.id = "${widget.profile.userId}" || sender.id = "${widget.profile.userId}" ',
+        );
 
     final messages = <types.Message>[];
     for (var item in response) {
@@ -70,19 +74,19 @@ class _ChatPageState extends State<ChatPage> {
     context.read<ChatCubit>().markMessagesAsRead(_otherUser.id);
   }
 
-  void _handleSendPressed(types.PartialText message) {
-    final textMessage = types.TextMessage(
-      author: _user,
-      createdAt: DateTime.now().millisecondsSinceEpoch,
-      id: const Uuid().v4(),
-      text: message.text,
-    );
-    context
-        .read<ChatCubit>()
-        .sendMessage(message: message.text, receiverId: widget.profile.userId);
-    //  LOAD MESSAGES AGAIN OR JUST ADD NEW TEXT TO MESSAGE
-    _addMessage(textMessage);
-  }
+  // void _handleSendPressed(types.PartialText message) {
+  //   final textMessage = types.TextMessage(
+  //     author: _user,
+  //     createdAt: DateTime.now().millisecondsSinceEpoch,
+  //     id: const Uuid().v4(),
+  //     text: message.text,
+  //   );
+  //   context
+  //       .read<ChatCubit>()
+  //       .sendMessage(message: message.text, receiverId: widget.profile.userId);
+  //   //  LOAD MESSAGES AGAIN OR JUST ADD NEW TEXT TO MESSAGE
+  //   _addMessage(textMessage);
+  // }
 
   void subscribeToMessages() {
     pb.collection('messages').subscribe(
@@ -129,7 +133,6 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void dispose() {
     // TODO: implement dispose
-    unsubscribeToMessages();
     super.dispose();
   }
 
@@ -242,8 +245,23 @@ class _ChatPageState extends State<ChatPage> {
     });
   }
 
+  Future<void> _loadInitialMessages() async {
+    await context.read<MessageCubit>().loadMessages(widget.profile.userId);
+    if (mounted) {
+      print(context.read<MessageCubit>().state.messages);
+    }
+  }
+
+  void _handleSendPressed(types.PartialText message) {
+    context.read<MessageCubit>().sendMessage(
+          message: message.text,
+          receiverId: widget.profile.userId,
+        );
+  }
+
   @override
   Widget build(BuildContext context) {
+    _loadInitialMessages();
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -288,56 +306,86 @@ class _ChatPageState extends State<ChatPage> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.call),
-            onPressed: () {},
-          ),
-          IconButton(
             icon: const Icon(Icons.more_vert),
             onPressed: () {},
           ),
         ],
       ),
-      body: Chat(
-        messages: _messages,
-        onAttachmentPressed: _handleAttachmentPressed,
-        onMessageTap: _handleMessageTap,
-        onPreviewDataFetched: _handlePreviewDataFetched,
-        onSendPressed: _handleSendPressed,
-        showUserAvatars: true,
-        showUserNames: true,
-        user: _user,
-        theme: DefaultChatTheme(
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          inputBackgroundColor: Theme.of(context).colorScheme.surface,
-          primaryColor: AppColors.primary,
-          secondaryColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-          inputTextColor: Theme.of(context).colorScheme.onSurface,
-          inputTextCursorColor: Theme.of(context).colorScheme.primary,
-          inputTextDecoration: InputDecoration(
-            hintStyle: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-            ),
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
-          ),
-          sentMessageBodyTextStyle: TextStyle(
-            color: Theme.of(context).colorScheme.onPrimary,
-            fontSize: 16,
-          ),
-          receivedMessageBodyTextStyle: TextStyle(
-            color: Theme.of(context).colorScheme.onSurface,
-            fontSize: 16,
-          ),
-          userAvatarNameColors: [
-            Colors.blue,
-            Theme.of(context).colorScheme.secondary,
-            Theme.of(context).colorScheme.tertiary,
-          ],
-        ),
-      ),
+      body: BlocConsumer<MessageCubit, MessageState>(
+          listener: (ctx, state) {},
+          builder: (context, state) {
+            if (state.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final messages = state.messages.map((msg) {
+              print(['file path', msg.filePath!.isNotEmpty]);
+              if (msg.filePath != null && msg.filePath!.isNotEmpty) {
+                // Handle file message
+                return types.FileMessage(
+                  author: msg.senderId == _user.id ? _user : _otherUser,
+                  id: msg.id,
+                  name: msg.filePath!.split('/').last, // Get filename from path
+                  size: 0, // You might want to store file size in your model
+                  uri: msg.filePath!,
+                  createdAt: msg.created.millisecondsSinceEpoch,
+                );
+              } else {
+                // Handle text message
+                return types.TextMessage(
+                  author: msg.senderId == _user.id ? _user : _otherUser,
+                  id: msg.id,
+                  text: msg.message,
+                  createdAt: msg.created.millisecondsSinceEpoch,
+                );
+              }
+            }).toList();
+
+            return Chat(
+              messages: messages,
+              onAttachmentPressed: _handleAttachmentPressed,
+              onMessageTap: _handleMessageTap,
+              onPreviewDataFetched: _handlePreviewDataFetched,
+              onSendPressed: _handleSendPressed,
+              showUserAvatars: true,
+              showUserNames: true,
+              user: _user,
+              theme: DefaultChatTheme(
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                inputBackgroundColor: Theme.of(context).colorScheme.surface,
+                primaryColor: AppColors.primary,
+                secondaryColor:
+                    Theme.of(context).colorScheme.surfaceContainerHighest,
+                inputTextColor: Theme.of(context).colorScheme.onSurface,
+                inputTextCursorColor: Theme.of(context).colorScheme.primary,
+                inputTextDecoration: InputDecoration(
+                  hintStyle: TextStyle(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.5),
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                ),
+                sentMessageBodyTextStyle: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                  fontSize: 16,
+                ),
+                receivedMessageBodyTextStyle: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontSize: 16,
+                ),
+                userAvatarNameColors: [
+                  Colors.blue,
+                  Theme.of(context).colorScheme.secondary,
+                  Theme.of(context).colorScheme.tertiary,
+                ],
+              ),
+            );
+          }),
     );
   }
 }

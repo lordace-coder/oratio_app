@@ -43,11 +43,3 @@ String getFullName(RecordModel user) {
 }
 // TODO ADD FUNCTIONALITY TO SEARCH AND FILTER JUST PRIESTS AND JUST USERS
 
-
-Future getUserProfile(String id)async{
-try {
-  
-} catch (e) {
-  
-}
-}

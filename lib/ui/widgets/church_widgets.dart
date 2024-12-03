@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:oratio_app/bloc/blocs.dart';
+import 'package:oratio_app/helpers/snackbars.dart';
+import 'package:oratio_app/helpers/transaction_modal.dart';
+import 'package:oratio_app/networkProvider/requests.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -227,6 +233,7 @@ class MassTimeButton extends StatelessWidget {
     );
   }
 }
+
 Widget buildChurchCard(BuildContext context, RecordModel church) {
   return GestureDetector(
     onTap: () {
@@ -315,7 +322,6 @@ Widget buildChurchCard(BuildContext context, RecordModel church) {
   );
 }
 
-
 AppBar createAppBar(BuildContext context,
     {required String label,
     List<Widget>? actions,
@@ -334,8 +340,22 @@ AppBar createAppBar(BuildContext context,
   );
 }
 
-void showGiveOptions(BuildContext context) {
-  showModalBottomSheet(
+void showGiveOptions(BuildContext context) async {
+  final user = context.read<PocketBaseServiceCubit>().state.pb.authStore.model
+      as RecordModel;
+  await context
+      .read<PocketBaseServiceCubit>()
+      .state
+      .pb
+      .collection("users")
+      .authRefresh();
+  /*
+  !AVAILABLE REASONS
+  offering
+  tithe
+  seed
+   */
+  await showModalBottomSheet(
     context: context,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -355,7 +375,9 @@ void showGiveOptions(BuildContext context) {
                     ),
               ),
               IconButton(
-                onPressed: () => Navigator.pop(context),
+                onPressed: () async {
+                  Navigator.pop(context);
+                },
                 icon: const Icon(FontAwesomeIcons.xmark),
               ),
             ],
@@ -366,32 +388,284 @@ void showGiveOptions(BuildContext context) {
             icon: FontAwesomeIcons.handHoldingDollar,
             label: 'Give Offering',
             description: 'Support your parish',
-            onTap: () {
-              Navigator.pop(context);
-              // Handle offering
+            onTap: () async {
+              // Create a BuildContext that we can safely dispose later
+              BuildContext? dialogContext;
+              try {
+                final parish = await showChurchSelect(context);
+                if (parish == null) {
+                  return NotificationService.showError(
+                    'Cancelled Transaction',
+                    duration: Durations.extralong4,
+                  );
+                }
+
+                final amt = await showTransactionModal(
+                  context,
+                  TransactionDetail("Give",
+                      handleTransaction: (context, data) {},
+                      onChange: (val) {},
+                      icon: const Icon(FontAwesomeIcons.cashRegister),
+                      title: 'Give Offering',
+                      detail: 'Support Your Parish'),
+                );
+
+                if (amt == null) {
+                  return NotificationService.showError(
+                    'Cancelled Transaction',
+                    duration: Durations.extralong4,
+                  );
+                }
+
+                // Show loading modal
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (BuildContext context) {
+                    dialogContext = context; // Store the dialog's context
+                    return const Center(
+                      child: Card(
+                        child: Padding(
+                          padding: EdgeInsets.all(20.0),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircularProgressIndicator(),
+                              SizedBox(height: 16),
+                              Text('Processing offering...'),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+
+                // Process the transaction
+                final parsedAmt = int.tryParse(amt);
+                if (parsedAmt == null) {
+                  if (dialogContext != null) Navigator.pop(dialogContext!);
+                  return showError(context, message: 'Invalid amount parsed');
+                }
+
+                if (parsedAmt > double.tryParse(amt.replaceAll('₦', ''))!) {
+                  if (dialogContext != null) Navigator.pop(dialogContext!);
+                  return showError(context,
+                      message:
+                          'Insufficient balance \n please fund account and try again');
+                }
+
+                await sendOffering(context, data: {
+                  "user": user.id,
+                  "amount": parsedAmt.toString(),
+                  "parish": parish,
+                  "reason": "offering",
+                });
+
+                // Dismiss loading modal after transaction completes
+                if (dialogContext != null) Navigator.pop(dialogContext!);
+
+                // Show success message
+                NotificationService.showSuccess(
+                  'Offering sent successfully',
+                  duration: Durations.extralong4,
+                );
+              } catch (e) {
+                // Dismiss loading modal if there's an error
+                if (dialogContext != null) Navigator.pop(dialogContext!);
+                showError(context,
+                    message: 'An error occurred: ${e.toString()}');
+              }
             },
           ),
           const Gap(16),
-          buildGiveOption(
-            context,
-            icon: FontAwesomeIcons.coins,
-            label: 'Pay Tithes',
-            description: '10% of your income',
-            onTap: () {
-              Navigator.pop(context);
-              // Handle tithes
-            },
-          ),
+          buildGiveOption(context,
+              icon: FontAwesomeIcons.coins,
+              label: 'Pay Tithes',
+              description: '10% of your income', onTap: () async {
+            // Create a BuildContext that we can safely dispose later
+            BuildContext? dialogContext;
+            try {
+              final parish = await showChurchSelect(context);
+              if (parish == null) {
+                return NotificationService.showError(
+                  'Cancelled Transaction',
+                  duration: Durations.extralong4,
+                );
+              }
+
+              final amt = await showTransactionModal(
+                context,
+                TransactionDetail("Give",
+                    handleTransaction: (context, data) {},
+                    onChange: (val) {},
+                    icon: const Icon(FontAwesomeIcons.cashRegister),
+                    title: 'Pay Your tithe',
+                    detail: 'A tenth of thy wages'),
+              );
+
+              if (amt == null) {
+                return NotificationService.showError(
+                  'Cancelled Transaction',
+                  duration: Durations.extralong4,
+                );
+              }
+
+              // Show loading modal
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (BuildContext context) {
+                  dialogContext = context; // Store the dialog's context
+                  return const Center(
+                    child: Card(
+                      child: Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(height: 16),
+                            Text('Processing transaction...'),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              );
+
+              // Process the transaction
+              final parsedAmt = int.tryParse(amt);
+              if (parsedAmt == null) {
+                if (dialogContext != null) Navigator.pop(dialogContext!);
+                return showError(context, message: 'Invalid amount parsed');
+              }
+
+              if (parsedAmt > double.tryParse(amt.replaceAll('₦', ''))!) {
+                if (dialogContext != null) Navigator.pop(dialogContext!);
+                return showError(context,
+                    message:
+                        'Insufficient balance \n please fund account and try again');
+              }
+
+              await sendOffering(context, data: {
+                "user": user.id,
+                "amount": parsedAmt.toString(),
+                "parish": parish,
+                "reason": "tithe",
+              });
+
+              // Dismiss loading modal after transaction completes
+              if (dialogContext != null) Navigator.pop(dialogContext!);
+
+              // Show success message
+              NotificationService.showSuccess(
+                'Tithe paid successfully',
+                duration: Durations.extralong4,
+              );
+            } catch (e) {
+              // Dismiss loading modal if there's an error
+              if (dialogContext != null) Navigator.pop(dialogContext!);
+              showError(context, message: 'An error occurred: ${e.toString()}');
+            }
+          }),
           const Gap(16),
           buildGiveOption(
             context,
             icon: FontAwesomeIcons.seedling,
             label: 'Special Seed',
             description: 'Give for a specific cause',
-            onTap: () {
-              Navigator.pop(context);
-              // Handle special seed
-            },
+            onTap: () async {
+              BuildContext? dialogContext;
+              try {
+                final parish = await showChurchSelect(context);
+                if (parish == null) {
+                  return NotificationService.showError(
+                    'Cancelled Transaction',
+                    duration: Durations.extralong4,
+                  );
+                }
+
+                final amt = await showTransactionModal(
+                  context,
+                  TransactionDetail("Give",
+                      handleTransaction: (context, data) {},
+                      onChange: (val) {},
+                      icon: const Icon(FontAwesomeIcons.cashRegister),
+                      title: 'Special Seed',
+                      detail: 'Give for'),
+                );
+
+                if (amt == null) {
+                  return NotificationService.showError(
+                    'Cancelled Transaction',
+                    duration: Durations.extralong4,
+                  );
+                }
+
+                // Show loading modal
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (BuildContext context) {
+                    dialogContext = context; // Store the dialog's context
+                    return const Center(
+                      child: Card(
+                        child: Padding(
+                          padding: EdgeInsets.all(20.0),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircularProgressIndicator(),
+                              SizedBox(height: 16),
+                              Text('Processing Transaction...'),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                );
+
+                // Process the transaction
+                final parsedAmt = int.tryParse(amt);
+                if (parsedAmt == null) {
+                  if (dialogContext != null) Navigator.pop(dialogContext!);
+                  return showError(context, message: 'Invalid amount parsed');
+                }
+
+                if (parsedAmt > double.tryParse(amt.replaceAll('₦', ''))!) {
+                  if (dialogContext != null) Navigator.pop(dialogContext!);
+                  return showError(context,
+                      message:
+                          'Insufficient balance \n please fund account and try again');
+                }
+
+                await sendOffering(context, data: {
+                  "user": user.id,
+                  "amount": parsedAmt.toString(),
+                  "parish": parish,
+                  "reason": "seed",
+                });
+
+                // Dismiss loading modal after transaction completes
+                if (dialogContext != null) Navigator.pop(dialogContext!);
+
+                // Show success message
+                NotificationService.showSuccess(
+                  'Seed sent successfully',
+                  duration: Durations.extralong4,
+                );
+              } catch (e) {
+                // Dismiss loading modal if there's an error
+                if (dialogContext != null) Navigator.pop(dialogContext!);
+                showError(context,
+                    message: 'An error occurred: ${e.toString()}');
+              }
+            } // Create a BuildContext that we can safely dispose later
+
+            ,
           ),
         ],
       ),
@@ -455,5 +729,3 @@ Widget buildGiveOption(
     ),
   );
 }
-
-

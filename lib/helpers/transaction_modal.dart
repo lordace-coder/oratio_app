@@ -1,9 +1,14 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/helpers/functions.dart';
+import 'package:oratio_app/ui/pages/mass_booking_page.dart';
 
 class TransactionModal extends StatelessWidget {
   final TextEditingController controller;
@@ -207,6 +212,76 @@ Future<String?>? showTransactionModal(
             title: detail.title,
           ));
   return amt;
+}
+
+Future<String?>? showChurchSelect(BuildContext context) async {
+  String? church;
+  await showDialog(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          content: BlocConsumer<ProfileDataCubit, ProfileDataState>(
+            listener: (context, state) {},
+            builder: (context, state) {
+              if (state is ProfileDataLoaded) {
+                if (state.profile.parish.isNotEmpty) {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Icon Header
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color:
+                              Theme.of(context).primaryColor.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(FontAwesomeIcons.church),
+                      ),
+                      const Gap(16),
+
+                      // Title
+                      Text(
+                        "Your Parish",
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      const Gap(8),
+
+                      // Subtitle
+                      Text(
+                        "A list of parish you attend",
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey[600],
+                            ),
+                      ),
+                      const Gap(24),
+                      ...state.profile.parish.map(
+                        (i) => buildChurchItem(context, i, () async {
+                          church = i.id;
+                          await Future.delayed(Durations.short1);
+                          NotificationService.showInfo(
+                            "Parish Selected",
+                            duration: Durations.extralong1,
+                          );
+                          Navigator.pop(context);
+                        }, false),
+                      )
+                    ],
+                  );
+                }
+              }
+              context.read<ProfileDataCubit>().getMyProfile();
+              return const NoParishYet();
+            },
+          ),
+        );
+      });
+  return church;
 }
 
 class TransactionDetail {

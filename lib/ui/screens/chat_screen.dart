@@ -79,17 +79,16 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
                 ),
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: SliverToBoxAdapter(
-                    child: buildStorySection(context),
-                  ),
-                ),
+                // SliverPadding(
+                //   padding: const EdgeInsets.symmetric(horizontal: 16),
+                //   sliver: SliverToBoxAdapter(
+                //     child: buildStorySection(context),
+                //   ),
+                // ),
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: BlocBuilder<ChatCubit, ChatState>(
                     builder: (context, state) {
-                      print(state.props);
                       if (state is ChatLoading) {
                         return const SliverToBoxAdapter(
                           child: Center(
