@@ -1,89 +1,194 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:gap/gap.dart';
-import 'package:go_router/go_router.dart';
-import 'package:oratio_app/ui/routes/route_names.dart';
-import 'package:oratio_app/ui/themes.dart';
-import 'package:oratio_app/ui/widgets/inputs.dart';
-
-enum PaymentStatus { succesful, failed }
+import 'package:intl/intl.dart';
+import 'package:oratio_app/bloc/booking_bloc/state.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 class PaymentSuccesful extends StatelessWidget {
-  const PaymentSuccesful({super.key});
+  const PaymentSuccesful({
+    super.key,
+    required this.bookingData,
+    required this.bookingId,
+  });
+
+  final MassBookingData bookingData;
+  final String bookingId;
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return "Date not specified";
+    return DateFormat('EEEE, MMM d, yyyy').format(date);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: AppColors.appBg,
-        appBar: AppBar(
-          leading: GestureDetector(
-              onTap: () {
-                context.pop();
-              },
-              child: const Icon(FontAwesomeIcons.chevronLeft)),
-        ),
-        body: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10.0),
-          child: Column(
-            children: [
-              const Row(),
-              Stack(
-                alignment: Alignment.center,
+      backgroundColor: Colors.grey[50],
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Column(
                 children: [
                   Container(
-                    width: 150,
-                    height: 150,
+                    height: 200,
                     decoration: BoxDecoration(
-                        color: AppColors.greenDisabled,
-                        borderRadius: BorderRadius.circular(10000)),
-                  ),
-                  Positioned(
-                    // // top: 0,
-                    // left: 30,
-                    // right: 30,
-                    // // bottom: 0,
-                    child: Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                          color: AppColors.green,
-                          borderRadius: BorderRadius.circular(10000)),
-                      child: const Icon(
-                        FontAwesomeIcons.check,
-                        size: 60,
-                        color: Colors.white,
+                      gradient: LinearGradient(
+                        colors: [Colors.blue[700]!, Colors.blue[900]!],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
                     ),
-                  )
+                    child: const Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.check_circle_outline,
+                            color: Colors.white,
+                            size: 64,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'Booking Confirmed!',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        children: [
+                          _buildInfoCard(),
+                          const SizedBox(height: 32),
+                          _buildQRPlaceholder(),
+                          const Spacer(),
+                          _buildButtons(context),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
-              const Gap(60),
-              const Text(
-                'Payment Succesful',
-                style: TextStyle(fontSize: 20),
-              ),
-              const Gap(30),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 30),
-                child: Text(
-                  'you have succesfully donated \$30.23 to this parish remain blessed',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.black54),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoCard() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            _buildInfoRow(Icons.church, 'Church',
+                bookingData.selectedChurch.getStringValue("name")),
+            const Divider(height: 32),
+            _buildInfoRow(Icons.calendar_today, 'Date',
+                _formatDate(bookingData.selectedDate)),
+            const Divider(height: 32),
+            _buildInfoRow(Icons.access_time, 'Time',
+                bookingData.getDateTime().toString()),
+            const Divider(height: 32),
+            _buildInfoRow(Icons.confirmation_number, 'Booking ID', bookingId),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.blue[700], size: 24),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 12,
                 ),
               ),
-              Expanded(child: Container()),
-              SubmitButtonV1(
-                  ontap: () {
-                    context.pushNamed(RouteNames.homePage);
-                  },
-                  radius: 12,
-                  backgroundcolor: AppColors.primary,
-                  child: const Text(
-                    'Back to App',
-                    style: TextStyle(color: Colors.white),
-                  )),
-              const Gap(20),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ],
           ),
-        ) );
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQRPlaceholder() {
+    return Container(
+      width: 150,
+      height: 150,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Center(
+        child: Icon(
+          Icons.qr_code_2,
+          size: 100,
+          color: Colors.grey[400],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildButtons(BuildContext context) {
+    return Column(
+      children: [
+        ElevatedButton(
+          onPressed: () {
+            // Add download ticket functionality
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue[700],
+            minimumSize: const Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: const Text(
+            'Download Ticket',
+            style: TextStyle(fontSize: 16),
+          ),
+        ),
+        const SizedBox(height: 16),
+        TextButton(
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+          child: Text(
+            'Back to Home',
+            style: TextStyle(
+              color: Colors.blue[700],
+              fontSize: 16,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

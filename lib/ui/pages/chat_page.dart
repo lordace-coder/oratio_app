@@ -13,6 +13,7 @@ import 'package:oratio_app/bloc/posts/post_cubit.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/networkProvider/users.dart';
 import 'package:oratio_app/services/chat/chat_service.dart';
+import 'package:oratio_app/services/file_downloader.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:uuid/uuid.dart';
@@ -26,7 +27,7 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
-  List<types.Message> _messages = [];
+  final List<types.Message> _messages = [];
   late RecordModel currentUser;
   late PocketBase pb;
   late types.User _user;
@@ -36,7 +37,7 @@ class _ChatPageState extends State<ChatPage> {
   void initState() {
     super.initState();
     pb = context.read<PocketBaseServiceCubit>().state.pb;
-
+    context.read<MessageCubit>().getSavedMessages(widget.profile.userId);
     currentUser = pb.authStore.model as RecordModel;
     _user = types.User(
       id: currentUser.id,
@@ -48,30 +49,6 @@ class _ChatPageState extends State<ChatPage> {
         firstName: widget.profile.user.getStringValue('first_name'),
         lastName: widget.profile.user.getStringValue('last_name'));
     subscribeToMessages();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadMessages());
-  }
-
-  Future<void> _loadMessages() async {
-    // FETCH MESSAGES
-    final response = await pb.collection('messages').getFullList(
-          sort: '-created',
-          filter:
-              'reciever.id = "${widget.profile.userId}" || sender.id = "${widget.profile.userId}" ',
-        );
-
-    final messages = <types.Message>[];
-    for (var item in response) {
-      messages.add(types.TextMessage(
-          author:
-              item.getStringValue('sender') == _user.id ? _user : _otherUser,
-          id: item.id,
-          text: item.getStringValue('message')));
-    }
-    setState(() {
-      _messages = messages;
-    });
-    await Future.delayed(Durations.extralong4);
-    context.read<ChatCubit>().markMessagesAsRead(_otherUser.id);
   }
 
   // void _handleSendPressed(types.PartialText message) {
@@ -132,7 +109,6 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   void dispose() {
-    // TODO: implement dispose
     super.dispose();
   }
 
@@ -225,9 +201,16 @@ class _ChatPageState extends State<ChatPage> {
     }
   }
 
-  void _handleMessageTap(BuildContext _, types.Message message) async {
+  void _handleMessageTap(BuildContext context, types.Message message) async {
     if (message is types.FileMessage) {
-      await OpenFilex.open(message.uri);
+      try {
+        await FileDownloadHandler.downloadFile(message);
+        // No need for a "downloaded" message since the file will open automatically
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.toString())),
+        );
+      }
     }
   }
 
@@ -247,9 +230,6 @@ class _ChatPageState extends State<ChatPage> {
 
   Future<void> _loadInitialMessages() async {
     await context.read<MessageCubit>().loadMessages(widget.profile.userId);
-    if (mounted) {
-      print(context.read<MessageCubit>().state.messages);
-    }
   }
 
   void _handleSendPressed(types.PartialText message) {
@@ -262,6 +242,7 @@ class _ChatPageState extends State<ChatPage> {
   @override
   Widget build(BuildContext context) {
     _loadInitialMessages();
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,
@@ -314,19 +295,23 @@ class _ChatPageState extends State<ChatPage> {
       body: BlocConsumer<MessageCubit, MessageState>(
           listener: (ctx, state) {},
           builder: (context, state) {
-            if (state.isLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
             final messages = state.messages.map((msg) {
-              print(['file path', msg.filePath!.isNotEmpty]);
               if (msg.filePath != null && msg.filePath!.isNotEmpty) {
                 // Handle file message
+
                 return types.FileMessage(
                   author: msg.senderId == _user.id ? _user : _otherUser,
                   id: msg.id,
                   name: msg.filePath!.split('/').last, // Get filename from path
                   size: 0, // You might want to store file size in your model
-                  uri: msg.filePath!,
+                  uri: pb.files
+                      .getUrl(
+                          RecordModel(
+                              collectionName: "messages",
+                              id: msg.id,
+                              collectionId: "nnh9nuyiwl32nsv"),
+                          msg.filePath!)
+                      .toString(),
                   createdAt: msg.created.millisecondsSinceEpoch,
                 );
               } else {

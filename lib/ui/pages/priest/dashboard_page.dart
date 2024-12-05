@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:oratio_app/ui/bright/modals/offering.dart';
+import 'package:oratio_app/ui/bright/pages/create_community.dart';
+import 'package:oratio_app/ui/bright/pages/create_event.dart';
+import 'package:oratio_app/ui/bright/pages/withdrawal_modal.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/church_widgets.dart';
@@ -11,6 +16,10 @@ class DashboardPage extends StatelessWidget {
   DashboardPage({super.key});
 
   bool showBalance = false;
+
+  void showComingSoon() {
+    NotificationService.showInfo("Coming soon", duration: Durations.extralong4);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -136,7 +145,12 @@ class DashboardPage extends StatelessWidget {
                                       color: Colors.white, fontSize: 20),
                                 ),
                                 GestureDetector(
-                                  onTap: () {},
+                                  onTap: () {
+                                    showDialog(
+                                        context: context,
+                                        builder: (ctx) =>
+                                            const WithdrawalModal());
+                                  },
                                   child: Container(
                                       padding: const EdgeInsets.all(6),
                                       decoration: BoxDecoration(
@@ -173,20 +187,27 @@ class DashboardPage extends StatelessWidget {
                             DashboardButton(
                               icon: FontAwesomeIcons.book,
                               text: 'Mass Requests',
-                              onTap: () {},
+                              onTap: () {
+                                showComingSoon();
+                              },
                             ),
                             DashboardButton(
                               icon: FontAwesomeIcons.church,
-                              onTap: () {},
+                              onTap: () {
+                                Navigator.of(context).push(MaterialPageRoute(
+                                    builder: (ctx) =>
+                                        const PrayerCommunityCreationPage()));
+                              },
                               text: 'Create Community',
                             ),
-                            DashboardButton(
-                              icon: FontAwesomeIcons.dropbox,
-                              onTap: () {
-                                // show modal with more options like communities,generate qr
-                              },
-                              text: 'More',
-                            ),
+                            // DashboardButton(
+                            //   icon: FontAwesomeIcons.dropbox,
+                            //   onTap: () {
+                            //     // show modal with more options like communities,generate qr
+                            //     // showDialog(context: context, builder: (ctx)=>);
+                            //   },
+                            //   text: 'More',
+                            // ),
                           ],
                         ),
                       ],
@@ -215,13 +236,19 @@ class DashboardPage extends StatelessWidget {
                                 child: DashboardButton(
                                   icon: FontAwesomeIcons.userGroup,
                                   text: 'Seeking Souls',
-                                  onTap: () {},
+                                  onTap: () {
+                                    showComingSoon();
+                                  },
                                 ),
                               ),
                               gap,
                               DashboardButton(
                                 icon: FontAwesomeIcons.clock,
-                                onTap: () {},
+                                onTap: () {
+                                  Navigator.of(context).push(MaterialPageRoute(
+                                      builder: (ctx) =>
+                                          const CreateEventPage()));
+                                },
                                 text: 'Create Event',
                               ),
                             ],
@@ -232,17 +259,10 @@ class DashboardPage extends StatelessWidget {
                                 message: 'View offerings',
                                 child: DashboardButton(
                                   icon: FontAwesomeIcons.cashRegister,
-                                  onTap: () {},
+                                  onTap: () {
+                                    // showDialog(context: context, builder: (ctx)=>const OfferingGivingModal());
+                                  },
                                   text: 'Offering\'s',
-                                ),
-                              ),
-                              gap,
-                              Tooltip(
-                                message: 'Request Prayer\'s',
-                                child: DashboardButton(
-                                  icon: FontAwesomeIcons.pray,
-                                  text: 'Confessions',
-                                  onTap: () {},
                                 ),
                               ),
                             ],
@@ -255,7 +275,7 @@ class DashboardPage extends StatelessWidget {
                                 child: DashboardButton(
                                   icon: FontAwesomeIcons.qrcode,
                                   text: 'Generate Qr',
-                                  onTap: () {},
+                                  onTap: showComingSoon,
                                 ),
                               ),
                               gap,
@@ -263,8 +283,10 @@ class DashboardPage extends StatelessWidget {
                                 message: 'Hold a live mass',
                                 child: DashboardButton(
                                   icon: FontAwesomeIcons.readme,
-                                  text: 'Live Mass',
-                                  onTap: () {},
+                                  text: 'Go Mass',
+                                  onTap: () {
+                                    showComingSoon();
+                                  },
                                 ),
                               ),
                             ],

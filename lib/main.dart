@@ -3,11 +3,10 @@ import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:async';
-import 'dart:io';
 import 'package:hive/hive.dart';
+import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/chat_cubit/message_cubit.dart';
 import 'package:oratio_app/services/chat/db/chat_hive.dart';
-
 import 'package:path_provider/path_provider.dart';
 import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/bloc/chat_cubit/chat_cubit.dart';
@@ -23,6 +22,7 @@ import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+
 class ConnectivityCubit extends Cubit<bool> {
   final Connectivity _connectivity = Connectivity();
   StreamSubscription? connectivitySubscription;
@@ -37,19 +37,13 @@ class ConnectivityCubit extends Cubit<bool> {
       if (result == ConnectivityResult.none) {
         emit(false);
       } else {
-        final bool hasInternet = await _checkInternetConnection();
-        emit(hasInternet);
+        emit(_checkInternetConnection());
       }
     });
   }
 
-  Future<bool> _checkInternetConnection() async {
-    try {
-      final result = await InternetAddress.lookup('google.com');
-      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
-    } catch (_) {
-      return false;
-    }
+  bool _checkInternetConnection() {
+    return true;
   }
 
   @override
@@ -60,7 +54,7 @@ class ConnectivityCubit extends Cubit<bool> {
 }
 
 void main() async {
-  var binding = WidgetsFlutterBinding.ensureInitialized();
+  WidgetsFlutterBinding.ensureInitialized();
   final appDocumentDirectory = await getApplicationDocumentsDirectory();
 
   Hive.init(appDocumentDirectory.path);
@@ -150,7 +144,6 @@ void main() async {
 
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
@@ -161,7 +154,6 @@ class MainApp extends StatelessWidget {
           child: BlocListener<ConnectivityCubit, bool>(
             listener: (context, hasConnection) {
               if (hasConnection) {
-                // Refresh data when connection is restored
                 try {
                   context.read<ChatCubit>().loadRecentChats();
                   context.read<NotificationCubit>().fetchNotifications();
@@ -170,12 +162,7 @@ class MainApp extends StatelessWidget {
                   debugPrint('Data refresh error: $e');
                 }
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('No internet connection'),
-                    duration: Duration(seconds: 3),
-                  ),
-                );
+                NotificationService.showError('No internet connection');
               }
             },
             child: BlocBuilder<ConnectivityCubit, bool>(

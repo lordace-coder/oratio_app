@@ -51,6 +51,9 @@ class MessageCubit extends Cubit<MessageState> {
       '*',
       (e) {
         if (e.action == 'create' && e.record != null) {
+          if (e.record?.getStringValue("sender") == currentUserId.toString()) {
+            return;
+          }
           final message = MessageModel.fromPocketBase(e.record!);
           _handleNewMessage(message);
         }
@@ -71,10 +74,23 @@ class MessageCubit extends Cubit<MessageState> {
           );
       final messages =
           response.map((item) => MessageModel.fromPocketBase(item)).toList();
+      print(messages.where((i) => i.received).length);
+
       emit(state.copyWith(
         messages: messages,
         isLoading: false,
       ));
+      // save all messages
+      messages.map((msg) async {
+        if (msg.received) {
+          return;
+        }
+        repository.messageBox.add(msg);
+        // *UPDATE MODEL RECIEVED TO TRUE
+        await pb
+            .collection("messages")
+            .update(msg.id, body: {"recieved": true});
+      });
 
       // Mark messages as read after loading
       await markMessagesAsRead(otherUserId);
@@ -87,11 +103,27 @@ class MessageCubit extends Cubit<MessageState> {
     }
   }
 
+  Future getSavedMessages(String otherUserId) async {
+    try {
+      emit(MessageState(
+        messages: [],
+        isLoading: true,
+      ));
+      final results = await repository.getUnreceivedMessages(otherUserId);
+      emit(MessageState(
+        messages: results,
+      ));
+    } catch (e) {
+      print('error gettings saved messages $e');
+    }
+  }
+
   Future<void> sendMessage({
     required String message,
     required String receiverId,
   }) async {
     try {
+      print('called');
       final currentUserId = pb.authStore.model.id;
       final newMessage = MessageModel(
         id: const Uuid().v4(),
@@ -103,42 +135,44 @@ class MessageCubit extends Cubit<MessageState> {
       );
 
       // Save locally first
-      await repository.saveUnreceivedMessage(newMessage);
+      // await repository.saveUnreceivedMessage(newMessage);
 
       // Try to send to PocketBase
       try {
-        await pb.collection('messages').create(body: newMessage.toJson());
-        await repository.markMessageAsReceived(newMessage.id);
+        await pb.collection('messages').create(body: {
+          "sender": currentUserId,
+          "message": newMessage.message,
+          "reciever": receiverId,
+        });
+        // await repository.markMessageAsReceived(newMessage.id);
       } catch (e) {
         // Message will remain in local storage if send fails
         print('Failed to send message: $e');
+        rethrow;
       }
 
       // Update state with new message
       final updatedMessages = [newMessage, ...state.messages];
       emit(state.copyWith(messages: updatedMessages));
     } catch (e) {
+      print('error $e');
       emit(state.copyWith(error: e.toString()));
     }
   }
 
   Future<void> markMessagesAsRead(String senderId) async {
+    print('markMessagesAsRead');
     try {
       final currentUserId = pb.authStore.model.id;
-      await pb.collection('messages').update(
-        'filter=sender.id = "$senderId" && reciever.id = "$currentUserId" && read = false',
-        body: {'read': true},
-      );
 
-      // Update local state
-      final updatedMessages = state.messages.map((msg) {
-        if (msg.senderId == senderId && !msg.read) {
-          return msg.copyWith(read: true);
-        }
-        return msg;
-      }).toList();
-
-      emit(state.copyWith(messages: updatedMessages));
+      for (var msg in state.messages) {
+        if (msg.read) continue;
+        await pb.collection('messages').update(
+          msg.id,
+          body: {'read': true},
+        );
+      }
+      // emit(state.copyWith(messages: updatedMessages));
     } catch (e) {
       print('Error marking messages as read: $e');
     }

@@ -99,11 +99,7 @@ final appRouter = GoRouter(
               communityId: state.pathParameters['community'].toString(),
             ),
           ),
-          GoRoute(
-            path: '/paymentsuccesfull',
-            name: RouteNames.paymentSuccesful,
-            builder: (context, state) => const PaymentSuccesful(),
-          ),
+
           GoRoute(
             path: '/mass',
             name: RouteNames.mass,

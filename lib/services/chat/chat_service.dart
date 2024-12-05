@@ -27,11 +27,6 @@ class ChatService {
         final RecordModel otherParticipant = isSender
             ? message.expand['reciever']![0]
             : message.expand['sender']![0];
-        print([
-          message.expand['sender']![0].id,
-          currentUserId,
-          otherParticipant.id
-        ]);
 
         final String otherParticipantId = otherParticipant.id;
 
@@ -56,9 +51,10 @@ class ChatService {
         }
 
         // Update unread count
-        if (!message.getBoolValue('read') && !isSender) {
+        if (!message.getBoolValue('read')) {
           chatMap[otherParticipantId]!.unreadCount++;
         }
+        print([!message.getBoolValue('read'), !isSender]);
 
         // Update most recent message preview
         if (chatMap[otherParticipantId]!

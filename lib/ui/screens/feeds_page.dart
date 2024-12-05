@@ -7,6 +7,7 @@ import 'package:oratio_app/bloc/posts/post_cubit.dart';
 import 'package:oratio_app/bloc/posts/post_state.dart';
 import 'package:oratio_app/bloc/prayer_requests/requests_cubit.dart';
 import 'package:oratio_app/bloc/prayer_requests/requests_state.dart';
+import 'package:oratio_app/helpers/user.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/buttons.dart';
 import 'package:oratio_app/ui/widgets/live_streams.dart';
@@ -15,6 +16,7 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/widgets/posts/prayer_community.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 class FeedsListScreen extends StatefulWidget {
   const FeedsListScreen({super.key});
@@ -68,6 +70,12 @@ class _FeedsListScreenState extends State<FeedsListScreen>
     _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       getPosts();
+      context
+          .read<PocketBaseServiceCubit>()
+          .state
+          .pb
+          .collection('users')
+          .authRefresh();
       getPrayerRequests();
     });
   }
@@ -130,10 +138,27 @@ class _FeedsListScreenState extends State<FeedsListScreen>
                                           width: 2,
                                         ),
                                       ),
-                                      child: const CircleAvatar(
-                                        backgroundColor: Colors.white,
-                                        radius: 20,
-                                        child: Icon(FontAwesomeIcons.user),
+                                      child: Hero(
+                                        tag: "my-profile",
+                                        child: CircleAvatar(
+                                          backgroundColor: Colors.white,
+                                          backgroundImage: getProfilePic(context,
+                                                      user: pb.authStore.model
+                                                          as RecordModel) ==
+                                                  null
+                                              ? null
+                                              : NetworkImage(getProfilePic(
+                                                  context,
+                                                  user: pb.authStore.model
+                                                      as RecordModel)!),
+                                          radius: 20,
+                                          child: getProfilePic(context,
+                                                      user: pb.authStore.model
+                                                          as RecordModel) ==
+                                                  null
+                                              ? const Icon(FontAwesomeIcons.user)
+                                              : null,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -151,15 +176,20 @@ class _FeedsListScreenState extends State<FeedsListScreen>
                                               color: Colors.white,
                                             ),
                                       ),
-                                      Text(
-                                        pb.authStore.model.data['username'],
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleMedium
-                                            ?.copyWith(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                            ),
+                                      GestureDetector(
+                                        onTap: () {
+                                          context.pushNamed(RouteNames.profile);
+                                        },
+                                        child: Text(
+                                          pb.authStore.model.data['username'],
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.copyWith(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
                                       ),
                                     ],
                                   ),

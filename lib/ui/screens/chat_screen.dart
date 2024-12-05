@@ -38,7 +38,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    context.read<ChatCubit>().loadRecentChats();
+    if (context.read<ChatCubit>().state is! ChatsLoaded) {
+      context.read<ChatCubit>().loadRecentChats();
+    }
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(

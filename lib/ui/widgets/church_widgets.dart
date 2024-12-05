@@ -7,6 +7,7 @@ import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/helpers/snackbars.dart';
 import 'package:oratio_app/helpers/transaction_modal.dart';
+import 'package:oratio_app/networkProvider/booking_requests.dart';
 import 'package:oratio_app/networkProvider/requests.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
@@ -341,14 +342,10 @@ AppBar createAppBar(BuildContext context,
 }
 
 void showGiveOptions(BuildContext context) async {
-  final user = context.read<PocketBaseServiceCubit>().state.pb.authStore.model
-      as RecordModel;
-  await context
-      .read<PocketBaseServiceCubit>()
-      .state
-      .pb
-      .collection("users")
-      .authRefresh();
+  final pb = context.read<PocketBaseServiceCubit>().state.pb;
+  final user = pb.authStore.model as RecordModel;
+  await pb.collection("users").authRefresh();
+
   /*
   !AVAILABLE REASONS
   offering
@@ -448,16 +445,21 @@ void showGiveOptions(BuildContext context) async {
                   return showError(context, message: 'Invalid amount parsed');
                 }
 
-                if (parsedAmt > double.tryParse(amt.replaceAll('₦', ''))!) {
+                if (parsedAmt >
+                    double.tryParse((await getUserBalance(user.id, pb))
+                        .replaceAll('₦', ''))!) {
                   if (dialogContext != null) Navigator.pop(dialogContext!);
                   return showError(context,
                       message:
                           'Insufficient balance \n please fund account and try again');
                 }
 
+                final donation = await handleDonation(
+                    pb, {'amount': parsedAmt, 'userId': pb.authStore.model.id});
+
                 await sendOffering(context, data: {
                   "user": user.id,
-                  "amount": parsedAmt.toString(),
+                  "donation": donation!['recordId'],
                   "parish": parish,
                   "reason": "offering",
                 });
@@ -474,7 +476,7 @@ void showGiveOptions(BuildContext context) async {
                 // Dismiss loading modal if there's an error
                 if (dialogContext != null) Navigator.pop(dialogContext!);
                 showError(context,
-                    message: 'An error occurred: ${e.toString()}');
+                    message: 'An error occurred: transaction failed');
               }
             },
           ),
@@ -542,16 +544,21 @@ void showGiveOptions(BuildContext context) async {
                 return showError(context, message: 'Invalid amount parsed');
               }
 
-              if (parsedAmt > double.tryParse(amt.replaceAll('₦', ''))!) {
+              if (parsedAmt >
+                  double.tryParse((await getUserBalance(user.id, pb))
+                      .replaceAll('₦', ''))!) {
                 if (dialogContext != null) Navigator.pop(dialogContext!);
                 return showError(context,
                     message:
                         'Insufficient balance \n please fund account and try again');
               }
 
+              final donation = await handleDonation(
+                  pb, {'amount': parsedAmt, 'userId': pb.authStore.model.id});
+
               await sendOffering(context, data: {
                 "user": user.id,
-                "amount": parsedAmt.toString(),
+                "donation": donation!['recordId'],
                 "parish": parish,
                 "reason": "tithe",
               });
@@ -628,23 +635,27 @@ void showGiveOptions(BuildContext context) async {
                   },
                 );
 
-                // Process the transaction
                 final parsedAmt = int.tryParse(amt);
                 if (parsedAmt == null) {
                   if (dialogContext != null) Navigator.pop(dialogContext!);
                   return showError(context, message: 'Invalid amount parsed');
                 }
 
-                if (parsedAmt > double.tryParse(amt.replaceAll('₦', ''))!) {
+                if (parsedAmt >
+                    double.tryParse((await getUserBalance(user.id, pb))
+                        .replaceAll('₦', ''))!) {
                   if (dialogContext != null) Navigator.pop(dialogContext!);
                   return showError(context,
                       message:
                           'Insufficient balance \n please fund account and try again');
                 }
 
+                final donation = await handleDonation(
+                    pb, {'amount': parsedAmt, 'userId': pb.authStore.model.id});
+
                 await sendOffering(context, data: {
                   "user": user.id,
-                  "amount": parsedAmt.toString(),
+                  "donation": donation!['recordId'],
                   "parish": parish,
                   "reason": "seed",
                 });

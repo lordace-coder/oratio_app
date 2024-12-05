@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:intl/intl.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
@@ -9,6 +10,8 @@ import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/bloc/posts/post_state.dart';
 import 'package:oratio_app/bloc/prayer_requests/requests_state.dart';
 import 'package:oratio_app/helpers/functions.dart';
+import 'package:oratio_app/helpers/user.dart';
+import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/widgets/church_widgets.dart';
 import 'package:pocketbase/pocketbase.dart';
 
@@ -88,6 +91,8 @@ class _PrayerCommentBottomSheetState extends State<PrayerCommentBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final pb = context.read<PocketBaseServiceCubit>().state.pb;
+
     if (comments.isEmpty && !searched) {
       getComments(context);
       searched = true;
@@ -181,9 +186,14 @@ class _PrayerCommentBottomSheetState extends State<PrayerCommentBottomSheet> {
             ),
             child: Row(
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 18,
-                  // backgroundImage: NetworkImage('YOUR_CURRENT_USER_AVATAR_URL'),
+                  backgroundImage: getProfilePic(context,
+                              user: pb.authStore.model as RecordModel) ==
+                          null
+                      ? null
+                      : NetworkImage(getProfilePic(context,
+                          user: pb.authStore.model as RecordModel)!),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -311,6 +321,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
       getComments(context);
       searched = true;
     }
+    final pb = context.read<PocketBaseServiceCubit>().state.pb;
 
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,
@@ -401,9 +412,14 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
             ),
             child: Row(
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 18,
-                  // backgroundImage: NetworkImage('YOUR_CURRENT_USER_AVATAR_URL'),
+                  backgroundImage: getProfilePic(context,
+                              user: pb.authStore.model as RecordModel) ==
+                          null
+                      ? null
+                      : NetworkImage(getProfilePic(context,
+                          user: pb.authStore.model as RecordModel)!),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -456,14 +472,29 @@ class CommentItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final user = context.read<PocketBaseServiceCubit>().state.pb.authStore.model
+        as RecordModel;
+    final String? img =
+        getProfilePic(context, user: comment.expand['user']!.first);
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const CircleAvatar(
-            radius: 20,
-            // backgroundImage: NetworkImage(comment.userAvatar),
+          GestureDetector(
+            onTap: () {
+              if (comment.expand['user']!.first.id == user.id) {
+                //check if user is current user
+                context.pushNamed(RouteNames.profile);
+              } else {
+                context.pushNamed(RouteNames.profilepagevisitor,
+                    pathParameters: {'id': comment.expand['user']!.first.id});
+              }
+            },
+            child: CircleAvatar(
+              radius: 20,
+              backgroundImage: img == null ? null : NetworkImage(img),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -472,19 +503,26 @@ class CommentItem extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(
-                      comment.expand['user'] != null
-                          ? comment.expand['user']![0]
-                              .getStringValue('username')
-                          : context
-                              .read<PocketBaseServiceCubit>()
-                              .state
-                              .pb
-                              .authStore
-                              .model
-                              .getStringValue('username'),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
+                    GestureDetector(
+                      onTap: () {
+                        if (comment.expand['user']!.first.id == user.id) {
+                          //check if user is current user
+                          context.pushNamed(RouteNames.profile);
+                        } else {
+                          context.pushNamed(RouteNames.profilepagevisitor,
+                              pathParameters: {
+                                'id': comment.expand['user']!.first.id
+                              });
+                        }
+                      },
+                      child: Text(
+                        comment.expand['user'] != null
+                            ? comment.expand['user']![0]
+                                .getStringValue('username')
+                            : user.getStringValue('username'),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),

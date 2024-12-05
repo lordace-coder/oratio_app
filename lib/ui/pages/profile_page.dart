@@ -18,8 +18,6 @@ class ProfilePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    context.read<ProfileDataCubit>().getMyProfile();
-
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
       body: RefreshIndicator.adaptive(
@@ -29,11 +27,6 @@ class ProfilePage extends StatelessWidget {
         child: BlocConsumer<ProfileDataCubit, ProfileDataState>(
           listener: (context, state) {},
           builder: (context, state) {
-            if (state is ProfileDataLoading || state is ProfileDataInitial) {
-              return const SizedBox(
-                  height: 300,
-                  child: Center(child: CircularProgressIndicator.adaptive()));
-            }
             if (state is ProfileDataLoaded) {
               final data = state.profile;
 
@@ -87,13 +80,16 @@ class ProfilePage extends StatelessWidget {
                                         color: Colors.white, width: 2),
                                   ),
                                   // display image here
-                                  child: const CircleAvatar(
-                                    radius: 50,
-                                    backgroundColor: Color(0xFF8B80FF),
-                                    child: Icon(
-                                      FontAwesomeIcons.userAstronaut,
-                                      color: Colors.white,
-                                      size: 40,
+                                  child: const Hero(
+                                    tag: "my-profile",
+                                    child: CircleAvatar(
+                                      radius: 50,
+                                      backgroundColor: Color(0xFF8B80FF),
+                                      child: Icon(
+                                        FontAwesomeIcons.userAstronaut,
+                                        color: Colors.white,
+                                        size: 40,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -204,10 +200,9 @@ class ProfilePage extends StatelessWidget {
                 ),
               ]);
             }
+            context.read<ProfileDataCubit>().getMyProfile();
 
-            return Container(
-              child: const Text('data'),
-            );
+            return Center(child:LinearProgressIndicator());
 
             // Profile Sections
           },

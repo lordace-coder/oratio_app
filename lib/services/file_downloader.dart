@@ -1,0 +1,73 @@
+import 'package:dio/dio.dart';
+import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
+import 'dart:io';
+import 'package:open_filex/open_filex.dart';
+
+class FileDownloadHandler {
+  static Future<String> getDownloadPath(String fileName) async {
+    Directory? directory;
+    if (Platform.isAndroid) {
+      directory = Directory('/storage/emulated/0/Download');
+    } else {
+      directory = await getApplicationDocumentsDirectory();
+    }
+    return '${directory.path}/$fileName';
+  }
+
+  static Future<bool> isFileDownloaded(String filePath) async {
+    final file = File(filePath);
+    return await file.exists();
+  }
+
+  static Future<void> openFile(String filePath) async {
+    try {
+      final result = await OpenFilex.open(filePath);
+      if (result.type != ResultType.done) {
+        throw Exception('Could not open file: ${result.message}');
+      }
+    } catch (e) {
+      throw Exception('Error opening file: $e');
+    }
+  }
+
+  static Future<void> downloadFile(types.FileMessage message) async {
+    // Request storage permission
+    var status = await Permission.storage.request();
+    if (!status.isGranted) {
+      throw Exception('Storage permission not granted');
+    }
+
+    try {
+      final savePath = await getDownloadPath(message.name);
+
+      // Check if file already exists
+      if (await isFileDownloaded(savePath)) {
+        // If file exists, just open it
+        await openFile(savePath);
+        return;
+      }
+
+      // Download file using Dio
+      NotificationService.showInfo("Downloading File Message");
+      await Dio().download(
+        message.uri,
+        savePath,
+        onReceiveProgress: (received, total) {
+          if (total != -1) {
+            double progress = (received / total) * 100;
+            print('Download Progress: ${progress.toStringAsFixed(0)}%');
+          }
+        },
+      );
+
+      // Open the file after download
+      await openFile(savePath);
+    } catch (e) {
+      print('Error handling file: $e');
+      throw Exception('Failed to handle file: $e');
+    }
+  }
+}

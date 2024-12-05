@@ -115,10 +115,9 @@ class ChatCubit extends Cubit<ChatState> {
   // Stream real-time updates for new messages
   void subscribeToMessages() {
     final currentUserId = _pb.authStore.model.id;
-    final t = _pb.collection('messages').subscribe(
+     _pb.collection('messages').subscribe(
       '*',
       (e) {
-        print('updated');
         if (e.action == 'create') {
           // Check if the message involves the current user
 
@@ -130,8 +129,7 @@ class ChatCubit extends Cubit<ChatState> {
               message.data['receiver'].toString().contains(currentUserId)) {
             loadRecentChats(); // Refresh chat list when new message arrives
           }
-          // TODO show message popup without local notification only if user is the reciever
-          print([e.record, 'notification']);
+        
           loadRecentChats();
         }
       },

@@ -10,12 +10,11 @@ import 'package:oratio_app/helpers/snackbars.dart';
 import 'package:oratio_app/helpers/transaction_modal.dart';
 import 'package:oratio_app/networkProvider/booking_requests.dart';
 import 'package:oratio_app/networkProvider/requests.dart';
+import 'package:oratio_app/ui/pages/pages.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/inputs.dart';
 import 'package:pocketbase/pocketbase.dart';
-
-
 
 class MassBookBottomSheet extends StatefulWidget {
   final Animation<Offset> slideAnimation;
@@ -36,7 +35,7 @@ class MassBookBottomSheet extends StatefulWidget {
 }
 
 class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
-  RecordModel? donation;
+  String? donation;
 
   final TextEditingController intention = TextEditingController();
 
@@ -246,7 +245,7 @@ class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
                       throw Exception(['Invalid donation data']);
                     }
                     setState(() {
-                      donation = RecordModel.fromJson(res);
+                      donation = res['recordId'];
                     });
                     showSuccess(context,
                         message: 'You have succesfully donated ₦$parsedAmt');
@@ -303,18 +302,34 @@ class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
                 return showError(context, message: 'Add at least one attendee');
               }
               // form is valid
+              print({
+                "time": widget.data.getDateTime(),
+                "parish": widget.data.selectedChurch.id,
+                "intention": intention.text.trim(),
+                "attendees": attendees.text.trim(),
+                "user": userId,
+                "donation": donation,
+              });
               try {
                 final res = await pb.collection("mass_booking").create(body: {
-                  "time": widget.data.selectedDate.toString(),
+                  "time": widget.data.getDateTime().toString(),
                   "parish": widget.data.selectedChurch.id,
                   "intention": intention.text.trim(),
                   "attendees": attendees.text.trim(),
                   "user": userId,
-                  "donation": donation!.id,
+                  "donation": donation,
                 });
                 showSuccess(context,
                     message: 'Mass Booking completed succesfully');
-                context.pushNamed(RouteNames.paymentSuccesful);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PaymentSuccesful(
+                      bookingData: widget.data,
+                      bookingId: res.id,
+                    ),
+                  ),
+                );
               } catch (e) {
                 final err = e as ClientException;
                 showError(context,
