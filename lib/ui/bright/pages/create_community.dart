@@ -1,7 +1,14 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
+import 'package:oratio_app/helpers/snackbars.dart';
+import 'package:oratio_app/networkProvider/users.dart';
 import 'package:oratio_app/ui/themes.dart';
+import 'package:pocketbase/pocketbase.dart';
+import 'package:http/http.dart' as http;
 
 class PrayerCommunityCreationPage extends StatefulWidget {
   const PrayerCommunityCreationPage({super.key});
@@ -26,32 +33,14 @@ class _PrayerCommunityCreationPageState
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
 
-  final List<Map<String, String>> _potentialLeaders = [
-    {
-      'name': 'Father Michael Rodriguez',
-      'church': "St. Mary's Cathedral",
-      'image': 'https://example.com/priest1.jpg'
-    },
-    {
-      'name': 'Sister Elizabeth Grace',
-      'church': 'Holy Spirit Parish',
-      'image': 'https://example.com/sister1.jpg'
-    },
-    {
-      'name': 'Deacon Thomas Wright',
-      'church': 'Our Lady of Mercy',
-      'image': 'https://example.com/deacon1.jpg'
-    },
-  ];
-
-  List<Map<String, String>> _filteredLeaders = [];
-  Map<String, String>? _selectedLeader;
+  List<RecordModel> _filteredLeaders = [];
+  RecordModel? _selectedLeader;
   bool _showLeaderSearch = true;
 
   @override
   void initState() {
     super.initState();
-    _filteredLeaders = _potentialLeaders;
+    _filteredLeaders = [];
     _leaderSearchController.addListener(_onLeaderSearchChange);
   }
 
@@ -73,51 +62,46 @@ class _PrayerCommunityCreationPageState
         });
       }
     } catch (e) {
-      print('Error picking image: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to pick image: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      showError(context, message: 'Error picking image: $e');
     }
   }
 
-  void _filterLeaders(String query) {
+  Future<void> _filterLeaders(String query) async {
     if (query.isEmpty) {
       setState(() {
-        _filteredLeaders = _potentialLeaders;
+        _filteredLeaders = [];
       });
       return;
     }
+    final pb = context.read<PocketBaseServiceCubit>().state.pb;
+    final potentialLeaders = await pb.collection("users").getList(
+        perPage: 8,
+        filter:
+            'username ~ "$query" || first_name ~ "$query" || last_name ~ "$query" ');
 
     setState(() {
-      _filteredLeaders = _potentialLeaders
-          .where((leader) =>
-              leader['name']!.toLowerCase().contains(query.toLowerCase()) ||
-              leader['church']!.toLowerCase().contains(query.toLowerCase()))
-          .toList();
+      _filteredLeaders = potentialLeaders.items;
     });
   }
 
   bool _validateInputs() {
     if (_communityNameController.text.trim().isEmpty) {
-      _showErrorSnackbar('Please enter a community name');
+      showError(context, message: 'Please enter a community name');
       return false;
     }
 
     if (_descriptionController.text.trim().isEmpty) {
-      _showErrorSnackbar('Please provide a community description');
+      showError(context, message: 'Please provide a community description');
       return false;
     }
 
     if (_selectedImage == null) {
-      _showErrorSnackbar('Please select a community image');
+      showError(context, message: 'Please select a community image');
       return false;
     }
 
     if (_selectedLeader == null) {
-      _showErrorSnackbar('Please select a community leader');
+      showError(context, message: 'Please select a community leader');
       return false;
     }
 
@@ -131,23 +115,22 @@ class _PrayerCommunityCreationPageState
       });
 
       try {
-        await Future.delayed(const Duration(seconds: 2));
+        final pb = context.read<PocketBaseServiceCubit>().state.pb;
         final data = _collectFormData();
         print('Community Data: $data');
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Community created successfully!'),
-            backgroundColor: AppColors.green,
-          ),
-        );
+        final bytes = await _selectedImage?.readAsBytes();
+        await pb.collection('prayer_community').create(body: data, files: [
+          http.MultipartFile.fromBytes(
+            'image',
+            bytes as List<int>,
+            filename: _selectedImage?.name,
+          )
+        ]);
+        NotificationService.showInfo('Created Community Succesfully');
+        _clearForm();
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to create community: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        print(e);
+        showError(context, message: 'Failed to create community: $e');
       } finally {
         setState(() {
           _isLoading = false;
@@ -167,16 +150,16 @@ class _PrayerCommunityCreationPageState
 
   Map<String, dynamic> _collectFormData() {
     return {
-      'communityName': _communityNameController.text.trim(),
+      'community': _communityNameController.text.trim(),
       'description': _descriptionController.text.trim(),
-      'leaderName': _selectedLeader?['name'],
-      'leaderChurch': _selectedLeader?['church'],
-      'communityImage': _selectedImage?.path,
+      'leader': _selectedLeader?.id,
+      // 'leaderChurch': _selectedLeader?['church'],
     };
   }
 
   @override
   Widget build(BuildContext context) {
+    final pb = context.read<PocketBaseServiceCubit>().state.pb;
     return Scaffold(
       backgroundColor: AppColors.appBg,
       body: CustomScrollView(
@@ -290,10 +273,17 @@ class _PrayerCommunityCreationPageState
                           final leader = _filteredLeaders[index];
                           return ListTile(
                             leading: CircleAvatar(
-                              backgroundImage: NetworkImage(leader['image']!),
+                              backgroundImage:
+                                  leader.getStringValue("avatar").isNotEmpty
+                                      ? NetworkImage(pb
+                                          .getFileUrl(leader,
+                                              leader.getStringValue("avatar"))
+                                          .toString())
+                                      : null,
                             ),
-                            title: Text(leader['name']!),
-                            subtitle: Text(leader['church']!),
+                            title: Text(leader.getStringValue("username")),
+                            // TODO DISPLAY CHURCH
+                            subtitle: Text(getFullName(leader)),
                             onTap: () {
                               setState(() {
                                 _selectedLeader = leader;
@@ -322,8 +312,10 @@ class _PrayerCommunityCreationPageState
                     child: Row(
                       children: [
                         CircleAvatar(
-                          backgroundImage:
-                              NetworkImage(_selectedLeader!['image']!),
+                          backgroundImage: NetworkImage(pb
+                              .getFileUrl(_selectedLeader!,
+                                  _selectedLeader!.getStringValue('avatar'))
+                              .toString()),
                           radius: 25,
                         ),
                         const SizedBox(width: 15),
@@ -332,19 +324,19 @@ class _PrayerCommunityCreationPageState
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                _selectedLeader!['name']!,
+                                _selectedLeader!.getStringValue('username'),
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                 ),
                               ),
-                              Text(
-                                _selectedLeader!['church']!,
-                                style: TextStyle(
-                                  color: AppColors.textDarkDim,
-                                  fontSize: 14,
-                                ),
-                              ),
+                              // Text(
+                              //   _selectedLeader!['church']!,
+                              //   style: TextStyle(
+                              //     color: AppColors.textDarkDim,
+                              //     fontSize: 14,
+                              //   ),
+                              // ),
                             ],
                           ),
                         ),
@@ -467,5 +459,14 @@ class _PrayerCommunityCreationPageState
     _descriptionController.dispose();
     _leaderSearchController.dispose();
     super.dispose();
+  }
+
+  void _clearForm() {
+    _communityNameController.clear();
+    _descriptionController.clear();
+    _leaderSearchController.clear();
+    _selectedImage = null;
+    _selectedLeader = null;
+    setState(() {});
   }
 }

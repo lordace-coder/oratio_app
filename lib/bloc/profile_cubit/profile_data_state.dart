@@ -6,12 +6,14 @@ class Profile {
   List<RecordModel> parish;
   String contact;
   List<RecordModel> community;
+  RecordModel? parishLeading;
   Profile({
     required this.user,
     required this.userId,
     required this.parish,
     required this.contact,
     required this.community,
+    this.parishLeading,
   });
 
   Profile copyWith({
@@ -42,7 +44,8 @@ final class ProfileDataError extends ProfileDataState {
   final String error;
 
   ProfileDataError(this.error) {
-    NotificationService.showError('Error occured loading profile $error');
+    NotificationService.showError('Error occured loading profile $error',
+        duration: const Duration(seconds: 5));
   }
 }
 

@@ -1,334 +1,469 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:animate_do/animate_do.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
-import 'package:oratio_app/ui/bright/modals/offering.dart';
+import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
+import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
+import 'package:oratio_app/networkProvider/paystack_payment.dart';
 import 'package:oratio_app/ui/bright/pages/create_community.dart';
 import 'package:oratio_app/ui/bright/pages/create_event.dart';
 import 'package:oratio_app/ui/bright/pages/withdrawal_modal.dart';
+import 'package:oratio_app/ui/pages/home_screen.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
-import 'package:oratio_app/ui/themes.dart';
-import 'package:oratio_app/ui/widgets/church_widgets.dart';
-import 'package:oratio_app/ui/widgets/home.dart';
+import 'package:pocketbase/pocketbase.dart';
 
-class DashboardPage extends StatelessWidget {
-  DashboardPage({super.key});
+class DashboardPage extends StatefulWidget {
+  const DashboardPage({super.key});
 
+  @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
   bool showBalance = false;
+  List _availableBanks = [];
 
   void showComingSoon() {
     NotificationService.showInfo("Coming soon", duration: Durations.extralong4);
   }
 
+  Future<void> loadChurchForPriest() async {
+    final pb = context.read<PocketBaseServiceCubit>().state.pb;
+    final profile = context.read<ProfileDataCubit>();
+    await profile.getMyProfile();
+  }
+
+  void handleGetBankList() async {
+    try {
+      if (_availableBanks.isEmpty) {
+        final res = await getBankList();
+
+        setState(() {
+          _availableBanks = res;
+        });
+      }
+    } catch (e) {
+      NotificationService.showError(
+        'Failed to load bank list',
+        duration: const Duration(seconds: 3),
+      );
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      loadChurchForPriest();
+      handleGetBankList();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    handleGetBankList();
     return Scaffold(
-      appBar: createAppBar(
-        context,
-        label: 'Parish Dashboard',
-        actions: [
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.blue.shade900,
+              Colors.indigo.shade900,
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(context),
+              Expanded(
+                child: RefreshIndicator.adaptive(
+                  color: Colors.white,
+                  onRefresh: () async {
+                    await loadChurchForPriest();
+                  },
+                  child: ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      FadeInDown(child: _buildBalanceCard()),
+                      const Gap(20),
+                      FadeInLeft(child: _buildQuickActions(context)),
+                      const Gap(20),
+                      FadeInRight(child: _buildMainGrid(context)),
+                      const Gap(20),
+                      FadeInUp(child: _buildRecentActivities(context)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            'Parish Dashboard',
+            style: TextStyle(
+              fontSize: 24,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           PopupMenuButton(
+            icon: const Icon(Icons.more_vert, color: Colors.white),
             itemBuilder: (context) => [
               const PopupMenuItem(
-                  child: Row(
-                children: [
-                  Icon(
-                    FontAwesomeIcons.userNinja,
-                    color: Colors.black54,
-                  ),
-                  Gap(5),
-                  Text('Customer Support')
-                ],
-              )),
+                child: Row(
+                  children: [
+                    Icon(FontAwesomeIcons.userNinja, size: 16),
+                    Gap(8),
+                    Text('Customer Support'),
+                  ],
+                ),
+              ),
               const PopupMenuItem(
-                  child: Row(
-                children: [
-                  Icon(
-                    FontAwesomeIcons.question,
-                    color: Colors.black54,
-                  ),
-                  Gap(5),
-                  Text('Get Help')
-                ],
-              ))
+                child: Row(
+                  children: [
+                    Icon(FontAwesomeIcons.question, size: 16),
+                    Gap(8),
+                    Text('Get Help'),
+                  ],
+                ),
+              ),
             ],
           ),
         ],
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-              fit: BoxFit.cover,
-              colorFilter: ColorFilter.mode(
-                Colors.grey.withOpacity(0.5), // Adjust opacity here
-                BlendMode.darken, // Choose how to blend the color
-              ),
-              image: Image.asset('assets/images/wallet_bg.jpeg').image),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 8.0,
-            ),
-            child: RefreshIndicator.adaptive(
-              color: AppColors.primary,
-              onRefresh: () async {
-                await Future.delayed(Durations.extralong4);
-              },
-              child: ListView(
-                children: [
-                  const Gap(20),
-                  // body,
-                  // * card to display details
-                  SizedBox(
-                    height: 109,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 15),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15),
-                        color: AppColors.primary,
-                      ),
-                      child: StatefulBuilder(builder: (context, setState) {
-                        return Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Text(
-                                      'Available Balance',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                    const Gap(5),
-                                    GestureDetector(
-                                      onTap: () {
-                                        setState(() {
-                                          showBalance = !showBalance;
-                                        });
-                                      },
-                                      child: Icon(
-                                        showBalance
-                                            ? FontAwesomeIcons.eye
-                                            : FontAwesomeIcons.eyeSlash,
-                                        size: 12,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                GestureDetector(
-                                  onTap: () {
-                                    context
-                                        .pushNamed(RouteNames.transactionsPage);
-                                  },
-                                  child: const Text(
-                                    'Transactions >',
-                                    style: TextStyle(
-                                      color: Colors.white54,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                )
-                              ],
-                            ),
-                            // * balance
-                            const Gap(20),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  showBalance ? '₦ 5000.00' : '*******',
-                                  style: const TextStyle(
-                                      color: Colors.white, fontSize: 20),
-                                ),
-                                GestureDetector(
-                                  onTap: () {
-                                    showDialog(
-                                        context: context,
-                                        builder: (ctx) =>
-                                            const WithdrawalModal());
-                                  },
-                                  child: Container(
-                                      padding: const EdgeInsets.all(6),
-                                      decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius:
-                                              BorderRadius.circular(15)),
-                                      child: Text(
-                                        'Request Withdrawal',
-                                        style:
-                                            TextStyle(color: AppColors.primary),
-                                      )),
-                                ),
-                              ],
-                            ),
-                          ],
-                        );
-                      }),
-                    ),
-                  ),
+    );
+  }
 
-                  const Gap(20),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 10),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(15),
-                      color: Colors.white,
-                    ),
-                    child: Column(
+  Widget _buildBalanceCard() {
+    RecordModel? parish;
+    if (context.watch<ProfileDataCubit>().state is ProfileDataLoaded) {
+      parish = (context.read<ProfileDataCubit>().state as ProfileDataLoaded)
+          .profile
+          .parishLeading;
+    }
+    return Card(
+      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(15),
+          gradient: LinearGradient(
+            colors: [Colors.purple.shade800, Colors.deepPurple.shade900],
+          ),
+        ),
+        child: StatefulBuilder(
+          builder: (context, setState) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            DashboardButton(
-                              icon: FontAwesomeIcons.book,
-                              text: 'Mass Requests',
-                              onTap: () {
-                                showComingSoon();
-                              },
-                            ),
-                            DashboardButton(
-                              icon: FontAwesomeIcons.church,
-                              onTap: () {
-                                Navigator.of(context).push(MaterialPageRoute(
-                                    builder: (ctx) =>
-                                        const PrayerCommunityCreationPage()));
-                              },
-                              text: 'Create Community',
-                            ),
-                            // DashboardButton(
-                            //   icon: FontAwesomeIcons.dropbox,
-                            //   onTap: () {
-                            //     // show modal with more options like communities,generate qr
-                            //     // showDialog(context: context, builder: (ctx)=>);
-                            //   },
-                            //   text: 'More',
-                            // ),
-                          ],
+                        const Text(
+                          'Available Balance',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(
+                            showBalance
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                            color: Colors.white60,
+                            size: 16,
+                          ),
+                          onPressed: () =>
+                              setState(() => showBalance = !showBalance),
                         ),
                       ],
                     ),
-                  ),
-                  const Gap(20),
-                  Builder(builder: (context) {
-                    const gap = Gap(16); //* GAP SPACE FOR ITEMS
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15),
-                        color: Colors.white,
+                    TextButton(
+                      onPressed: () =>
+                          context.pushNamed(RouteNames.transactionsPage),
+                      child: const Text(
+                        'View Transactions',
+                        style: TextStyle(color: Colors.white70),
                       ),
-                      // ignore: prefer_const_constructors
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Tooltip(
-                                message:
-                                    'View those that request your services as a priest',
-                                child: DashboardButton(
-                                  icon: FontAwesomeIcons.userGroup,
-                                  text: 'Seeking Souls',
-                                  onTap: () {
-                                    showComingSoon();
-                                  },
-                                ),
-                              ),
-                              gap,
-                              DashboardButton(
-                                icon: FontAwesomeIcons.clock,
-                                onTap: () {
-                                  Navigator.of(context).push(MaterialPageRoute(
-                                      builder: (ctx) =>
-                                          const CreateEventPage()));
-                                },
-                                text: 'Create Event',
-                              ),
-                            ],
-                          ),
-                          Column(
-                            children: [
-                              Tooltip(
-                                message: 'View offerings',
-                                child: DashboardButton(
-                                  icon: FontAwesomeIcons.cashRegister,
-                                  onTap: () {
-                                    // showDialog(context: context, builder: (ctx)=>const OfferingGivingModal());
-                                  },
-                                  text: 'Offering\'s',
-                                ),
-                              ),
-                            ],
-                          ),
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Tooltip(
-                                message: 'Generate qr code for mass',
-                                child: DashboardButton(
-                                  icon: FontAwesomeIcons.qrcode,
-                                  text: 'Generate Qr',
-                                  onTap: showComingSoon,
-                                ),
-                              ),
-                              gap,
-                              Tooltip(
-                                message: 'Hold a live mass',
-                                child: DashboardButton(
-                                  icon: FontAwesomeIcons.readme,
-                                  text: 'Go Mass',
-                                  onTap: () {
-                                    showComingSoon();
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                  const Gap(20),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
-                    decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10)),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Recent Actions',
-                              style: TextStyle(fontSize: 17),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                context.pushNamed(RouteNames.transactionsPage);
-                              },
-                              child: const Text('see more..'),
-                            )
-                          ],
-                        ),
-                        const TransactionItem(),
-                        const TransactionItem(),
-                        const TransactionItem(),
-                        const TransactionItem(),
-                      ],
                     ),
-                  )
-                ],
+                  ],
+                ),
+                const Gap(12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      showBalance
+                          ? '₦${parish != null ? parish.getDoubleValue('wallet') : "0.0"}'
+                          : '* * * * * *',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (ctx) => WithdrawalModal(
+                            banks: _availableBanks,
+                            parish: parish!,
+                          ),
+                        );
+                      },
+                      icon: const Icon(FontAwesomeIcons.moneyBillTransfer,
+                          size: 16),
+                      label: const Text('Withdraw'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.purple.shade800,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActions(BuildContext context) {
+    final profile = context.read<ProfileDataCubit>().state;
+
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Quick Actions',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
               ),
             ),
+            const Gap(16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildQuickActionButton(
+                  icon: FontAwesomeIcons.book,
+                  label: 'Mass\nRequests',
+                  onTap: showComingSoon,
+                  color: Colors.blue,
+                ),
+                _buildQuickActionButton(
+                  icon: FontAwesomeIcons.church,
+                  label: 'Create\nCommunity',
+                  onTap: () {
+                    // check if profile is loaded
+                    if (profile is ProfileDataLoaded) {
+                      if (profile.profile.parishLeading != null) {
+                        Navigator.of(context).push(MaterialPageRoute(
+                          builder: (ctx) => const PrayerCommunityCreationPage(),
+                        ));
+                      } else {
+                        NotificationService.showWarning(
+                            'Priest isnt leading any parish currently, if this is an issue then refresh');
+                      }
+                    }
+                  },
+                  color: Colors.green,
+                ),
+                _buildQuickActionButton(
+                  icon: FontAwesomeIcons.clock,
+                  label: 'Create\nEvent',
+                  onTap: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (ctx) => const CreateEventPage(),
+                    ));
+                  },
+                  color: Colors.orange,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    required Color color,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 24),
           ),
+          const Gap(8),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMainGrid(BuildContext context) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Parish Services',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const Gap(16),
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 3,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: 1,
+              children: [
+                _buildServiceButton(
+                  icon: FontAwesomeIcons.userGroup,
+                  label: 'Seeking\nSouls',
+                  onTap: showComingSoon,
+                  color: Colors.purple,
+                ),
+                _buildServiceButton(
+                  icon: FontAwesomeIcons.cashRegister,
+                  label: 'Offerings',
+                  onTap: () {},
+                  color: Colors.green,
+                ),
+                _buildServiceButton(
+                  icon: FontAwesomeIcons.qrcode,
+                  label: 'Generate\nQR',
+                  onTap: showComingSoon,
+                  color: Colors.blue,
+                ),
+                _buildServiceButton(
+                  icon: FontAwesomeIcons.readme,
+                  label: 'Go Mass',
+                  onTap: showComingSoon,
+                  color: Colors.red,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildServiceButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+    required Color color,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color),
+            const Gap(8),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecentActivities(BuildContext context) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Recent Activities',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () =>
+                      context.pushNamed(RouteNames.transactionsPage),
+                  child: const Text('See All'),
+                ),
+              ],
+            ),
+            const Gap(16),
+            const TransactionItem(),
+            const TransactionItem(),
+            const TransactionItem(),
+            const TransactionItem(),
+          ],
         ),
       ),
     );

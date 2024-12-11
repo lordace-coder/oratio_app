@@ -34,7 +34,6 @@ class MessageState {
 class MessageCubit extends Cubit<MessageState> {
   final MessageRepository repository;
   final PocketBase pb;
-  StreamSubscription? _subscription;
 
   MessageCubit({
     required this.repository,

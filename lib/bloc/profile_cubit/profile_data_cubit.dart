@@ -2,7 +2,6 @@ import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:meta/meta.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
-import 'package:oratio_app/helpers/snackbars.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 part 'profile_data_state.dart';
@@ -15,10 +14,30 @@ class ProfileDataCubit extends Cubit<ProfileDataState> {
     emit(ProfileDataLoading());
 
     try {
+// check if user is a priest
+      RecordModel? myParish;
+      if ((pb.authStore.model as RecordModel).getBoolValue('priest')) {
+        // get parish he is leading
+        final data = (await pb
+                .collection('parish')
+                .getList(filter: 'priest = "${pb.authStore.model.id}" '))
+            .items;
+        print(data);
+        if (data.isNotEmpty) {
+          myParish = data.first;
+        } else {
+          print('no parish for priest = "${pb.authStore.model.id}" ');
+          NotificationService.showWarning(
+              'This account is not connected to any parish, This may cause some errors',
+              duration: const Duration(seconds: 7));
+        }
+      }
+
       final profile = Profile(
           user: pb.authStore.model,
           userId: pb.authStore.model.id,
           parish: [],
+          parishLeading: myParish,
           contact: '',
           community: []);
       final parishAttending = await pb.collection('parish').getFullList(

@@ -43,4 +43,3 @@ A new Flutter project.
 `
 
 
-app works in android version 8 and above but not below 7 ever since i put 

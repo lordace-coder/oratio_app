@@ -1,25 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
+import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 class WithdrawalModal extends StatefulWidget {
-  const WithdrawalModal({super.key});
-
+  const WithdrawalModal({super.key, required this.banks, required this.parish});
+  final List banks;
+  final RecordModel parish;
   @override
-  _WithdrawalModalState createState() => _WithdrawalModalState();
+  _WithdrawalModalState createState() =>
+      _WithdrawalModalState(parish, bankNames: banks);
 }
 
 class _WithdrawalModalState extends State<WithdrawalModal> {
   // Bank selection dropdown values
-  final List<String> _bankNames = [
-    'St. Mary\'s Credit Union',
-    'Mercy Bank',
-    'Providence Financial',
-    'Holy Cross Bank',
-    'Guardian Savings',
-  ];
+  final List _bankNames;
   String? _selectedBank;
-
+  final RecordModel parish;
   // Text controllers
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _accountController = TextEditingController();
@@ -30,7 +31,16 @@ class _WithdrawalModalState extends State<WithdrawalModal> {
   // Data map to hold withdrawal details
   Map<String, dynamic> data = {};
 
-  void _submitWithdrawal() {
+  _WithdrawalModalState(this.parish, {required List bankNames})
+      : _bankNames = bankNames;
+
+  Future<void> submitWithdrawalRequest(Map<String, dynamic> data) async {
+    final pb = context.read<PocketBaseServiceCubit>().state.pb;
+    data['user'] = pb.authStore.model.id;
+    await pb.collection("withdrawal_request").create(body: data);
+  }
+
+  void _submitWithdrawal() async {
     // Validation logic
     if (_amountController.text.isEmpty) {
       _showValidationError('Please enter a withdrawal amount');
@@ -47,43 +57,47 @@ class _WithdrawalModalState extends State<WithdrawalModal> {
       return;
     }
 
+    final amt = int.tryParse(_amountController.text.trim());
+    if (amt == null) {
+      return _showValidationError(
+          "Invalid amount typed in, make sure amount is in digits");
+    }
+    if (amt > parish.getIntValue('wallet')) {
+      return _showValidationError("Insufficient Balance in parish account");
+    }
+
     // Prepare data map
     data = {
       'amount': _amountController.text,
-      'account': _accountController.text,
-      'bank': _selectedBank,
+      'account_number': _accountController.text,
+      'bank_name': _selectedBank,
     };
 
     // Set loading state
     setState(() {
       _isLoading = true;
     });
+    try {
+      // Simulate network request
+      await submitWithdrawalRequest(data);
 
-    // Simulate network request
-    Future.delayed(const Duration(seconds: 2), () {
-      setState(() {
-        _isLoading = false;
-      });
-
-      // Show success snackbar
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-              'Withdrawal request for \$${data['amount']} submitted successfully!'),
-          backgroundColor: Colors.deepPurple,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
+      NotificationService.showSuccess(
+          'Withdrawal request for \$${data['amount']} submitted successfully!',
+          duration: const Duration(seconds: 5));
 
       // Close the modal
       Navigator.of(context).pop();
 
       // Clear data
       _resetForm();
-    });
+    } catch (e) {
+      NotificationService.showError(
+        "An Error occured submittin request,please confirm that you have up to the required amount or contact customer care",
+      );
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   void _resetForm() {
@@ -96,21 +110,14 @@ class _WithdrawalModalState extends State<WithdrawalModal> {
   }
 
   void _showValidationError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red[700],
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
+    NotificationService.showError(message,
+        duration: const Duration(seconds: 6));
   }
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      insetPadding: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15),
       ),
@@ -207,16 +214,23 @@ class _WithdrawalModalState extends State<WithdrawalModal> {
                       style: TextStyle(color: Colors.deepPurple[700]),
                     ),
                     decoration: InputDecoration(
+                      constraints: const BoxConstraints(maxHeight: 400),
                       prefixIcon: Icon(Icons.account_balance_sharp,
                           color: Colors.deepPurple[700]),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    items: _bankNames.map((String bank) {
+                    items: _bankNames.map((bank) {
                       return DropdownMenuItem<String>(
-                        value: bank,
-                        child: Text(bank),
+                        value: bank['slug'],
+                        child: SizedBox(
+                          width: 200,
+                          child: Text(
+                            bank['name'],
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                       );
                     }).toList(),
                     onChanged: (String? newValue) {

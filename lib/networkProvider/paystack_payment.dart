@@ -1,7 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_paystack_plus/flutter_paystack_plus.dart';
 import 'package:dio/dio.dart';
+import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/helpers/configs.dart';
 import 'package:pocketbase/pocketbase.dart';
 
@@ -73,4 +77,17 @@ class PaystackPaymentService {
       throw Exception('Payment error: $e');
     }
   }
+}
+
+Future<List> getBankList() async {
+  List jsonData = [];
+  try {
+    String banksJson = await rootBundle.loadString('assets/banks.json');
+    jsonData = jsonDecode(banksJson);
+  } catch (e) {
+    print(e);
+    NotificationService.showError(
+        'Banks failed to load from assets, please contact the developers to fix this IMMEDIATELY');
+  }
+  return jsonData;
 }

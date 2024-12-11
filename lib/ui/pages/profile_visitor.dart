@@ -154,80 +154,11 @@ class ProfileVisitorPage extends StatelessWidget {
                     ),
                   ),
                 ),
-
-                SliverToBoxAdapter(
-                  child: Transform.translate(
-                    offset: const Offset(0, 0),
-                    child: Column(
-                      children: [
-                        _buildSection(
-                          "Parish You're Attending",
-                          FontAwesomeIcons.church,
-                          [
-                            ...data.parish.map((item) =>
-                                _buildParishItem(item.getStringValue('name')))
-                          ],
-                        ),
-                        _buildSection(
-                          "Contact Information",
-                          FontAwesomeIcons.addressBook,
-                          [
-                            _buildContactItem("09012345678"),
-                            _buildAddButton("Add Contact Information"),
-                          ],
-                        ),
-                        _buildSection(
-                          "Select Language",
-                          FontAwesomeIcons.language,
-                          [
-                            _buildLanguageItem("English - US"),
-                          ],
-                        ),
-                        const Gap(16),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: Column(
-                            children: [
-                              _buildGradientButton(
-                                "Customer Service",
-                                FontAwesomeIcons.headset,
-                                const Color(0xFF6C63FF),
-                                AppColors.primary,
-                                () {
-                                  openWhatsApp(
-                                      phoneNumber: '+2349061299286',
-                                      message:
-                                          'Im looking for customer support');
-                                },
-                              ),
-                              const Gap(12),
-                              _buildGradientButton(
-                                "Log Out",
-                                FontAwesomeIcons.rightFromBracket,
-                                const Color(0xFFFF6B6B),
-                                const Color(0xFFFF3131),
-                                () {
-                                  context
-                                      .read<PocketBaseServiceCubit>()
-                                      .state
-                                      .pb
-                                      .authStore
-                                      .clear();
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Gap(32),
-                      ],
-                    ),
-                  ),
-                ),
               ]);
             }
 
-            return Container(
-              child: const Text('data'),
+            return const Center(
+              child: CircularProgressIndicator(),
             );
 
             // Profile Sections
@@ -323,16 +254,6 @@ class ProfileVisitorPage extends StatelessWidget {
               ),
             ),
           ),
-          TextButton(
-            onPressed: () {},
-            child: const Text(
-              "Remove",
-              style: TextStyle(
-                color: Color(0xFFFF6B6B),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -352,44 +273,8 @@ class ProfileVisitorPage extends StatelessWidget {
               ),
             ),
           ),
-          TextButton(
-            onPressed: () {},
-            child: const Text(
-              "Edit",
-              style: TextStyle(
-                color: Color(0xFF6C63FF),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildLanguageItem(String language) {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            language,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Color(0xFF4A4A4A),
-            ),
-          ),
-        ),
-        TextButton(
-          onPressed: () {},
-          child: const Text(
-            "Choose Language",
-            style: TextStyle(
-              color: Color(0xFF6C63FF),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-      ],
     );
   }
 
