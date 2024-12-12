@@ -1,25 +1,69 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/ui/widgets/church_widgets.dart';
+import 'package:pocketbase/pocketbase.dart';
 
-class SchedulesPage extends StatelessWidget {
+class SchedulesPage extends StatefulWidget {
   const SchedulesPage({super.key});
+
+  @override
+  State<SchedulesPage> createState() => _SchedulesPageState();
+}
+
+class _SchedulesPageState extends State<SchedulesPage> {
+  bool loading = false;
+  List<RecordModel> schedule = [];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      getScheduleList();
+    });
+  }
+
+  Future<void> getScheduleList() async {
+    if (loading) return;
+    setState(() {
+      loading = true;
+    });
+    try {
+      final pb = context.read<PocketBaseServiceCubit>().state.pb;
+      final data = await pb.collection("schedule").getList();
+      schedule = data.items;
+      print(schedule[0]);
+    } catch (e) {
+      print(e);
+      NotificationService.showError('Failed to load Schedules',
+          duration: const Duration(seconds: 4));
+    }
+    setState(() {
+      loading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: createAppBar(context, label: 'My Schedule'),
-      body: ListView.builder(
-          itemCount: 10,
-          itemBuilder: (context, index) => ScheduleItem(
-                title: "Design Team Meeting",
-                dateTime: DateTime(
-                    2024, 10, 25, 10, 30), // Year, Month, Day, Hour, Minute
-                location: "Conference Room 2B",
-                category: "Meeting",
-                categoryColor: Colors.blue,
-                isCompleted: false,
-              )),
+      body: loading
+          ? const Center(
+              child: CircularProgressIndicator.adaptive(),
+            )
+          : ListView.builder(
+              itemCount: schedule.length,
+              itemBuilder: (context, index) => ScheduleItem(
+                    title: schedule[index].getStringValue('title'),
+                    dateTime: DateTime.parse(schedule[index].getStringValue(
+                        'date')), // Year, Month, Day, Hour, Minute
+                    location: schedule[index].getStringValue("location"),
+                    category: "Meeting",
+                    categoryColor: Colors.blue,
+                    isCompleted: false,
+                  )),
     );
   }
 }

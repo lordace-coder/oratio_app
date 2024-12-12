@@ -8,6 +8,7 @@ import 'package:oratio_app/bloc/posts/post_state.dart';
 import 'package:oratio_app/bloc/prayer_requests/requests_cubit.dart';
 import 'package:oratio_app/bloc/prayer_requests/requests_state.dart';
 import 'package:oratio_app/helpers/user.dart';
+import 'package:oratio_app/ui/routes/routes.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/buttons.dart';
 import 'package:oratio_app/ui/widgets/live_streams.dart';
@@ -17,6 +18,7 @@ import 'package:go_router/go_router.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/widgets/posts/prayer_community.dart';
 import 'package:pocketbase/pocketbase.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class FeedsListScreen extends StatefulWidget {
   const FeedsListScreen({super.key});
@@ -91,6 +93,13 @@ class _FeedsListScreenState extends State<FeedsListScreen>
   Widget build(BuildContext context) {
     final pb = context.read<PocketBaseServiceCubit>().state.pb;
     getPosts();
+    // redirect user to home page if first time
+    SharedPreferences.getInstance().then((pref) {
+      if (!AppRouter(pref: pref).opened()) {
+        context.pushNamed(RouteNames.onboarding);
+        print('navigating');
+      }
+    });
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: NestedScrollView(
@@ -142,7 +151,8 @@ class _FeedsListScreenState extends State<FeedsListScreen>
                                         tag: "my-profile",
                                         child: CircleAvatar(
                                           backgroundColor: Colors.white,
-                                          backgroundImage: getProfilePic(context,
+                                          backgroundImage: getProfilePic(
+                                                      context,
                                                       user: pb.authStore.model
                                                           as RecordModel) ==
                                                   null
@@ -156,7 +166,8 @@ class _FeedsListScreenState extends State<FeedsListScreen>
                                                       user: pb.authStore.model
                                                           as RecordModel) ==
                                                   null
-                                              ? const Icon(FontAwesomeIcons.user)
+                                              ? const Icon(
+                                                  FontAwesomeIcons.user)
                                               : null,
                                         ),
                                       ),

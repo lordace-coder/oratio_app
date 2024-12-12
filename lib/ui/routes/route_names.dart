@@ -4,6 +4,7 @@ class RouteNames {
   static String profile = 'profile';
   static String signup = 'signuppage';
   static String login = 'loginpage';
+  static String onboarding = 'onboardingpage';
   static String forgotpwpage = 'forgotpassword';
   static String communitypage = 'communitypage';
   static String parishpage = 'parishpage';

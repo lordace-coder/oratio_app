@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/helpers/functions.dart';
+import 'package:oratio_app/helpers/user.dart';
 import 'package:oratio_app/networkProvider/users.dart';
 import 'package:oratio_app/ui/pages/chat_page.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
@@ -38,6 +39,8 @@ class ProfileVisitorPage extends StatelessWidget {
               return const Center(child: CircularProgressIndicator.adaptive());
             }
             if (state is ProfileDataLoaded) {
+              final pb = context.read<PocketBaseServiceCubit>().state.pb;
+
               final data = state.guestProfile;
               return CustomScrollView(slivers: [
                 // Custom App Bar with Gradient and Profile Info
@@ -89,14 +92,31 @@ class ProfileVisitorPage extends StatelessWidget {
                                         color: Colors.white, width: 2),
                                   ),
                                   // display image here
-                                  child: const CircleAvatar(
+                                  child: CircleAvatar(
                                     radius: 50,
-                                    backgroundColor: Color(0xFF8B80FF),
-                                    child: Icon(
-                                      FontAwesomeIcons.userAstronaut,
-                                      color: Colors.white,
-                                      size: 40,
-                                    ),
+                                    backgroundColor: getProfilePic(context,
+                                                user: pb.authStore.model
+                                                    as RecordModel) ==
+                                            null
+                                        ? const Color(0xFF8B80FF)
+                                        : null,
+                                    backgroundImage: getProfilePic(context,
+                                                user:
+                                                    state.guestProfile!.user) ==
+                                            null
+                                        ? null
+                                        : NetworkImage(getProfilePic(context,
+                                            user: state.guestProfile!.user)!),
+                                    child: getProfilePic(context,
+                                                user:
+                                                    state.guestProfile!.user) ==
+                                            null
+                                        ? const Icon(
+                                            FontAwesomeIcons.userAstronaut,
+                                            color: Colors.white,
+                                            size: 40,
+                                          )
+                                        : null,
                                   ),
                                 ),
                                 const Gap(16),

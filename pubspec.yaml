@@ -63,6 +63,7 @@ flutter:
     - assets/images/wallet_bg.jpeg
     - assets/lottie/
     - assets/banks.json
+    - assets/images/onboarding/
   fonts:
     - family: Itim
       fonts:

@@ -7,6 +7,7 @@ import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/helpers/functions.dart';
+import 'package:oratio_app/helpers/user.dart';
 import 'package:oratio_app/networkProvider/users.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -29,6 +30,7 @@ class ProfilePage extends StatelessWidget {
           builder: (context, state) {
             if (state is ProfileDataLoaded) {
               final data = state.profile;
+              final pb = context.read<PocketBaseServiceCubit>().state.pb;
 
               return CustomScrollView(slivers: [
                 // Custom App Bar with Gradient and Profile Info
@@ -80,16 +82,34 @@ class ProfilePage extends StatelessWidget {
                                         color: Colors.white, width: 2),
                                   ),
                                   // display image here
-                                  child: const Hero(
+                                  child: Hero(
                                     tag: "my-profile",
                                     child: CircleAvatar(
                                       radius: 50,
-                                      backgroundColor: Color(0xFF8B80FF),
-                                      child: Icon(
-                                        FontAwesomeIcons.userAstronaut,
-                                        color: Colors.white,
-                                        size: 40,
-                                      ),
+                                      backgroundColor: getProfilePic(context,
+                                                  user: pb.authStore.model
+                                                      as RecordModel) ==
+                                              null
+                                          ? const Color(0xFF8B80FF)
+                                          : null,
+                                      backgroundImage: getProfilePic(context,
+                                                  user: pb.authStore.model
+                                                      as RecordModel) ==
+                                              null
+                                          ? null
+                                          : NetworkImage(getProfilePic(context,
+                                              user: pb.authStore.model
+                                                  as RecordModel)!),
+                                      child: getProfilePic(context,
+                                                  user: pb.authStore.model
+                                                      as RecordModel) ==
+                                              null
+                                          ? const Icon(
+                                              FontAwesomeIcons.userAstronaut,
+                                              color: Colors.white,
+                                              size: 40,
+                                            )
+                                          : null,
                                     ),
                                   ),
                                 ),
@@ -202,7 +222,7 @@ class ProfilePage extends StatelessWidget {
             }
             context.read<ProfileDataCubit>().getMyProfile();
 
-            return Center(child:LinearProgressIndicator());
+            return const Center(child: LinearProgressIndicator());
 
             // Profile Sections
           },

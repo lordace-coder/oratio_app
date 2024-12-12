@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -5,7 +6,9 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:async';
 import 'package:hive/hive.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:oratio_app/bloc/bible_readings/bible_reading_service.dart';
 import 'package:oratio_app/bloc/chat_cubit/message_cubit.dart';
+import 'package:oratio_app/services/bible_reading.dart';
 import 'package:oratio_app/services/chat/db/chat_hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:oratio_app/bloc/blocs.dart';
@@ -22,7 +25,14 @@ import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+  }
+}
 
 class ConnectivityCubit extends Cubit<bool> {
   final Connectivity _connectivity = Connectivity();
@@ -56,6 +66,8 @@ class ConnectivityCubit extends Cubit<bool> {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  HttpOverrides.global = MyHttpOverrides();
+
   final appDocumentDirectory = await getApplicationDocumentsDirectory();
 
   Hive.init(appDocumentDirectory.path);
@@ -63,14 +75,17 @@ void main() async {
       MessageModelAdapter()); // Generate this using build_runner
 
   final pref = await SharedPreferences.getInstance();
-
+  final bibleService = BibleReadingService();
+  bibleService.updateIfNeeded(fetchReadings);
   PocketBase? pb;
   try {
-    pb = PocketBase(AppData.baseUrl,
-        authStore: AsyncAuthStore(
-          save: (String data) async => pref.setString('pb_auth', data),
-          initial: pref.getString('pb_auth'),
-        ));
+    pb = PocketBase(
+      AppData.baseUrl,
+      authStore: AsyncAuthStore(
+        save: (String data) async => pref.setString('pb_auth', data),
+        initial: pref.getString('pb_auth'),
+      ),
+    );
   } catch (e) {
     debugPrint('PocketBase initialization error: $e');
   }
@@ -138,19 +153,23 @@ void main() async {
           },
         ),
       ],
-      child: const MainApp(),
+      child: MainApp(
+        pref: pref,
+      ),
     ),
   );
 }
 
 class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+  const MainApp({super.key, required this.pref});
+  final SharedPreferences pref;
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'Book Mass',
       builder: (context, child) => AppLock(
+        enabled: false,
         builder: (context, arg) => ScaffoldMessenger(
           child: BlocListener<ConnectivityCubit, bool>(
             listener: (context, hasConnection) {
@@ -205,7 +224,7 @@ class MainApp extends StatelessWidget {
         backgroundLockLatency: const Duration(seconds: 6),
       ),
       color: AppColors.primary,
-      routerConfig: appRouter,
+      routerConfig: AppRouter(pref: pref).appRouter(),
       theme: ThemeData(fontFamily: 'Itim', primaryColor: AppColors.primary),
     );
   }
