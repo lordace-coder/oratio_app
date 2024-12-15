@@ -67,16 +67,7 @@ class _DashboardPageState extends State<DashboardPage> {
     handleGetBankList();
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.blue.shade900,
-              Colors.indigo.shade900,
-            ],
-          ),
-        ),
+        color: const Color.fromARGB(255, 243, 243, 243),
         child: SafeArea(
           child: Column(
             children: [
@@ -118,12 +109,12 @@ class _DashboardPageState extends State<DashboardPage> {
             'Parish Dashboard',
             style: TextStyle(
               fontSize: 24,
-              color: Colors.white,
+              // color: Colors.white,
               fontWeight: FontWeight.bold,
             ),
           ),
           PopupMenuButton(
-            icon: const Icon(Icons.more_vert, color: Colors.white),
+            icon: const Icon(Icons.more_vert, color: Colors.black),
             itemBuilder: (context) => [
               const PopupMenuItem(
                 child: Row(

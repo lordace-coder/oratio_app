@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:intl/intl.dart';
@@ -12,7 +11,6 @@ import 'package:oratio_app/bloc/prayer_requests/requests_state.dart';
 import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/helpers/user.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
-import 'package:oratio_app/ui/widgets/church_widgets.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class PrayerCommentBottomSheet extends StatefulWidget {

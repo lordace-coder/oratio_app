@@ -9,6 +9,6 @@ PocketBase getPocketBaseFromContext(BuildContext context) {
 
 Future<void> sendWithdrawalRequest(
     BuildContext ctx, Map<String, dynamic> data) async {
-  final _pb = getPocketBaseFromContext(ctx);
-  await _pb.collection('withdrawal_request').create(body: data);
+  final pb = getPocketBaseFromContext(ctx);
+  await pb.collection('withdrawal_request').create(body: data);
 }

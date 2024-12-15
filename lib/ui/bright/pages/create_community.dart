@@ -165,6 +165,7 @@ class _PrayerCommunityCreationPageState
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
+            foregroundColor: Colors.white,
             expandedHeight: 200,
             floating: false,
             pinned: true,

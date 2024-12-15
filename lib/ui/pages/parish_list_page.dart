@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/networkProvider/requests.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
+import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class ParishListPage extends StatefulWidget {
@@ -19,6 +22,7 @@ class _ParishListPageState extends State<ParishListPage>
   // Controller for search bar animations
   late AnimationController _animationController;
   late Animation<double> _searchBarAnimation;
+  late PocketBase pb;
   final controller = TextEditingController();
   bool _isHovered = false;
   bool _loading = false;
@@ -27,6 +31,7 @@ class _ParishListPageState extends State<ParishListPage>
   @override
   void initState() {
     super.initState();
+    pb = context.read<PocketBaseServiceCubit>().state.pb;
     // Initialize animation controller with 300ms duration
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
@@ -171,8 +176,13 @@ class _ParishListPageState extends State<ParishListPage>
                     ),
                   )
                 else if (_loading)
-                  const SliverToBoxAdapter(
-                    child: Text('loading'),
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                        height: 300,
+                        child: Center(
+                            child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                        ))),
                   )
                 else
                   const SliverToBoxAdapter(
@@ -384,7 +394,10 @@ class _ParishListPageState extends State<ParishListPage>
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
                 child: Image.network(
-                  'https://via.placeholder.com/60', // Reduced size
+                  pb
+                      .getFileUrl(church, church.getStringValue('image'),
+                          thumb: '60 x 60')
+                      .toString(), // Reduced size
                   width: 60,
                   height: 60,
                   fit: BoxFit.cover,

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:oratio_app/bloc/booking_bloc/state.dart';
-import 'package:pocketbase/pocketbase.dart';
 
 class PaymentSuccesful extends StatelessWidget {
   const PaymentSuccesful({

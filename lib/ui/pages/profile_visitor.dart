@@ -5,11 +5,9 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
-import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/helpers/user.dart';
 import 'package:oratio_app/networkProvider/users.dart';
 import 'package:oratio_app/ui/pages/chat_page.dart';
-import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 

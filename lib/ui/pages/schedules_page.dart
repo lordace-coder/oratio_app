@@ -32,11 +32,9 @@ class _SchedulesPageState extends State<SchedulesPage> {
     });
     try {
       final pb = context.read<PocketBaseServiceCubit>().state.pb;
-      final data = await pb.collection("schedule").getList();
+      final data = await pb.collection("schedule").getList(sort: 'date');
       schedule = data.items;
-      print(schedule[0]);
     } catch (e) {
-      print(e);
       NotificationService.showError('Failed to load Schedules',
           duration: const Duration(seconds: 4));
     }
@@ -60,7 +58,9 @@ class _SchedulesPageState extends State<SchedulesPage> {
                     dateTime: DateTime.parse(schedule[index].getStringValue(
                         'date')), // Year, Month, Day, Hour, Minute
                     location: schedule[index].getStringValue("location"),
-                    category: "Meeting",
+                    category: schedule[index].getStringValue('type') == ' '
+                        ? 'Meeting'
+                        : schedule[index].getStringValue('type'),
                     categoryColor: Colors.blue,
                     isCompleted: false,
                   )),

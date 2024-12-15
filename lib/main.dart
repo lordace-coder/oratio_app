@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:go_router/go_router.dart';
 import 'dart:async';
 import 'package:hive/hive.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
@@ -160,16 +161,30 @@ void main() async {
   );
 }
 
-class MainApp extends StatelessWidget {
+class MainApp extends StatefulWidget {
   const MainApp({super.key, required this.pref});
   final SharedPreferences pref;
+
+  @override
+  State<MainApp> createState() => _MainAppState();
+}
+
+class _MainAppState extends State<MainApp> {
+  GoRouter? appRouter;
+
+  @override
+  void initState() {
+    super.initState();
+    appRouter ??= AppRouter(pref: widget.pref).appRouter();
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'Book Mass',
       builder: (context, child) => AppLock(
-        enabled: false,
+        enabled: AppRouter(pref: widget.pref).opened(),
         builder: (context, arg) => ScaffoldMessenger(
           child: BlocListener<ConnectivityCubit, bool>(
             listener: (context, hasConnection) {
@@ -224,7 +239,7 @@ class MainApp extends StatelessWidget {
         backgroundLockLatency: const Duration(seconds: 6),
       ),
       color: AppColors.primary,
-      routerConfig: AppRouter(pref: pref).appRouter(),
+      routerConfig: appRouter,
       theme: ThemeData(fontFamily: 'Itim', primaryColor: AppColors.primary),
     );
   }

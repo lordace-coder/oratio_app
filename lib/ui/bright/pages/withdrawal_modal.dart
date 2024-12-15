@@ -4,7 +4,6 @@ import 'package:animate_do/animate_do.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
-import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class WithdrawalModal extends StatefulWidget {

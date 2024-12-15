@@ -44,8 +44,7 @@ final class ProfileDataError extends ProfileDataState {
   final String error;
 
   ProfileDataError(this.error) {
-    NotificationService.showError('Error occured loading profile $error',
-        duration: const Duration(seconds: 5));
+   
   }
 }
 

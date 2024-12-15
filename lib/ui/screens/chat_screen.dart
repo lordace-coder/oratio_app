@@ -10,7 +10,6 @@ import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/services/chat/chat_service.dart';
 import 'package:oratio_app/ui/pages/chat_page.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
-import 'package:oratio_app/ui/widgets/live_streams.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});

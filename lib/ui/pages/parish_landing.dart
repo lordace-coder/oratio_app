@@ -3,8 +3,10 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
+import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/networkProvider/requests.dart';
 import 'package:oratio_app/networkProvider/users.dart';
+import 'package:oratio_app/services/servces.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/buttons.dart';
 
@@ -28,6 +30,8 @@ class _ParishLandingPageState extends State<ParishLandingPage> {
             if (snapshot.connectionState == ConnectionState.done &&
                 snapshot.hasData) {
               final data = snapshot.data!;
+              final parishMember =
+                  isParishMember(church: data, context: context);
               return Stack(
                 children: [
                   SingleChildScrollView(
@@ -205,7 +209,7 @@ class _ParishLandingPageState extends State<ParishLandingPage> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              const Gap(16),
+                              const Gap(10),
                               Container(
                                 padding: const EdgeInsets.all(20),
                                 decoration: BoxDecoration(
@@ -225,15 +229,21 @@ class _ParishLandingPageState extends State<ParishLandingPage> {
                           ),
                         ),
 
-                        const Gap(32),
+                        const Gap(20),
 
                         // Join Button
                         Container(
                           margin: const EdgeInsets.all(24),
                           child: buildGradientButton(
-                            'Join Parish',
+                            parishMember ? 'My Parish' : 'Join Parish',
                             FontAwesomeIcons.userPlus,
                             () async {
+                              //check if user is attending parish
+                              if (parishMember) {
+                                return NotificationService.showWarning(
+                                    'Already a Parish Member',
+                                    duration: const Duration(seconds: 4));
+                              }
                               //  TODO join parish here
                               await joinParish(context, id: widget.parishId);
                               setState(() {});

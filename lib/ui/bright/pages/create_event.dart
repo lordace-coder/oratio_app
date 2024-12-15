@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
+import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 class CreateEventPage extends StatefulWidget {
   const CreateEventPage({super.key});
@@ -12,6 +16,7 @@ class CreateEventPage extends StatefulWidget {
 class _CreateEventPageState extends State<CreateEventPage> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
   DateTime? _selectedDate;
 
   // Modern event type with more contemporary icons and subtle design
@@ -25,6 +30,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
   ];
   String _selectedEventType = 'Workshop';
   bool _isLoading = false;
+  RecordModel? parish;
 
   Map<String, dynamic> data = {};
 
@@ -60,26 +66,26 @@ class _CreateEventPageState extends State<CreateEventPage> {
     }
   }
 
-  void _createEvent() {
+  void _createEvent() async {
+    final pb = context.read<PocketBaseServiceCubit>().state.pb;
+
     if (_validateInputs()) {
       // Prepare data map
       data = {
         'title': _titleController.text,
+        'location': _locationController.text,
         'description': _descriptionController.text,
-        'date': _selectedDate,
-        'eventType': _selectedEventType
+        'date': _selectedDate.toString(),
+        'type': _selectedEventType,
+        'parish': parish?.id,
       };
 
       // Simulate loading state with network request
       setState(() {
         _isLoading = true;
       });
-
-      Future.delayed(const Duration(seconds: 2), () {
-        setState(() {
-          _isLoading = false;
-        });
-
+      try {
+        await pb.collection('schedule').create(body: data);
         // Show success snackbar
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -91,9 +97,14 @@ class _CreateEventPageState extends State<CreateEventPage> {
             ),
           ),
         );
-
         // Reset form
         _resetForm();
+      } catch (e) {
+        _showErrorSnackbar('Error occured during upload \n $e');
+      }
+
+      setState(() {
+        _isLoading = false;
       });
     }
   }
@@ -101,6 +112,10 @@ class _CreateEventPageState extends State<CreateEventPage> {
   bool _validateInputs() {
     if (_titleController.text.trim().isEmpty) {
       _showErrorSnackbar('Please enter an event title');
+      return false;
+    }
+    if (_locationController.text.trim().isEmpty) {
+      _showErrorSnackbar('Please enter a Location');
       return false;
     }
 
@@ -138,6 +153,20 @@ class _CreateEventPageState extends State<CreateEventPage> {
         ),
       ),
     );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (context.read<ProfileDataCubit>().state is ProfileDataLoaded) {
+      parish = (context.read<ProfileDataCubit>().state as ProfileDataLoaded)
+          .profile
+          .parishLeading;
+    }
+    // set location to parish location if location is empty
+    if (_locationController.text.trim().isEmpty) {
+      _locationController.text = parish?.getStringValue('location') ?? '';
+    }
   }
 
   @override
@@ -329,6 +358,33 @@ class _CreateEventPageState extends State<CreateEventPage> {
                       labelText: 'Event Title',
                       labelStyle: const TextStyle(color: Colors.deepPurple),
                       prefixIcon: const Icon(Icons.title_outlined,
+                          color: Colors.deepPurple),
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(
+                          color: Colors.deepPurple,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 25),
+
+                FadeInUp(
+                  child: TextField(
+                    controller: _locationController,
+                    decoration: InputDecoration(
+                      labelText: 'Location',
+                      labelStyle: const TextStyle(color: Colors.deepPurple),
+                      prefixIcon: const Icon(Icons.location_pin,
                           color: Colors.deepPurple),
                       filled: true,
                       fillColor: Colors.grey[100],
