@@ -59,6 +59,7 @@ class _ShellRouteWrapperState extends State<ShellRouteWrapper> {
 
 class AppRouter {
   final SharedPreferences pref;
+  GoRouter? goRouter;
   AppRouter({
     required this.pref,
   });
@@ -69,173 +70,178 @@ class AppRouter {
   }
 
   GoRouter appRouter() {
-    String initialLocation = '/';
-    if (!opened()) {
-      initialLocation = '/auth/onboarding';
+    if (goRouter == null) {
+      String initialLocation = '/';
+      if (!opened()) {
+        initialLocation = '/auth/onboarding';
+      }
+      goRouter = GoRouter(
+        redirectLimit: 2,
+        initialLocation: initialLocation,
+        redirect: (context, state) {
+          final pb = context.read<PocketBaseServiceCubit>().state.pb;
+
+          if (!pb.authStore.isValid && !state.fullPath!.contains('auth')) {
+            return '/auth/login';
+          }
+          return null;
+        },
+        routes: [
+          ShellRoute(
+              builder: (context, state, child) =>
+                  ShellRouteWrapper(child: child),
+              routes: [
+                GoRoute(
+                  path: '/',
+                  name: RouteNames.homePage,
+                  builder: (context, state) =>
+                      const AuthListener(child: HomePage()),
+                ),
+                GoRoute(
+                  path: '/settings',
+                  name: RouteNames.settingsPage,
+                  builder: (context, state) => const SettingsPage(),
+                ),
+                GoRoute(
+                  path: '/profilevisitor/:id',
+                  name: RouteNames.profilepagevisitor,
+                  builder: (context, state) => AuthListener(
+                      child: ProfileVisitorPage(
+                    id: state.pathParameters['id'].toString(),
+                  )),
+                ),
+                GoRoute(
+                  path: '/connect',
+                  name: RouteNames.connect,
+                  builder: (context, state) => const ConnectPage(),
+                ),
+                GoRoute(
+                  path: '/profilepage',
+                  name: RouteNames.profile,
+                  builder: (context, state) =>
+                      const AuthListener(child: ProfilePage()),
+                ),
+                GoRoute(
+                  path: '/auth/forgotpwpage',
+                  name: RouteNames.forgotpwpage,
+                  builder: (context, state) =>
+                      const AuthListener(child: ForgotPasswordPage()),
+                ),
+                GoRoute(
+                  path: '/${RouteNames.notifications}',
+                  name: RouteNames.notifications,
+                  builder: (context, state) =>
+                      const AuthListener(child: NotificationPage()),
+                ),
+                GoRoute(
+                  path: '/auth/login',
+                  name: RouteNames.login,
+                  builder: (context, state) =>
+                      const AuthListener(child: LoginPage()),
+                ),
+                GoRoute(
+                  path: '/auth/signup',
+                  name: RouteNames.signup,
+                  builder: (context, state) =>
+                      const AuthListener(child: SignupPage()),
+                ),
+                GoRoute(
+                  path: '/community',
+                  name: RouteNames.communitypage,
+                  builder: (context, state) =>
+                      const AuthListener(child: CommunityPage()),
+                ),
+                GoRoute(
+                  path: '/parishlistpage',
+                  name: RouteNames.parishpage,
+                  builder: (context, state) => const ParishListPage(),
+                ),
+                GoRoute(
+                  path: '/auth/onboarding',
+                  name: RouteNames.onboarding,
+                  builder: (context, state) => const OnboardingScreen(),
+                ),
+                GoRoute(
+                  path: '/${RouteNames.communityDetailPage}/:community',
+                  name: RouteNames.communityDetailPage,
+                  builder: (context, state) => PrayerCommunityDetail(
+                    communityId: state.pathParameters['community'].toString(),
+                  ),
+                ),
+
+                GoRoute(
+                  path: '/mass',
+                  name: RouteNames.mass,
+                  builder: (context, state) => const MassBookingPage(),
+                ),
+                GoRoute(
+                  path: '/parishdetails:id',
+                  name: RouteNames.parishlanding,
+                  builder: (context, state) => ParishLandingPage(
+                    parishId: state.pathParameters['id'].toString(),
+                  ),
+                ),
+
+                GoRoute(
+                  path: '/${RouteNames.createPrayerRequest}',
+                  name: RouteNames.createPrayerRequest,
+                  builder: (context, state) => const CreatePrayerRequestPage(),
+                ),
+                GoRoute(
+                  path: '/${RouteNames.transactionsPage}',
+                  name: RouteNames.transactionsPage,
+                  builder: (context, state) => const TransactionPage(),
+                ),
+                GoRoute(
+                  path: '/${RouteNames.schedule}',
+                  name: RouteNames.schedule,
+                  builder: (context, state) => const SchedulesPage(),
+                ),
+
+                GoRoute(
+                  path: '/${RouteNames.transactionDetails}',
+                  name: RouteNames.transactionDetails,
+                  builder: (context, state) => const TransactionDetailsPage(),
+                ),
+                GoRoute(
+                  path: '/${RouteNames.scanQr}',
+                  name: RouteNames.scanQr,
+                  builder: (context, state) => const ScanQrPage(),
+                ),
+                GoRoute(
+                  path: '/${RouteNames.readingPage}',
+                  name: RouteNames.readingPage,
+                  builder: (context, state) => const BibleReadingPage(),
+                ),
+                GoRoute(
+                  path: '/${RouteNames.prayerPage}',
+                  name: RouteNames.prayerPage,
+                  builder: (context, state) => const PrayerPage(),
+                ),
+
+                // priest routes
+                GoRoute(
+                    path: '/priest/dashboard',
+                    name: RouteNames.dashboard,
+                    pageBuilder: (context, state) {
+                      return CustomTransitionPage(
+                        transitionDuration: const Duration(seconds: 1),
+                        transitionsBuilder:
+                            (context, animation, secondaryAnimation, child) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: const DashboardPage(),
+                          );
+                        },
+                        child: const DashboardPage(),
+                      );
+                    })
+              ])
+        ],
+      );
+      return goRouter!;
     }
-    return GoRouter(
-      redirectLimit: 2,
-      initialLocation: initialLocation,
-      redirect: (context, state) {
-        final pb = context.read<PocketBaseServiceCubit>().state.pb;
-
-        if (!pb.authStore.isValid && !state.fullPath!.contains('auth')) {
-          return '/auth/login';
-        }
-        return null;
-      },
-      routes: [
-        ShellRoute(
-            builder: (context, state, child) => ShellRouteWrapper(child: child),
-            routes: [
-              GoRoute(
-                path: '/',
-                name: RouteNames.homePage,
-                builder: (context, state) =>
-                    const AuthListener(child: HomePage()),
-              ),
-              GoRoute(
-                path: '/settings',
-                name: RouteNames.settingsPage,
-                builder: (context, state) => const SettingsPage(),
-              ),
-              GoRoute(
-                path: '/profilevisitor/:id',
-                name: RouteNames.profilepagevisitor,
-                builder: (context, state) => AuthListener(
-                    child: ProfileVisitorPage(
-                  id: state.pathParameters['id'].toString(),
-                )),
-              ),
-              GoRoute(
-                path: '/connect',
-                name: RouteNames.connect,
-                builder: (context, state) => const ConnectPage(),
-              ),
-              GoRoute(
-                path: '/profilepage',
-                name: RouteNames.profile,
-                builder: (context, state) =>
-                    const AuthListener(child: ProfilePage()),
-              ),
-              GoRoute(
-                path: '/auth/forgotpwpage',
-                name: RouteNames.forgotpwpage,
-                builder: (context, state) =>
-                    const AuthListener(child: ForgotPasswordPage()),
-              ),
-              GoRoute(
-                path: '/${RouteNames.notifications}',
-                name: RouteNames.notifications,
-                builder: (context, state) =>
-                    const AuthListener(child: NotificationPage()),
-              ),
-              GoRoute(
-                path: '/auth/login',
-                name: RouteNames.login,
-                builder: (context, state) =>
-                    const AuthListener(child: LoginPage()),
-              ),
-              GoRoute(
-                path: '/auth/signup',
-                name: RouteNames.signup,
-                builder: (context, state) =>
-                    const AuthListener(child: SignupPage()),
-              ),
-              GoRoute(
-                path: '/community',
-                name: RouteNames.communitypage,
-                builder: (context, state) =>
-                    const AuthListener(child: CommunityPage()),
-              ),
-              GoRoute(
-                path: '/parishlistpage',
-                name: RouteNames.parishpage,
-                builder: (context, state) => const ParishListPage(),
-              ),
-              GoRoute(
-                path: '/auth/onboarding',
-                name: RouteNames.onboarding,
-                builder: (context, state) => const OnboardingScreen(),
-              ),
-              GoRoute(
-                path: '/${RouteNames.communityDetailPage}/:community',
-                name: RouteNames.communityDetailPage,
-                builder: (context, state) => PrayerCommunityDetail(
-                  communityId: state.pathParameters['community'].toString(),
-                ),
-              ),
-
-              GoRoute(
-                path: '/mass',
-                name: RouteNames.mass,
-                builder: (context, state) => const MassBookingPage(),
-              ),
-              GoRoute(
-                path: '/parishdetails:id',
-                name: RouteNames.parishlanding,
-                builder: (context, state) => ParishLandingPage(
-                  parishId: state.pathParameters['id'].toString(),
-                ),
-              ),
-
-              GoRoute(
-                path: '/${RouteNames.createPrayerRequest}',
-                name: RouteNames.createPrayerRequest,
-                builder: (context, state) => const CreatePrayerRequestPage(),
-              ),
-              GoRoute(
-                path: '/${RouteNames.transactionsPage}',
-                name: RouteNames.transactionsPage,
-                builder: (context, state) => const TransactionPage(),
-              ),
-              GoRoute(
-                path: '/${RouteNames.schedule}',
-                name: RouteNames.schedule,
-                builder: (context, state) => const SchedulesPage(),
-              ),
-
-              GoRoute(
-                path: '/${RouteNames.transactionDetails}',
-                name: RouteNames.transactionDetails,
-                builder: (context, state) => const TransactionDetailsPage(),
-              ),
-              GoRoute(
-                path: '/${RouteNames.scanQr}',
-                name: RouteNames.scanQr,
-                builder: (context, state) => const ScanQrPage(),
-              ),
-              GoRoute(
-                path: '/${RouteNames.readingPage}',
-                name: RouteNames.readingPage,
-                builder: (context, state) => const BibleReadingPage(),
-              ),
-              GoRoute(
-                path: '/${RouteNames.prayerPage}',
-                name: RouteNames.prayerPage,
-                builder: (context, state) => const PrayerPage(),
-              ),
-
-              // priest routes
-              GoRoute(
-                  path: '/priest/dashboard',
-                  name: RouteNames.dashboard,
-                  pageBuilder: (context, state) {
-                    return CustomTransitionPage(
-                      transitionDuration: const Duration(seconds: 1),
-                      transitionsBuilder:
-                          (context, animation, secondaryAnimation, child) {
-                        return FadeTransition(
-                          opacity: animation,
-                          child: const DashboardPage(),
-                        );
-                      },
-                      child: const DashboardPage(),
-                    );
-                  })
-            ])
-      ],
-    );
+    return goRouter!;
   }
 }
 

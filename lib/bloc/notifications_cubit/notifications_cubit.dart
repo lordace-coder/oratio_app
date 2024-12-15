@@ -1,4 +1,5 @@
 import 'package:bloc/bloc.dart';
+import 'package:oratio_app/popup_notification/popup_notification.dart';
 import 'package:pocketbase/pocketbase.dart';
 part 'notifications_state.dart';
 
@@ -42,14 +43,21 @@ class NotificationCubit extends Cubit<NotificationState> {
     }
   }
 
-  Future realtimeConnection() async {
+  void realtimeConnection() async {
     final userId = _pocketBase.authStore.model.id;
     try {
-      final stream =
-          await _pocketBase.collection('notifications').subscribe('*', (e) {
-        print(e.record);
+      print('subscribed');
+
+      _pocketBase.collection('notifications').subscribe('*', (e) {
+        if (e.action == 'create') {
+          print(e.record);
+          if (e.record == null) return;
+          PopupNotification.show(
+            title: e.record!.getStringValue('title'),
+            message: e.record!.getStringValue('notification'),
+          );
+        }
       }, filter: 'user = $userId');
-      stream.call();
       print('subscribed');
     } catch (e) {
       print('realtime error $e');

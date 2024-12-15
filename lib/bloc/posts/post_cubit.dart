@@ -12,7 +12,7 @@ class PostCubit extends Cubit<PostState> {
 
     try {
       final records =
-          await _pocketBase.collection('posts').getList(expand: 'community');
+          await _pocketBase.collection('posts').getList(expand: 'community',sort:'-created');
       emit(PostLoaded(
         records.items
             .map((record) => Post.fromRecord(record, _pocketBase))

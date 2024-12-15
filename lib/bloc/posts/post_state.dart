@@ -68,7 +68,7 @@ class PostError extends PostState {
   final String error;
 
   PostError(this.error) {
-    NotificationService.showError('An error occured $error');
+    NotificationService.showError('An error occured Fetchin Feeds');
   }
 
   @override

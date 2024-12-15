@@ -39,7 +39,7 @@ class NotificationConfig {
     this.padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     this.position = NotificationPosition.top,
     this.animationDuration = const Duration(milliseconds: 300),
-    this.dismissDirection = DismissDirection.up,
+    this.dismissDirection = DismissDirection.horizontal,
     this.elevation = 2,
     this.icon,
     this.maxWidth,
@@ -99,7 +99,7 @@ class NotificationService {
   static Timer? _timer;
   static NotificationConfig _globalConfig = const NotificationConfig();
   static bool debugMode = false;
-
+  static const Duration _defaultDuration = Duration(seconds: 3);
   static void initialize(BuildContext context) {
     _overlayState = Overlay.of(context);
     _log('NotificationService initialized');
@@ -194,6 +194,8 @@ class NotificationService {
     Duration? duration,
     NotificationConfig? config,
   }) {
+    duration ??= _defaultDuration;
+
     if (_overlayState == null) {
       throw Exception(
           'NotificationService not initialized. Call initialize() first.');
@@ -219,11 +221,9 @@ class NotificationService {
 
     _overlayState!.insert(_overlayEntry!);
 
-    if (duration != null) {
-      _timer = Timer(duration, () {
-        _dismiss();
-      });
-    }
+    _timer = Timer(duration, () {
+      _dismiss();
+    });
   }
 
   static void _dismiss() {

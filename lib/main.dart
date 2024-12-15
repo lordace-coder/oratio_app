@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:go_router/go_router.dart';
 import 'dart:async';
 import 'package:hive/hive.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/bible_readings/bible_reading_service.dart';
 import 'package:oratio_app/bloc/chat_cubit/message_cubit.dart';
+import 'package:oratio_app/popup_notification/popup_notification.dart';
 import 'package:oratio_app/services/bible_reading.dart';
 import 'package:oratio_app/services/chat/db/chat_hive.dart';
 import 'package:path_provider/path_provider.dart';
@@ -101,6 +101,7 @@ void main() async {
   } catch (e) {
     debugPrint('Notification fetch error: $e');
   }
+  final appRouter = AppRouter(pref: pref);
 
   ChatService chatService = ChatService(pbCubit.state.pb);
 
@@ -155,28 +156,15 @@ void main() async {
         ),
       ],
       child: MainApp(
-        pref: pref,
+        appRouter: appRouter,
       ),
     ),
   );
 }
 
-class MainApp extends StatefulWidget {
-  const MainApp({super.key, required this.pref});
-  final SharedPreferences pref;
-
-  @override
-  State<MainApp> createState() => _MainAppState();
-}
-
-class _MainAppState extends State<MainApp> {
-  GoRouter? appRouter;
-
-  @override
-  void initState() {
-    super.initState();
-    appRouter ??= AppRouter(pref: widget.pref).appRouter();
-  }
+class MainApp extends StatelessWidget {
+  const MainApp({super.key, required this.appRouter});
+  final AppRouter appRouter;
 
   @override
   Widget build(BuildContext context) {
@@ -184,7 +172,7 @@ class _MainAppState extends State<MainApp> {
       debugShowCheckedModeBanner: false,
       title: 'Book Mass',
       builder: (context, child) => AppLock(
-        enabled: AppRouter(pref: widget.pref).opened(),
+        enabled: appRouter.opened(),
         builder: (context, arg) => ScaffoldMessenger(
           child: BlocListener<ConnectivityCubit, bool>(
             listener: (context, hasConnection) {
@@ -239,7 +227,7 @@ class _MainAppState extends State<MainApp> {
         backgroundLockLatency: const Duration(seconds: 6),
       ),
       color: AppColors.primary,
-      routerConfig: appRouter,
+      routerConfig: appRouter.appRouter(),
       theme: ThemeData(fontFamily: 'Itim', primaryColor: AppColors.primary),
     );
   }

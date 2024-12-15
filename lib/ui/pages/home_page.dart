@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:oratio_app/bloc/blocs.dart';
+import 'package:oratio_app/popup_notification/popup_notification.dart';
 import 'package:oratio_app/ui/screens/chat_screen.dart';
 import 'package:oratio_app/ui/screens/feeds_page.dart';
 import 'package:oratio_app/ui/pages/home_screen.dart';
 import 'package:oratio_app/ui/themes.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -19,29 +23,75 @@ class _HomePageState extends State<HomePage> {
     const HomeScreen(),
     const ChatScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    PopupNotification.initialize(context);
+    subscribeNotifications();
+  }
+
+  void subscribeNotifications() {
+    PocketBase pocketBase = context.read<PocketBaseServiceCubit>().state.pb;
+    final userId = pocketBase.authStore.model.id;
+
+    pocketBase.collection('notifications').subscribe('*', (e) {
+      if (e.action == 'create') {
+        if (e.record == null) return;
+        PopupNotification.show(
+          title: e.record!.getStringValue('title'),
+          message: e.record!.getStringValue('notification'),
+        );
+      }
+    }, filter: 'user = "$userId" ');
+  }
+
+  void _unSubscribeNotifications() {
+    PocketBase pocketBase = context.read<PocketBaseServiceCubit>().state.pb;
+
+    pocketBase.collection('notifications').unsubscribe('*');
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _unSubscribeNotifications();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: _selectedIndex == 2 ? Colors.white : AppColors.gray,
-      body: _pages[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        items: const [
-          BottomNavigationBarItem(
-              icon: Icon(FontAwesomeIcons.rss), label: 'Feeds'),
-          BottomNavigationBarItem(
-              icon: Icon(FontAwesomeIcons.wallet), label: 'Wallet'),
-          BottomNavigationBarItem(
-              icon: Icon(FontAwesomeIcons.solidMessage), label: 'Check Up'),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: AppColors.primary, // Change the selected item color
-        unselectedItemColor: Colors.grey, // Change the unselected item color
-        backgroundColor: Colors.white, // Change the background color
-        onTap: (id) {
+    return PopScope(
+      onPopInvokedWithResult: (x, y) {
+        if (_selectedIndex != 0) {
           setState(() {
-            _selectedIndex = id;
+            _selectedIndex = 0;
           });
-        },
+        }
+      },
+      canPop: _selectedIndex == 0,
+      child: Scaffold(
+        backgroundColor: _selectedIndex == 2 ? Colors.white : AppColors.gray,
+        body: _pages[_selectedIndex],
+        bottomNavigationBar: BottomNavigationBar(
+          items: const [
+            BottomNavigationBarItem(
+                icon: Icon(FontAwesomeIcons.rss), label: 'Feeds'),
+            BottomNavigationBarItem(
+                icon: Icon(FontAwesomeIcons.wallet), label: 'Wallet'),
+            BottomNavigationBarItem(
+                icon: Icon(FontAwesomeIcons.solidMessage), label: 'Check Up'),
+          ],
+          currentIndex: _selectedIndex,
+          selectedItemColor:
+              AppColors.primary, // Change the selected item color
+          unselectedItemColor: Colors.grey, // Change the unselected item color
+          backgroundColor: Colors.white, // Change the background color
+          onTap: (id) {
+            setState(() {
+              _selectedIndex = id;
+            });
+          },
+        ),
       ),
     );
   }

@@ -26,7 +26,8 @@ class PaystackPaymentService {
       final amountInKobo = (amount * 100).toInt();
 
       // Generate reference
-      final reference = 'TR${DateTime.now().millisecondsSinceEpoch}';
+      final reference =
+          'TR ${(pb.authStore.model as RecordModel).getStringValue('username')} ${DateTime.now().millisecondsSinceEpoch}';
 
       // Initialize payment
       await FlutterPaystackPlus.openPaystackPopup(
