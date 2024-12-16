@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:oratio_app/popup_notification/popup_notification.dart';
 import 'package:oratio_app/services/chat/chat_service.dart';
 import 'package:pocketbase/pocketbase.dart';
 
@@ -114,27 +115,32 @@ class ChatCubit extends Cubit<ChatState> {
 
   // Stream real-time updates for new messages
   void subscribeToMessages() {
-    final currentUserId = _pb.authStore.model.id;
-     _pb.collection('messages').subscribe(
-      '*',
-      (e) {
-        if (e.action == 'create') {
-          // Check if the message involves the current user
+    final currentUserId = (_pb.authStore.model as RecordModel).id;
+    _pb.collection('messages').subscribe('*', (e) {
+      if (e.action == 'create') {
+        // Check if the message involves the current user
 
-          if (e.record == null) {
-            return;
-          }
-          final message = e.record!;
-          if (message.data['sender'] == currentUserId ||
-              message.data['receiver'].toString().contains(currentUserId)) {
-            loadRecentChats(); // Refresh chat list when new message arrives
-          }
-        
-          loadRecentChats();
+        if (e.record == null) {
+          return;
         }
-      },
-      filter: 'sender.id = "$currentUserId" || reciever.id = "$currentUserId"',
-    );
+        final message = e.record!;
+        if (e.record?.getStringValue('sender') != currentUserId) {
+          PopupNotification.show(
+              title:
+                  '${message.expand['sender']?.first.getStringValue('username')} :',
+              message: message.getStringValue('message'));
+        }
+        if (message.data['sender'] == currentUserId ||
+            message.data['receiver'].toString().contains(currentUserId)) {
+          loadRecentChats(); // Refresh chat list when new message arrives
+        }
+
+        loadRecentChats();
+      }
+    },
+        filter:
+            'sender.id = "$currentUserId" || reciever.id = "$currentUserId"',
+        expand: 'sender');
   }
 
   @override

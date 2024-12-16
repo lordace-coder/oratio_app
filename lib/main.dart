@@ -46,7 +46,7 @@ class ConnectivityCubit extends Cubit<bool> {
   void monitorConnection() {
     connectivitySubscription =
         _connectivity.onConnectivityChanged.listen((result) async {
-      if (result == ConnectivityResult.none) {
+      if (result.first == ConnectivityResult.none) {
         emit(false);
       } else {
         emit(_checkInternetConnection());
@@ -73,7 +73,7 @@ void main() async {
 
   Hive.init(appDocumentDirectory.path);
   Hive.registerAdapter(
-      MessageModelAdapter()); // Generate this using build_runner
+      MessageModelAdapter(),); // Generate this using build_runner
 
   final pref = await SharedPreferences.getInstance();
   final bibleService = BibleReadingService();

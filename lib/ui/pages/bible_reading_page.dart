@@ -17,7 +17,7 @@ class _BibleReadingPageState extends State<BibleReadingPage>
   int index = 0;
   bool loading = false;
   final List<BibleVerse> verses = [];
-
+  String? _lastUpdateTime;
   late AnimationController _animationController;
   late Animation<double> _animation;
 
@@ -25,15 +25,23 @@ class _BibleReadingPageState extends State<BibleReadingPage>
     setState(() {
       loading = true;
     });
-    final bibleService = BibleReadingService();
-    final data = await bibleService.getReadings();
-    for (var verse in data) {
-      verses.add(BibleVerse.fromJson(verse));
+    try {
+      final bibleService = BibleReadingService();
+      final data = await bibleService.getReadings();
+      _lastUpdateTime = await bibleService.getLastUpdateTimeAgo();
+      verses.clear(); // Clear existing verses before adding new ones
+      for (var verse in data) {
+        verses.add(BibleVerse.fromJson(verse));
+      }
+      print(verses.length);
+    } catch (e) {
+      print('Error loading Bible verses: $e');
+      // Handle error appropriately
+    } finally {
+      setState(() {
+        loading = false;
+      });
     }
-    print(verses.length);
-    setState(() {
-      loading = false;
-    });
   }
 
   @override
@@ -208,7 +216,7 @@ class _BibleReadingPageState extends State<BibleReadingPage>
                                         color: AppColors.textDarkDim, size: 16),
                                     const SizedBox(width: 8),
                                     Text(
-                                      'Last read: 2 hours ago',
+                                      'Last Updated : $_lastUpdateTime',
                                       style: GoogleFonts.poppins(
                                         color: AppColors.textDarkDim,
                                         fontSize: 12,
@@ -262,7 +270,6 @@ class _BibleReadingPageState extends State<BibleReadingPage>
                                     ),
                                     Row(
                                       children: [
-                                        _buildIconButton(Icons.bookmark_border),
                                         const SizedBox(width: 8),
                                         _buildIconButton(Icons.share_outlined),
                                       ],
@@ -321,24 +328,6 @@ class _BibleReadingPageState extends State<BibleReadingPage>
                   ),
                 ],
               ),
-      ),
-      floatingActionButton: Container(
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withOpacity(0.3),
-              blurRadius: 15,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: FloatingActionButton(
-          foregroundColor: Colors.white,
-          onPressed: () {},
-          backgroundColor: AppColors.primary,
-          child: const Icon(Icons.menu_book_rounded),
-        ),
       ),
     );
   }

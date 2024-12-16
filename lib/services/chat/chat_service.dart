@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
+import 'package:oratio_app/popup_notification/popup_notification.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class ChatService {
@@ -48,6 +49,7 @@ class ChatService {
             lastMessageAt: DateTime.parse(message.created),
             profile: profile,
           );
+     
         }
 
         // Update unread count

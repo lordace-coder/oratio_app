@@ -30,19 +30,19 @@ class _FeedsListScreenState extends State<FeedsListScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final ScrollController _scrollController = ScrollController();
-
+  late PocketBase pb;
   void getPosts() {
     try {
       final postState = context.read<PostCubit>().state;
-      // if (postState is PostLoaded) {
-      //   if (postState.posts.isEmpty) {
-      //     context.read<PostCubit>().fetchPosts();
-      //   }
-      //   return;
-      // }
-      // if (postState is! PostLoaded && postState is! PostError) {
-      //   context.read<PostCubit>().fetchPosts();
-      // }
+      if (postState is PostLoaded) {
+        if (postState.posts.isEmpty) {
+          context.read<PostCubit>().fetchPosts();
+        }
+        return;
+      }
+      if (postState is! PostLoaded && postState is! PostError) {
+        context.read<PostCubit>().fetchPosts();
+      }
       context.read<PostCubit>().fetchPosts();
       return;
     } catch (e) {}
@@ -68,6 +68,7 @@ class _FeedsListScreenState extends State<FeedsListScreen>
   @override
   void initState() {
     super.initState();
+    pb = context.read<PocketBaseServiceCubit>().state.pb;
     _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       getPosts();
@@ -90,13 +91,10 @@ class _FeedsListScreenState extends State<FeedsListScreen>
 
   @override
   Widget build(BuildContext context) {
-    final pb = context.read<PocketBaseServiceCubit>().state.pb;
-    getPosts();
     // redirect user to home page if first time
     SharedPreferences.getInstance().then((pref) {
       if (!AppRouter(pref: pref).opened()) {
         context.pushNamed(RouteNames.onboarding);
-        print('navigating');
       }
     });
     return Scaffold(
@@ -260,10 +258,87 @@ class _FeedsListScreenState extends State<FeedsListScreen>
                 //   child: buildStorySection(context),
                 // ),
                 BlocConsumer<PostCubit, PostState>(
-                  listener: (context, state) {
-                    // TODO: implement listener
-                  },
+                  listener: (context, state) {},
                   builder: (context, state) {
+                    if (state is PostError) {
+                      return Container(
+                        height: 300,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.blue.shade50,
+                                Colors.blue.shade100,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.blue.shade200.withOpacity(0.3),
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
+                              )
+                            ]),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.error_outline,
+                              color: Colors.blue.shade400,
+                              size: 80,
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Couldn\'t Load Content',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.blue.shade700,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Having trouble fetching the latest posts',
+                              style: TextStyle(
+                                color: Colors.blue.shade600,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                            ElevatedButton(
+                              onPressed: () {
+                                context.read<PostCubit>().fetchPosts();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.blue.shade500,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 24, vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                elevation: 5,
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.refresh, size: 20),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Try Again',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          ],
+                        ),
+                      );
+                    }
                     if (state is PostLoaded) {
                       if (state.posts.isEmpty) {
                         return SizedBox(
@@ -323,7 +398,6 @@ class _FeedsListScreenState extends State<FeedsListScreen>
             // Prayer Requests Tab
             BlocConsumer<PrayerRequestCubit, PrayerRequestState>(
               listener: (context, state) {
-                // TODO: implement listener
               },
               builder: (context, state) {
                 if (state is PrayerRequestLoaded) {

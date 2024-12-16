@@ -13,6 +13,7 @@ import 'package:oratio_app/ui/bright/pages/create_event.dart';
 import 'package:oratio_app/ui/bright/pages/withdrawal_modal.dart';
 import 'package:oratio_app/ui/pages/home_screen.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
+import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -74,7 +75,7 @@ class _DashboardPageState extends State<DashboardPage> {
               _buildHeader(context),
               Expanded(
                 child: RefreshIndicator.adaptive(
-                  color: Colors.white,
+                  color: AppColors.primary,
                   onRefresh: () async {
                     await loadChurchForPriest();
                   },
@@ -105,6 +106,11 @@ class _DashboardPageState extends State<DashboardPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          IconButton(
+              onPressed: () {
+                context.pop();
+              },
+              icon: const Icon(FontAwesomeIcons.arrowLeft)),
           const Text(
             'Parish Dashboard',
             style: TextStyle(

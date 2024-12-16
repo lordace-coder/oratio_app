@@ -131,41 +131,41 @@ class PrayerRequestCard extends StatefulWidget {
 }
 
 class _PrayerRequestCardState extends State<PrayerRequestCard> {
-  bool? praying;
-
+  bool? isPraying;
+  int isPrayingCount = 0;
   DateFormat format = DateFormat("yyyy-MM-dd HH:mm:ss.SSS'Z'");
-
+  late PocketBase pb;
   PrayerRequest? _prayerRequest;
 
   Future addPraying(BuildContext context) async {
-    final pb = context.read<PocketBaseServiceCubit>().state.pb;
     final bool praying = widget.data.praying.contains(pb.authStore.model.id);
     try {
+      setState(() {
+        isPraying = !isPraying!;
+        if (praying) {
+          isPrayingCount--;
+        } else {
+          isPrayingCount++;
+        }
+      });
       if (praying) {
         await pb.collection('prayer_requests').update(widget.data.id, body: {
           'praying-': [pb.authStore.model.id]
         });
-        setState(() {
-          _prayerRequest = widget.data;
-          _prayerRequest?.praying.remove(pb.authStore.model.id);
-        });
+
+        _prayerRequest?.praying.remove(pb.authStore.model.id);
+
         NotificationService.showWarning('You removed your prayer',
             duration: Durations.extralong4);
       } else {
         await pb.collection('prayer_requests').update(widget.data.id, body: {
           'praying+': [pb.authStore.model.id]
         });
-        setState(() {
-          _prayerRequest = widget.data;
-          _prayerRequest?.praying.add(pb.authStore.model.id);
-        });
+        _prayerRequest?.praying.add(pb.authStore.model.id);
+
         NotificationService.showSuccess('Prayer said succesfully',
             duration: Durations.extralong4);
       }
-
-      final record = await pb
-          .collection('prayer_requests')
-          .getOne(widget.data.id, expand: 'user');
     } catch (e) {
       // display error on ui
       NotificationService.showError('error occured while sending prayer');
@@ -189,11 +189,38 @@ class _PrayerRequestCardState extends State<PrayerRequestCard> {
     }
   }
 
+  String formatCount(int number) {
+    if (number < 1000) return number.toString();
+
+    if (number < 1000000) {
+      double result = number / 1000;
+      // Show one decimal place if number is not exactly divisible by 1000
+      return '${result.toStringAsFixed(result.truncateToDouble() == result ? 0 : 1)}K';
+    }
+
+    if (number < 1000000000) {
+      double result = number / 1000000;
+      return '${result.toStringAsFixed(result.truncateToDouble() == result ? 0 : 1)}M';
+    }
+
+    double result = number / 1000000000;
+    return '${result.toStringAsFixed(result.truncateToDouble() == result ? 0 : 1)}B';
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    pb = context.read<PocketBaseServiceCubit>().state.pb;
+    isPrayingCount = widget.data.praying.length;
+    isPraying = widget.data.praying.contains(pb.authStore.model.id);
+  }
+
   @override
   Widget build(BuildContext context) {
-    praying ??= widget.data.praying.contains(
-        context.read<PocketBaseServiceCubit>().state.pb.authStore.model.id);
     _prayerRequest ??= widget.data;
+    if (isPrayingCount <= 0) {
+      isPrayingCount = 0;
+    }
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       elevation: 0,
@@ -260,16 +287,8 @@ class _PrayerRequestCardState extends State<PrayerRequestCard> {
             child: Row(
               children: [
                 _PrayerAction(
-                  icon: !_prayerRequest!.praying.contains(context
-                          .read<PocketBaseServiceCubit>()
-                          .state
-                          .pb
-                          .authStore
-                          .model
-                          .id)
-                      ? Icons.favorite_border
-                      : Icons.favorite,
-                  label: 'Praying ${_prayerRequest!.praying.length}',
+                  icon: !isPraying! ? Icons.favorite_border : Icons.favorite,
+                  label: 'Praying (${formatCount(isPrayingCount)})',
                   onTap: () {
                     addPraying(context);
                   },
@@ -277,7 +296,7 @@ class _PrayerRequestCardState extends State<PrayerRequestCard> {
                 const SizedBox(width: 16),
                 _PrayerAction(
                   icon: Icons.comment_outlined,
-                  label: 'Comment',
+                  label: 'Comment (${formatCount(widget.data.comment.length)})',
                   onTap: () async {
                     final result = await showPrayerCommentOptions(context);
                     if (result != null) {

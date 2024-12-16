@@ -6,39 +6,26 @@ class BibleVerse {
   String? translationName;
   String? translationNote;
 
-  BibleVerse(
-      {this.reference,
-      this.verses,
-      this.text,
-      this.translationId,
-      this.translationName,
-      this.translationNote});
+  BibleVerse({
+    this.reference,
+    this.verses,
+    this.text,
+    this.translationId,
+    this.translationName,
+    this.translationNote,
+  });
 
-  BibleVerse.fromJson(Map<String, dynamic> json) {
-    if (json["reference"] is String) {
-      reference = json["reference"];
-    }
+  BibleVerse.fromJson(Map<dynamic, dynamic> json) {
+    reference = json["reference"]?.toString();
     if (json["verses"] is List) {
-      verses = json["verses"] == null
-          ? null
-          : (json["verses"] as List).map((e) => Verses.fromJson(e)).toList();
+      verses = (json["verses"] as List)
+          .map((e) => Verses.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
     }
-    if (json["text"] is String) {
-      text = json["text"];
-    }
-    if (json["translation_id"] is String) {
-      translationId = json["translation_id"];
-    }
-    if (json["translation_name"] is String) {
-      translationName = json["translation_name"];
-    }
-    if (json["translation_note"] is String) {
-      translationNote = json["translation_note"];
-    }
-  }
-
-  static List<BibleVerse> fromList(List<Map<String, dynamic>> list) {
-    return list.map(BibleVerse.fromJson).toList();
+    text = json["text"]?.toString();
+    translationId = json["translation_id"]?.toString();
+    translationName = json["translation_name"]?.toString();
+    translationNote = json["translation_note"]?.toString();
   }
 
   Map<String, dynamic> toJson() {
@@ -62,28 +49,24 @@ class Verses {
   int? verse;
   String? text;
 
-  Verses({this.bookId, this.bookName, this.chapter, this.verse, this.text});
+  Verses({
+    this.bookId,
+    this.bookName,
+    this.chapter,
+    this.verse,
+    this.text,
+  });
 
   Verses.fromJson(Map<String, dynamic> json) {
-    if (json["book_id"] is String) {
-      bookId = json["book_id"];
-    }
-    if (json["book_name"] is String) {
-      bookName = json["book_name"];
-    }
-    if (json["chapter"] is int) {
-      chapter = json["chapter"];
-    }
-    if (json["verse"] is int) {
-      verse = json["verse"];
-    }
-    if (json["text"] is String) {
-      text = json["text"];
-    }
-  }
-
-  static List<Verses> fromList(List<Map<String, dynamic>> list) {
-    return list.map(Verses.fromJson).toList();
+    bookId = json["book_id"]?.toString();
+    bookName = json["book_name"]?.toString();
+    chapter = json["chapter"] is int
+        ? json["chapter"]
+        : int.tryParse(json["chapter"].toString());
+    verse = json["verse"] is int
+        ? json["verse"]
+        : int.tryParse(json["verse"].toString());
+    text = json["text"]?.toString();
   }
 
   Map<String, dynamic> toJson() {

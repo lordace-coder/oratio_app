@@ -213,11 +213,6 @@ class AppRouter {
                   name: RouteNames.readingPage,
                   builder: (context, state) => const BibleReadingPage(),
                 ),
-                GoRoute(
-                  path: '/${RouteNames.prayerPage}',
-                  name: RouteNames.prayerPage,
-                  builder: (context, state) => const PrayerPage(),
-                ),
 
                 // priest routes
                 GoRoute(

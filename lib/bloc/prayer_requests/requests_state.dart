@@ -127,7 +127,5 @@ class PrayerRequestLoaded extends PrayerRequestState {
 class PrayerRequestError extends PrayerRequestState {
   final String message;
 
-  PrayerRequestError(this.message){
-      NotificationService.showError('An error occured $message');
-  }
+  PrayerRequestError(this.message);
 }
