@@ -32,7 +32,7 @@ class _SchedulesPageState extends State<SchedulesPage> {
     });
     try {
       final pb = context.read<PocketBaseServiceCubit>().state.pb;
-      final data = await pb.collection("schedule").getList(sort: 'date');
+      final data = await pb.collection("schedule").getList(sort: 'date',filter: '');
       schedule = data.items;
     } catch (e) {
       NotificationService.showError('Failed to load Schedules',

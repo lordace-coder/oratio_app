@@ -10,3 +10,9 @@ bool isParishMember(
     {required RecordModel church, required BuildContext context}) {
   return church.getListValue('members').contains(getUser(context).id);
 }
+
+
+bool isCommunityMember(
+    {required RecordModel community, required BuildContext context}) {
+  return community.getListValue('members').contains(getUser(context).id);
+}

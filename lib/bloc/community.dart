@@ -8,12 +8,14 @@ class PrayerCommunity {
   String community;
   String description;
   int members;
+  List allMembers;
   Map leader;
   PrayerCommunity({
     required this.id,
     required this.community,
     required this.description,
     required this.members,
+    required this.allMembers,
     required this.leader,
   });
 
@@ -22,6 +24,7 @@ class PrayerCommunity {
     String? community,
     String? description,
     int? members,
+    List? allMembers,
     Map? leader,
   }) {
     return PrayerCommunity(
@@ -29,6 +32,7 @@ class PrayerCommunity {
       community: community ?? this.community,
       description: description ?? this.description,
       members: members ?? this.members,
+      allMembers: allMembers ?? this.allMembers,
       leader: leader ?? this.leader,
     );
   }
@@ -39,6 +43,7 @@ class PrayerCommunity {
       'community': community,
       'description': description,
       'members': members,
+      'allMembers': allMembers,
       'leader': leader,
     };
   }
@@ -49,6 +54,7 @@ class PrayerCommunity {
         community: map['community'] as String,
         description: map['description'] as String,
         members: map['members'] as int,
+        allMembers: map['allMembers'] as List,
         leader: Map.from(
           (map['leader'] as Map),
         ));
@@ -61,7 +67,7 @@ class PrayerCommunity {
 
   @override
   String toString() {
-    return 'PrayerCommunity(id: $id, community: $community, description: $description, members: $members, leader: $leader)';
+    return 'PrayerCommunity(id: $id, community: $community, description: $description, members: $members, allMembers: $allMembers, leader: $leader)';
   }
 
   @override
@@ -72,6 +78,7 @@ class PrayerCommunity {
         other.community == community &&
         other.description == description &&
         other.members == members &&
+        other.allMembers == allMembers &&
         mapEquals(other.leader, leader);
   }
 
@@ -81,6 +88,7 @@ class PrayerCommunity {
         community.hashCode ^
         description.hashCode ^
         members.hashCode ^
+        allMembers.hashCode ^
         leader.hashCode;
   }
 }

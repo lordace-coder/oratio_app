@@ -8,9 +8,9 @@ Future<List<Map<String, dynamic>>> fetchReadings() async {
       final res = await getRandomBibleReading();
       data.add(res as Map<String, dynamic>);
     }
+  // ignore: empty_catches
   } catch (e) {
-    print(e);
   }
-  print(data);
+
   return data;
 }

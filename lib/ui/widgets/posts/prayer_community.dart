@@ -6,9 +6,11 @@ import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/bloc/posts/post_cubit.dart';
 import 'package:oratio_app/bloc/posts/post_state.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
+import 'package:confirm_dialog/confirm_dialog.dart';
 import 'package:oratio_app/bloc/prayer_requests/requests_state.dart';
 import 'package:oratio_app/helpers/functions.dart';
+import 'package:oratio_app/helpers/user.dart';
+import 'package:oratio_app/services/file_downloader.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/posts/bottom_scaffold.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -39,9 +41,17 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
         children: [
           // Post Header
           ListTile(
+            onTap: () {
+              try {
+                openCommunity(context, widget.post.communityId!);
+              } catch (e) {
+                NotificationService.showError('Something went wrong');
+              }
+            },
             contentPadding: const EdgeInsets.all(10),
             leading: CircleAvatar(
               radius: 24,
+              // backgroundImage: NetworkImage(),
               backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
               child: Icon(FontAwesomeIcons.church,
                   color: Theme.of(context).primaryColor),
@@ -62,14 +72,25 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
           ),
           // Post Image
           if (widget.post.image!.isNotEmpty)
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 9),
-              height: 200,
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  color: Theme.of(context).primaryColor.withOpacity(0.1),
-                  image:
-                      DecorationImage(image: NetworkImage(widget.post.image!))),
+            GestureDetector(
+              onLongPress: () async {
+                var _save = await confirm(context,
+                    content: const Text('Do you want to save this image?'));
+                if (_save) {
+                  FileDownloadHandler.downloadRawFile(widget.post.image!);
+                }
+              },
+              child: Container(
+                margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 9),
+                height: 200,
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    color: Theme.of(context).primaryColor.withOpacity(0.1),
+                    image: DecorationImage(
+                      image: NetworkImage(widget.post.image!),
+                      fit: BoxFit.cover,
+                    )),
+              ),
             ),
           // Post Actions
 
@@ -221,6 +242,8 @@ class _PrayerRequestCardState extends State<PrayerRequestCard> {
     if (isPrayingCount <= 0) {
       isPrayingCount = 0;
     }
+    final pb = context.read<PocketBaseServiceCubit>().state.pb;
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       elevation: 0,
@@ -230,18 +253,30 @@ class _PrayerRequestCardState extends State<PrayerRequestCard> {
         children: [
           // Prayer Request Header
           ListTile(
+            onTap: () {
+              openProfile(context, _prayerRequest!.user.id);
+            },
             contentPadding: const EdgeInsets.all(10),
             leading: CircleAvatar(
               radius: 24,
+              backgroundImage:
+                  getProfilePic(context, user: _prayerRequest!.user) == null
+                      ? null
+                      : NetworkImage(getProfilePic(context,
+                          user: pb.authStore.model as RecordModel)!),
               backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-              child: Text(
-                '${_prayerRequest!.user.getStringValue('first_name')[0]}${_prayerRequest!.user.getStringValue('last_name')[0]}'
-                    .toUpperCase(),
-                style: TextStyle(
-                  color: Theme.of(context).primaryColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              child: getProfilePic(context,
+                          user: pb.authStore.model as RecordModel) ==
+                      null
+                  ? Text(
+                      '${_prayerRequest!.user.getStringValue('first_name')[0]}${_prayerRequest!.user.getStringValue('last_name')[0]}'
+                          .toUpperCase(),
+                      style: TextStyle(
+                        color: Theme.of(context).primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : null,
             ),
             title: Text(
               _prayerRequest!.user.getStringValue('username'),

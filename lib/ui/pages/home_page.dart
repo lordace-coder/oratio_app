@@ -28,34 +28,14 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     PopupNotification.initialize(context);
-    subscribeNotifications();
   }
 
-  void subscribeNotifications() {
-    PocketBase pocketBase = context.read<PocketBaseServiceCubit>().state.pb;
-    final userId = pocketBase.authStore.model.id;
 
-    pocketBase.collection('notifications').subscribe('*', (e) {
-      if (e.action == 'create') {
-        if (e.record == null) return;
-        PopupNotification.show(
-          title: e.record!.getStringValue('title'),
-          message: e.record!.getStringValue('notification'),
-        );
-      }
-    }, filter: 'user = "$userId" ');
-  }
 
-  void _unSubscribeNotifications() {
-    PocketBase pocketBase = context.read<PocketBaseServiceCubit>().state.pb;
-
-    pocketBase.collection('notifications').unsubscribe('*');
-  }
-
+  
   @override
   void dispose() {
     super.dispose();
-    _unSubscribeNotifications();
   }
 
   @override

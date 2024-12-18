@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lottie/lottie.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
+import 'package:oratio_app/bloc/notifications_cubit/notifications_cubit.dart';
 import 'package:oratio_app/bloc/posts/post_cubit.dart';
 import 'package:oratio_app/bloc/posts/post_state.dart';
 import 'package:oratio_app/bloc/prayer_requests/requests_cubit.dart';
@@ -97,6 +98,8 @@ class _FeedsListScreenState extends State<FeedsListScreen>
         context.pushNamed(RouteNames.onboarding);
       }
     });
+    final unreadNotificationCount =
+        context.read<NotificationCubit>().unreadNotificationCount();
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: NestedScrollView(
@@ -205,19 +208,37 @@ class _FeedsListScreenState extends State<FeedsListScreen>
                               ),
                               Row(
                                 children: [
-                                  buildIconButton(
-                                    icon: FontAwesomeIcons.magnifyingGlass,
+                                  GestureDetector(
                                     onTap: () {
                                       context.pushNamed(RouteNames.connect);
                                     },
+                                    child: const Icon(
+                                      FontAwesomeIcons.magnifyingGlass,
+                                      color: Colors.white70,
+                                      size: 20,
+                                    ),
                                   ),
-                                  const Gap(8),
-                                  buildIconButton(
-                                    icon: FontAwesomeIcons.bell,
+                                  const Gap(12),
+                                  GestureDetector(
                                     onTap: () => context
                                         .pushNamed(RouteNames.notifications),
-                                    hasNotification: true,
+                                    child: Badge(
+                                      isLabelVisible:
+                                          unreadNotificationCount != 0,
+                                      label: Text(
+                                          unreadNotificationCount.toString()),
+                                      child: const Icon(
+                                        FontAwesomeIcons.bell,
+                                        color: Colors.white70,
+                                        size: 20,
+                                      ),
+                                    ),
                                   ),
+                                  // buildIconButton(
+                                  //   icon: FontAwesomeIcons.bell,
+
+                                  //   hasNotification: true,
+                                  // ),
                                 ],
                               ),
                             ],
@@ -397,8 +418,7 @@ class _FeedsListScreenState extends State<FeedsListScreen>
 
             // Prayer Requests Tab
             BlocConsumer<PrayerRequestCubit, PrayerRequestState>(
-              listener: (context, state) {
-              },
+              listener: (context, state) {},
               builder: (context, state) {
                 if (state is PrayerRequestLoaded) {
                   return RefreshIndicator.adaptive(

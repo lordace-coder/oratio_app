@@ -4,6 +4,7 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 import 'package:oratio_app/networkProvider/requests.dart';
+import 'package:oratio_app/services/servces.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/buttons.dart';
 
@@ -27,6 +28,7 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
             if (snapshot.connectionState == ConnectionState.done &&
                 snapshot.hasData) {
               final data = snapshot.data!;
+              final isMember = (data.allMembers).contains(getUser(context).id);
               return Stack(
                 children: [
                   SingleChildScrollView(
@@ -230,9 +232,10 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                         Container(
                           margin: const EdgeInsets.all(24),
                           child: buildGradientButton(
-                            'Join Community',
+                            isMember ? "Welcome Back" : 'Join Community',
                             FontAwesomeIcons.userPlus,
                             () async {
+                              if (isMember) return;
                               await joinCommunity(context,
                                   communityId: widget.communityId);
                               setState(() {});

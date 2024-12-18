@@ -27,7 +27,7 @@ class PaystackPaymentService {
 
       // Generate reference
       final reference =
-          'TR ${(pb.authStore.model as RecordModel).getStringValue('username')} ${DateTime.now().millisecondsSinceEpoch}';
+          'TR_${(pb.authStore.model as RecordModel).getStringValue('username')}_${DateTime.now().millisecondsSinceEpoch}';
 
       // Initialize payment
       await FlutterPaystackPlus.openPaystackPopup(
@@ -67,9 +67,6 @@ class PaystackPaymentService {
           onSuccess.call();
         },
         onSuccess: () {
-          // print('success');
-          // Navigator.of(context).pop();
-          // AppRouter().navigateTo(OrderReceipt(orderId: orderId));
           onSuccess.call();
         },
       );
@@ -85,7 +82,6 @@ Future<List> getBankList() async {
     String banksJson = await rootBundle.loadString('assets/banks.json');
     jsonData = jsonDecode(banksJson);
   } catch (e) {
-    print(e);
     NotificationService.showError(
         'Banks failed to load from assets, please contact the developers to fix this IMMEDIATELY');
   }

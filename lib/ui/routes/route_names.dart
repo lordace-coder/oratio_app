@@ -26,4 +26,5 @@ class RouteNames {
   static String createPrayerRequest = 'createPrayerRequest';
   // priest pages
   static String dashboard = 'dashboardPage';
+  static String createEvent = 'createEventPage';
 }

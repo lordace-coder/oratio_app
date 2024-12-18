@@ -5,7 +5,7 @@ part 'notifications_state.dart';
 
 class NotificationCubit extends Cubit<NotificationState> {
   final PocketBase _pocketBase;
-
+  int _unreadCount = 0;
   NotificationCubit(this._pocketBase) : super(NotificationInitial());
 
   Future<void> fetchNotifications() async {
@@ -45,23 +45,33 @@ class NotificationCubit extends Cubit<NotificationState> {
 
   void realtimeConnection() async {
     final userId = _pocketBase.authStore.model.id;
-    try {
-      print('subscribed');
 
-      _pocketBase.collection('notifications').subscribe('*', (e) {
-        if (e.action == 'create') {
-          print(e.record);
-          if (e.record == null) return;
-          PopupNotification.show(
-            title: e.record!.getStringValue('title'),
-            message: e.record!.getStringValue('notification'),
-          );
-        }
-      }, filter: 'user = $userId');
-      print('subscribed');
-    } catch (e) {
-      print('realtime error $e');
-      emit(NotificationError(e.toString()));
+    _pocketBase.collection('notifications').subscribe('*', (e) {
+      if (e.action == 'create') {
+        if (e.record == null) return;
+        PopupNotification.show(
+          title: e.record!.getStringValue('title'),
+          message: e.record!.getStringValue('notification'),
+        );
+        _unreadCount = 0;
+        unreadNotificationCount();
+      }
+    }, filter: 'user = "$userId" ');
+  }
+
+  ///to get the unread count to increase reset it to zero and call this function again
+  int unreadNotificationCount() {
+    if (_unreadCount != 0) return _unreadCount;
+    if (state is NotificationLoaded) {
+      // count unread notifications
     }
+    return _unreadCount;
+  }
+
+  @override
+  Future<void> close() {
+    // TODO: implement close
+    _pocketBase.collection('notifications').unsubscribe('*');
+    return super.close();
   }
 }

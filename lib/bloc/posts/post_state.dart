@@ -11,10 +11,12 @@ class Post extends Equatable {
   final String post;
   final List<String> likes;
   final String? community;
+  final String? communityId;
   final String? image;
   final List commentCount;
   final String date;
   const Post({
+    required this.communityId,
     required this.commentCount,
     required this.id,
     required this.post,
@@ -36,7 +38,7 @@ class Post extends Equatable {
       post: record.getStringValue('post'),
       likes: List<String>.from(record.getListValue('likes')),
       community: record.expand['community']?.first.getStringValue('community'),
-      image: pb.getFileUrl(record, record.data['image']).toString(),
+      image: pb.getFileUrl(record, record.data['image']).toString(), communityId: record.getStringValue('community'),
     );
   }
 }

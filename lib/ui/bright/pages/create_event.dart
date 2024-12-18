@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
+import 'package:oratio_app/popup_notification/popup_notification.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class CreateEventPage extends StatefulWidget {
@@ -87,18 +90,13 @@ class _CreateEventPageState extends State<CreateEventPage> {
       try {
         await pb.collection('schedule').create(body: data);
         // Show success snackbar
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Event "${data['title']}" created successfully!'),
-            backgroundColor: Colors.deepPurple,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-        );
+        PopupNotification.show(
+            message: 'Event "${data['title']}" created successfully!',
+            title: 'Created Succesfully');
+
         // Reset form
         _resetForm();
+        context.pop();
       } catch (e) {
         _showErrorSnackbar('Error occured during upload \n $e');
       }
@@ -143,16 +141,7 @@ class _CreateEventPageState extends State<CreateEventPage> {
   }
 
   void _showErrorSnackbar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red[700],
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
+    NotificationService.showError(message);
   }
 
   @override

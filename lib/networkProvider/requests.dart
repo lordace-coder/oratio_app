@@ -20,6 +20,7 @@ Future<List<PrayerCommunity>> getCommunities(BuildContext context,
               leader: {},
               members: i.getListValue('members').length,
               id: i.id,
+              allMembers: i.getListValue('members'),
             ))
         .toList();
   } catch (e) {
@@ -66,6 +67,7 @@ Future<PrayerCommunity?> getCommunity(BuildContext context,
       leader: {},
       members: data.getListValue('members').length,
       id: data.id,
+      allMembers: data.getListValue('members'),
     );
   } catch (e) {
     print('error $e');
@@ -133,6 +135,7 @@ Future<List<PrayerCommunity>> getFeaturedCommunities(BuildContext context,
               leader: {},
               members: i.getListValue('members').length,
               id: i.id,
+              allMembers: i.getListValue('members'),
             ))
         .toList();
   } catch (e) {

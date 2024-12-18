@@ -151,8 +151,11 @@ class ProfilePage extends StatelessWidget {
                           "Parish You're Attending",
                           FontAwesomeIcons.church,
                           [
-                            ...data.parish.map((item) =>
-                                _buildParishItem(item.getStringValue('name')))
+                            ...data.parish.map((item) => _buildParishItem(
+                                    item.getStringValue('name'),
+                                    label: 'visit', onAction: () {
+                                  openParish(context, item.id);
+                                }))
                           ],
                         ),
                         _buildSection(
@@ -160,7 +163,10 @@ class ProfilePage extends StatelessWidget {
                           FontAwesomeIcons.church,
                           [
                             ...data.community.map((item) => _buildParishItem(
-                                item.getStringValue('community')))
+                                item.getStringValue('community'),
+                                label: 'visit',
+                                onAction: () =>
+                                    openCommunity(context, item.id)))
                           ],
                         ),
                         _buildSection(

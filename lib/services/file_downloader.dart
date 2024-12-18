@@ -33,6 +33,43 @@ class FileDownloadHandler {
     }
   }
 
+  static Future<void> downloadRawFile(String url) async {
+    var status = await Permission.storage.request();
+    if (!status.isGranted) {
+      throw Exception('Storage permission not granted');
+    }
+
+    try {
+      final savePath = await getDownloadPath(url);
+
+      // Check if file already exists
+      if (await isFileDownloaded(savePath)) {
+        // If file exists, just open it
+        await openFile(savePath);
+        return;
+      }
+
+      // Download file using Dio
+      NotificationService.showInfo("Saving Image...");
+      await Dio().download(
+        url,
+        savePath,
+        onReceiveProgress: (received, total) {
+          if (total != -1) {
+            double progress = (received / total) * 100;
+            print('Download Progress: ${progress.toStringAsFixed(0)}%');
+          }
+        },
+      );
+
+      // Open the file after download
+      await openFile(savePath);
+    } catch (e) {
+      print('Error handling file: $e');
+      throw Exception('Failed to handle file: $e');
+    }
+  }
+
   static Future<void> downloadFile(types.FileMessage message) async {
     // Request storage permission
     var status = await Permission.storage.request();

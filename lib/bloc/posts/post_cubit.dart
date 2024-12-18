@@ -19,7 +19,6 @@ class PostCubit extends Cubit<PostState> {
             .toList(),
       ));
     } catch (e) {
-      print(e);
       emit(PostError(e.toString()));
     }
   }

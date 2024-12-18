@@ -3,6 +3,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:oratio_app/ui/bright/pages/create_event.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
@@ -173,6 +174,12 @@ class AppRouter {
                   path: '/mass',
                   name: RouteNames.mass,
                   builder: (context, state) => const MassBookingPage(),
+                ),
+
+                GoRoute(
+                  path: '/create-event-page',
+                  name: RouteNames.createEvent,
+                  builder: (context, state) => const CreateEventPage(),
                 ),
                 GoRoute(
                   path: '/parishdetails:id',

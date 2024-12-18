@@ -56,6 +56,19 @@ class _ConnectPageState extends State<ConnectPage>
 
   Future getUsers({String? filter}) async {
     if (filter != null) setState(() => _selectedFilter = filter);
+    if (_selectedFilter == 'All') {
+      final q = search != null
+          ? '(username ~ "$search" || email ~ "$search" || first_name ~ "$search" || last_name ~ "$search")'
+          : 'priest = ${filter == 'Priest'}';
+      try {
+        final newData = await listUsers(context, page: page, filter: q);
+        _users = [...newData];
+        setState(() {});
+      } catch (e) {
+        print(e);
+      }
+      return;
+    }
 
     final q = search != null
         ? '(username ~ "$search" || email ~ "$search" || first_name ~ "$search" || last_name ~ "$search") && priest = ${_selectedFilter == 'Priest'}'
@@ -307,46 +320,52 @@ class _ConnectPageState extends State<ConnectPage>
               ),
             ),
 
-            // User List (same as before)
             if (_users != null)
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final user = _users![index];
-                    return TweenAnimationBuilder(
-                      duration: Duration(milliseconds: 400 + (index * 100)),
-                      tween: Tween<double>(begin: 0, end: 1),
-                      builder: (context, double value, child) {
-                        return Transform.translate(
-                          offset: Offset(0, 50 * (1 - value)),
-                          child: Opacity(
-                            opacity: value,
-                            child: child,
+              SliverToBoxAdapter(
+                child: RefreshIndicator(
+                  onRefresh: () async {},
+                  child: SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final user = _users![index];
+                        return TweenAnimationBuilder(
+                          duration: Duration(milliseconds: 400 + (index * 100)),
+                          tween: Tween<double>(begin: 0, end: 1),
+                          builder: (context, double value, child) {
+                            return Transform.translate(
+                              offset: Offset(0, 50 * (1 - value)),
+                              child: Opacity(
+                                opacity: value,
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: UserCard(
+                            id: user.id,
+                            name: getFullName(user),
+                            username: user.getStringValue('username'),
+                            followers: user
+                                .getListValue('followers')
+                                .length
+                                .toString(),
+                            isFollowing: isFollowing(
+                                context
+                                    .read<PocketBaseServiceCubit>()
+                                    .state
+                                    .pb
+                                    .authStore
+                                    .model
+                                    .id,
+                                user.getListValue('followers')),
+                            onFollowTap: () {
+                              handleFollowUser(user.id);
+                            },
                           ),
                         );
                       },
-                      child: UserCard(
-                        id: user.id,
-                        name: getFullName(user),
-                        username: user.getStringValue('username'),
-                        followers:
-                            user.getListValue('followers').length.toString(),
-                        isFollowing: isFollowing(
-                            context
-                                .read<PocketBaseServiceCubit>()
-                                .state
-                                .pb
-                                .authStore
-                                .model
-                                .id,
-                            user.getListValue('followers')),
-                        onFollowTap: () {
-                          handleFollowUser(user.id);
-                        },
-                      ),
-                    );
-                  },
-                  childCount: _users!.length,
+                      childCount: _users!.length,
+                    ),
+                  ),
                 ),
               ),
           ],
@@ -416,7 +435,7 @@ class _SliverFilterDelegate extends SliverPersistentHeaderDelegate {
   }
 }
 
-class UserCard extends StatelessWidget {
+class UserCard extends StatefulWidget {
   final String name;
   final String username;
   final String followers;
@@ -434,11 +453,32 @@ class UserCard extends StatelessWidget {
   });
 
   @override
+  State<UserCard> createState() => _UserCardState();
+}
+
+class _UserCardState extends State<UserCard> {
+  bool? following;
+
+  void followUser() {
+    setState(() {
+      following = true;
+    });
+    widget.onFollowTap.call();
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    following ??= widget.isFollowing;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
         context.pushNamed(RouteNames.profilepagevisitor,
-            pathParameters: {'id': id});
+            pathParameters: {'id': widget.id});
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -459,7 +499,7 @@ class UserCard extends StatelessWidget {
             radius: 28,
             backgroundColor: Colors.grey[200],
             child: Text(
-              name[0],
+              widget.name[0],
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -467,7 +507,7 @@ class UserCard extends StatelessWidget {
             ),
           ),
           title: Text(
-            name,
+            widget.name,
             style: const TextStyle(
               fontWeight: FontWeight.bold,
             ),
@@ -476,28 +516,28 @@ class UserCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                username,
+                widget.username,
                 style: TextStyle(color: Colors.grey[600]),
               ),
               const SizedBox(height: 4),
               Text(
-                '$followers followers',
+                '${widget.followers} followers',
                 style: TextStyle(color: Colors.grey[600]),
               ),
             ],
           ),
           trailing: ElevatedButton(
-            onPressed: onFollowTap,
+            onPressed: followUser,
             style: ElevatedButton.styleFrom(
-              backgroundColor: isFollowing
+              backgroundColor: following!
                   ? Colors.grey[200]
                   : Theme.of(context).primaryColor,
-              foregroundColor: isFollowing ? Colors.black87 : Colors.white,
+              foregroundColor: following! ? Colors.black87 : Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
             ),
-            child: Text(isFollowing ? 'Following' : 'Follow'),
+            child: Text(following! ? 'Following' : 'Follow'),
           ),
         ),
       ),

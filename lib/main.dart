@@ -73,7 +73,8 @@ void main() async {
 
   Hive.init(appDocumentDirectory.path);
   Hive.registerAdapter(
-      MessageModelAdapter(),); // Generate this using build_runner
+    MessageModelAdapter(),
+  ); // Generate this using build_runner
 
   final pref = await SharedPreferences.getInstance();
   final bibleService = BibleReadingService();
@@ -180,6 +181,7 @@ class MainApp extends StatelessWidget {
                 try {
                   context.read<ChatCubit>().loadRecentChats();
                   context.read<NotificationCubit>().fetchNotifications();
+                  context.read<NotificationCubit>().realtimeConnection();
                   context.read<PostCubit>().fetchPosts();
                 } catch (e) {
                   debugPrint('Data refresh error: $e');

@@ -297,9 +297,8 @@ class _DashboardPageState extends State<DashboardPage> {
                   icon: FontAwesomeIcons.clock,
                   label: 'Create\nEvent',
                   onTap: () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (ctx) => const CreateEventPage(),
-                    ));
+                    context.pushNamed(RouteNames.createEvent);
+                  
                   },
                   color: Colors.orange,
                 ),
