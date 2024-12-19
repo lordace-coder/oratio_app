@@ -108,16 +108,6 @@ class _ChatPageState extends State<ChatPage> {
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  _handleImageSelection();
-                },
-                child: const Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Text('Photo'),
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
                   _handleFileSelection();
                 },
                 child: const Align(
@@ -142,9 +132,13 @@ class _ChatPageState extends State<ChatPage> {
   void _handleFileSelection() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.any,
+      allowMultiple: false,
+      withData: true,
     );
 
-    if (result != null && result.files.single.path != null) {
+    if (result != null &&
+        result.files.single.path != null &&
+        result.files.single.bytes != null) {
       final message = types.FileMessage(
         author: _user,
         createdAt: DateTime.now().millisecondsSinceEpoch,
@@ -154,6 +148,21 @@ class _ChatPageState extends State<ChatPage> {
         size: result.files.single.size,
         uri: result.files.single.path!,
       );
+
+      NotificationService.showInfo('Uploading file...');
+      try {
+        await pb.collection('messages').create(body: <String, dynamic>{
+          "sender": _user.id,
+          "message": "{{file}}",
+          "reciever": _otherUser.id,
+        }, files: [
+          http.MultipartFile.fromBytes('file', result.files.single.bytes!,
+              filename: result.files.single.name)
+        ]);
+      } catch (e) {
+        print(e);
+        NotificationService.showError('File upload failed');
+      }
 
       _addMessage(message);
     }
@@ -180,19 +189,6 @@ class _ChatPageState extends State<ChatPage> {
         uri: result.path,
         width: image.width.toDouble(),
       );
-      NotificationService.showInfo('Uploading file...');
-      try {
-        await pb.collection('messages').create(body: <String, dynamic>{
-          "sender": _user.id,
-          "message": "{{file}}",
-          "reciever": _otherUser.id,
-        }, files: [
-          http.MultipartFile.fromBytes('file', bytes as List<int>)
-        ]);
-      } catch (e) {
-        print(e);
-        NotificationService.showError('File upload failed');
-      }
     }
   }
 

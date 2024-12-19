@@ -8,7 +8,6 @@ import 'package:hive/hive.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/bible_readings/bible_reading_service.dart';
 import 'package:oratio_app/bloc/chat_cubit/message_cubit.dart';
-import 'package:oratio_app/popup_notification/popup_notification.dart';
 import 'package:oratio_app/services/bible_reading.dart';
 import 'package:oratio_app/services/chat/db/chat_hive.dart';
 import 'package:path_provider/path_provider.dart';
@@ -35,6 +34,7 @@ class MyHttpOverrides extends HttpOverrides {
   }
 }
 
+
 class ConnectivityCubit extends Cubit<bool> {
   final Connectivity _connectivity = Connectivity();
   StreamSubscription? connectivitySubscription;
@@ -55,7 +55,7 @@ class ConnectivityCubit extends Cubit<bool> {
   }
 
   bool _checkInternetConnection() {
-    //TODO
+    // TODO 
     return true;
   }
 

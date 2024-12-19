@@ -114,262 +114,256 @@ class _ConnectPageState extends State<ConnectPage>
           return false;
         },
         child: CustomScrollView(
-          controller: _scrollController,
-          physics: const BouncingScrollPhysics(),
-          slivers: [
-            // Enhanced App Bar
-            SliverAppBar(
-              expandedHeight: 200.0,
-              floating: false,
-              pinned: true,
-              stretch: true,
-              leading: IconButton(
-                icon: const Icon(FontAwesomeIcons.chevronLeft),
-                // Cupertino style back button
-                color: Colors.white,
-                onPressed: () => context.pop(),
-              ),
-              backgroundColor: AppColors.primary,
-              elevation: 0,
-              flexibleSpace: FlexibleSpaceBar(
-                collapseMode: CollapseMode.parallax,
-                background: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    // Gradient background
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topRight,
-                          end: Alignment.bottomLeft,
-                          colors: [
-                            Theme.of(context).primaryColor.withOpacity(0.8),
-                            Theme.of(context).primaryColor,
-                          ],
-                        ),
-                      ),
-                    ),
-                    // Decorative circles
-                    Positioned(
-                      right: -50,
-                      top: -50,
-                      child: Hero(
-                        tag: 'finduser',
-                        child: Container(
-                          width: 200,
-                          height: 200,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withOpacity(0.1),
+            controller: _scrollController,
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // Enhanced App Bar
+              SliverAppBar(
+                expandedHeight: 200.0,
+                floating: false,
+                pinned: true,
+                stretch: true,
+                leading: IconButton(
+                  icon: const Icon(FontAwesomeIcons.chevronLeft),
+                  // Cupertino style back button
+                  color: Colors.white,
+                  onPressed: () => context.pop(),
+                ),
+                backgroundColor: AppColors.primary,
+                elevation: 0,
+                flexibleSpace: FlexibleSpaceBar(
+                  collapseMode: CollapseMode.parallax,
+                  background: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      // Gradient background
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topRight,
+                            end: Alignment.bottomLeft,
+                            colors: [
+                              Theme.of(context).primaryColor.withOpacity(0.8),
+                              Theme.of(context).primaryColor,
+                            ],
                           ),
                         ),
                       ),
-                    ),
+                      // Decorative circles
+                      Positioned(
+                        right: -50,
+                        top: -50,
+                        child: Hero(
+                          tag: 'finduser',
+                          child: Container(
+                            width: 200,
+                            height: 200,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withOpacity(0.1),
+                            ),
+                          ),
+                        ),
+                      ),
 
-                    // Content
-                    Positioned(
-                      bottom: 60,
-                      left: 16,
-                      right: 16,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.people_alt_rounded,
-                                color: Colors.white,
-                                size: 32,
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                'Connect',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineMedium
-                                    ?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                      // Content
+                      Positioned(
+                        bottom: 60,
+                        left: 16,
+                        right: 16,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.people_alt_rounded,
+                                  color: Colors.white,
+                                  size: 32,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'Connect',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineMedium
+                                      ?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Find and follow other users',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge
+                                  ?.copyWith(
+                                    color: Colors.white.withOpacity(0.9),
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                bottom: PreferredSize(
+                  preferredSize: const Size.fromHeight(60),
+                  child: Container(
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[50],
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(30),
+                      ),
+                    ),
+                    child: Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Search Bar
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _SliverSearchAppBar(
+                  minHeight: 80,
+                  maxHeight: 80,
+                  child: Container(
+                    color: Colors.grey[50],
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 10),
+                    child: Hero(
+                      tag: 'searchBar',
+                      child: Material(
+                        color: Colors.transparent,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Find and follow other users',
-                            style:
-                                Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                      color: Colors.white.withOpacity(0.9),
-                                    ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(60),
-                child: Container(
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[50],
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(30),
-                    ),
-                  ),
-                  child: Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // Search Bar
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: _SliverSearchAppBar(
-                minHeight: 80,
-                maxHeight: 80,
-                child: Container(
-                  color: Colors.grey[50],
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  child: Hero(
-                    tag: 'searchBar',
-                    child: Material(
-                      color: Colors.transparent,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: (query) {
-                            search = query;
-                            getUsers();
-                          },
-                          decoration: InputDecoration(
-                            hintText: 'Search users...',
-                            prefixIcon:
-                                const Icon(Icons.search, color: Colors.grey),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
-                            filled: true,
-                            fillColor: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
-            // Filter Chips
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: _SliverFilterDelegate(
-                minHeight: 60,
-                maxHeight: 60,
-                child: Container(
-                  color: Colors.grey[50],
-                  padding: const EdgeInsets.only(left: 16),
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: ['All', 'Priest', 'Users'].map((filter) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: FilterChip(
-                          label: Text(filter),
-                          selected: _selectedFilter == filter,
-                          onSelected: (selected) {
-                            getUsers(filter: filter);
-                          },
-                          selectedColor: Theme.of(context).primaryColor,
-                          labelStyle: TextStyle(
-                            color: _selectedFilter == filter
-                                ? Colors.white
-                                : Colors.black87,
-                          ),
-                          elevation: 0,
-                          pressElevation: 2,
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ),
-            ),
-
-            if (_users != null)
-              SliverToBoxAdapter(
-                child: RefreshIndicator(
-                  onRefresh: () async {},
-                  child: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final user = _users![index];
-                        return TweenAnimationBuilder(
-                          duration: Duration(milliseconds: 400 + (index * 100)),
-                          tween: Tween<double>(begin: 0, end: 1),
-                          builder: (context, double value, child) {
-                            return Transform.translate(
-                              offset: Offset(0, 50 * (1 - value)),
-                              child: Opacity(
-                                opacity: value,
-                                child: child,
-                              ),
-                            );
-                          },
-                          child: UserCard(
-                            id: user.id,
-                            name: getFullName(user),
-                            username: user.getStringValue('username'),
-                            followers: user
-                                .getListValue('followers')
-                                .length
-                                .toString(),
-                            isFollowing: isFollowing(
-                                context
-                                    .read<PocketBaseServiceCubit>()
-                                    .state
-                                    .pb
-                                    .authStore
-                                    .model
-                                    .id,
-                                user.getListValue('followers')),
-                            onFollowTap: () {
-                              handleFollowUser(user.id);
+                          child: TextField(
+                            controller: _searchController,
+                            onChanged: (query) {
+                              search = query;
+                              getUsers();
                             },
+                            decoration: InputDecoration(
+                              hintText: 'Search users...',
+                              prefixIcon:
+                                  const Icon(Icons.search, color: Colors.grey),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Filter Chips
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _SliverFilterDelegate(
+                  minHeight: 60,
+                  maxHeight: 60,
+                  child: Container(
+                    color: Colors.grey[50],
+                    padding: const EdgeInsets.only(left: 16),
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      children: ['All', 'Priest', 'Users'].map((filter) {
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: FilterChip(
+                            label: Text(filter),
+                            selected: _selectedFilter == filter,
+                            onSelected: (selected) {
+                              getUsers(filter: filter);
+                            },
+                            selectedColor: Theme.of(context).primaryColor,
+                            labelStyle: TextStyle(
+                              color: _selectedFilter == filter
+                                  ? Colors.white
+                                  : Colors.black87,
+                            ),
+                            elevation: 0,
+                            pressElevation: 2,
                           ),
                         );
-                      },
-                      childCount: _users!.length,
+                      }).toList(),
                     ),
                   ),
                 ),
               ),
-          ],
-        ),
+
+              if (_users != null)
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final user = _users![index];
+                      return TweenAnimationBuilder(
+                        duration: Duration(milliseconds: 400 + (index * 100)),
+                        tween: Tween<double>(begin: 0, end: 1),
+                        builder: (context, double value, child) {
+                          return Transform.translate(
+                            offset: Offset(0, 50 * (1 - value)),
+                            child: Opacity(
+                              opacity: value,
+                              child: child,
+                            ),
+                          );
+                        },
+                        child: UserCard(
+                          id: user.id,
+                          name: getFullName(user),
+                          username: user.getStringValue('username'),
+                          followers:
+                              user.getListValue('followers').length.toString(),
+                          isFollowing: isFollowing(
+                              context
+                                  .read<PocketBaseServiceCubit>()
+                                  .state
+                                  .pb
+                                  .authStore
+                                  .model
+                                  .id,
+                              user.getListValue('followers')),
+                          onFollowTap: () {
+                            handleFollowUser(user.id);
+                          },
+                        ),
+                      );
+                    },
+                    childCount: _users!.length,
+                  ),
+                ),
+            ]),
       ),
     );
   }
