@@ -129,6 +129,10 @@ class ChatCubit extends Cubit<ChatState> {
         }
         final message = e.record!;
         if (e.record?.getStringValue('sender') != currentUserId) {
+          String msg = e.record!.getStringValue('message');
+          if (msg == "{{file}}") {
+            msg = 'sent you a file';
+          }
           PopupNotification.show(
             onTap: () async {
               await context
@@ -145,7 +149,7 @@ class ChatCubit extends Cubit<ChatState> {
             },
             title:
                 '${message.expand['sender']?.first.getStringValue('username')} :',
-            message: message.getStringValue('message'),
+            message: msg,
             icon: FontAwesomeIcons.message,
           );
         }

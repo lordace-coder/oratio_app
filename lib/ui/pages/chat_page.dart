@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
+import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/bloc/chat_cubit/message_cubit.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
@@ -16,6 +17,7 @@ import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:uuid/uuid.dart';
+import 'package:http/http.dart' as http;
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key, required this.profile});
@@ -178,8 +180,19 @@ class _ChatPageState extends State<ChatPage> {
         uri: result.path,
         width: image.width.toDouble(),
       );
-
-      _addMessage(message);
+      NotificationService.showInfo('Uploading file...');
+      try {
+        await pb.collection('messages').create(body: <String, dynamic>{
+          "sender": _user.id,
+          "message": "{{file}}",
+          "reciever": _otherUser.id,
+        }, files: [
+          http.MultipartFile.fromBytes('file', bytes as List<int>)
+        ]);
+      } catch (e) {
+        print(e);
+        NotificationService.showError('File upload failed');
+      }
     }
   }
 

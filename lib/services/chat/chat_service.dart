@@ -37,10 +37,12 @@ class ChatService {
           community: [], // You'll need to fetch this from your actual data
         );
 
+        String msg = message.getStringValue('message');
+        if (msg == '{{file}}') {
+          msg = message.getStringValue('file');
+        }
         // Format message preview with "You:" prefix if current user is sender
-        final String messagePreview = isSender
-            ? 'You: ${message.getStringValue('message')}'
-            : message.getStringValue('message');
+        String messagePreview = isSender ? 'You: $msg' : msg;
 
         // Create or update chat preview
         if (!chatMap.containsKey(otherParticipantId)) {

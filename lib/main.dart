@@ -55,6 +55,7 @@ class ConnectivityCubit extends Cubit<bool> {
   }
 
   bool _checkInternetConnection() {
+    //TODO
     return true;
   }
 
@@ -226,7 +227,7 @@ class MainApp extends StatelessWidget {
           ),
         ),
         lockScreenBuilder: (context) => const LockScreen(),
-        backgroundLockLatency: const Duration(seconds: 6),
+        backgroundLockLatency: const Duration(seconds: 9),
       ),
       color: AppColors.primary,
       routerConfig: appRouter.appRouter(),
