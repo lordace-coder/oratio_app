@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
+import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/networkProvider/requests.dart';
 import 'package:oratio_app/services/servces.dart';
 import 'package:oratio_app/ui/themes.dart';
@@ -235,7 +236,11 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                             isMember ? "Welcome Back" : 'Join Community',
                             FontAwesomeIcons.userPlus,
                             () async {
-                              if (isMember) return;
+                              if (isMember) {
+                                NotificationService.showWarning(
+                                    'You are already a Member of this Community');
+                                return;
+                              }
                               await joinCommunity(context,
                                   communityId: widget.communityId);
                               setState(() {});

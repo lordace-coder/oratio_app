@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
+import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/bloc/community.dart';
 import 'package:oratio_app/networkProvider/requests.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 class CommunityPage extends StatefulWidget {
   const CommunityPage({super.key});
@@ -16,23 +20,31 @@ class CommunityPage extends StatefulWidget {
 }
 
 class _CommunityPageState extends State<CommunityPage> {
-  final bool _loading = false;
-
+  bool _loading = false;
+  final TextEditingController _searchController = TextEditingController();
   List<PrayerCommunity> communities = [];
+  late PocketBase pb;
 
-  Future<List<PrayerCommunity>> loadData() async {
-    print('loading');
+  void loadData({String? query}) async {
+    setState(() {
+      _loading = true;
+    });
+    final data = await getCommunities(context,
+        filter: query == null
+            ? null
+            : 'community ~ "$query" || leader.username ~"$query"');
+    communities = data;
 
-    final data = await getCommunities(context);
-
-    print(data[0]);
-
-    return data;
+    setState(() {
+      _loading = false;
+    });
   }
 
   @override
   void initState() {
     super.initState();
+    pb = context.read<PocketBaseServiceCubit>().state.pb;
+    loadData();
   }
 
   @override
@@ -68,15 +80,15 @@ class _CommunityPageState extends State<CommunityPage> {
                   children: [
                     // Decorative pattern overlay
                     Opacity(
-                      opacity: 0.1,
+                      opacity: 0.4,
                       child: Container(
                         decoration: const BoxDecoration(
-                            // image: DecorationImage(
-                            //   image:
-                            //       NetworkImage('https://placeholder.com/pattern'),
-                            //   repeat: ImageRepeat.repeat,
-                            // ),
-                            ),
+                          image: DecorationImage(
+                            image: AssetImage('assets/images/wallet_bg.jpeg'),
+                            repeat: ImageRepeat.noRepeat,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
                       ),
                     ),
                     // Gradient overlay
@@ -112,30 +124,35 @@ class _CommunityPageState extends State<CommunityPage> {
               ),
             ),
             actions: [
-              IconButton(
-                onPressed: () {},
-                icon: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    FontAwesomeIcons.plus,
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                ),
-              ),
+              (pb.authStore.model as RecordModel).getBoolValue('priest')
+                  ? IconButton(
+                      onPressed: () {
+                        context.pushNamed(RouteNames.createCommunityPage);
+                      },
+                      icon: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          FontAwesomeIcons.plus,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ),
+                    )
+                  : Container(),
               const Gap(8),
             ],
           ),
 
           // Search Bar Section
-          FutureBuilder(
-            future: loadData(),
-            builder: (BuildContext context, AsyncSnapshot snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
+          Builder(
+            builder: (
+              BuildContext context,
+            ) {
+              if (_loading && communities.isEmpty) {
                 return SliverToBoxAdapter(
                   child: SizedBox(
                     height: 200,
@@ -143,7 +160,7 @@ class _CommunityPageState extends State<CommunityPage> {
                   ),
                 );
               }
-              if (snapshot.hasData) {
+              if (communities.isNotEmpty) {
                 return SliverToBoxAdapter(
                   child: Column(
                     children: [
@@ -161,55 +178,22 @@ class _CommunityPageState extends State<CommunityPage> {
                             ),
                           ],
                         ),
-                        child: const TextField(
-                          decoration: InputDecoration(
-                            hintText: 'Search communities...',
+                        child: TextField(
+                          controller: _searchController,
+                          onChanged: (query) {
+                            loadData(query: query);
+                          },
+                          decoration: const InputDecoration(
+                            hintText: 'Find Community...',
                             border: InputBorder.none,
                             icon: Icon(FontAwesomeIcons.magnifyingGlass,
                                 size: 16),
                           ),
                         ),
                       ),
-
-                      // Featured Communities Section
-                      FutureBuilder<List<PrayerCommunity>>(
-                          future: getFeaturedCommunities(context),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState ==
-                                    ConnectionState.done &&
-                                snapshot.data!.isNotEmpty) {
-                              return Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Featured Communities',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    const Gap(16),
-                                    SizedBox(
-                                      height: 160,
-                                      child: ListView.builder(
-                                        scrollDirection: Axis.horizontal,
-                                        itemCount: snapshot.data?.length,
-                                        itemBuilder: (context, index) =>
-                                            buildFeaturedCard(),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            } else {
-                              return Container();
-                            }
-                          }),
                       Column(
                         children: [
-                          ...snapshot.data
+                          ...communities
                               .map((i) => buildCommunityListItem(context, i))
                         ],
                       )
@@ -316,93 +300,127 @@ class _CommunityPageState extends State<CommunityPage> {
 
   Widget buildCommunityListItem(
       BuildContext context, PrayerCommunity community) {
+    final userId = pb.authStore.model.id as String;
+
+    bool joined = community.allMembers.contains(userId);
+    int membersCount = community.members;
     return InkWell(
       onTap: () {
         context.pushNamed(RouteNames.communityDetailPage, pathParameters: {
           'community': community.id,
         });
       },
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
+      child: StatefulBuilder(builder: (context, rebuild) {
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
               ),
-              child: Icon(
-                FontAwesomeIcons.church,
-                color: AppColors.primary,
-                size: 20,
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  image: community.image != null
+                      ? DecorationImage(
+                          image: NetworkImage(community.image!),
+                          fit: BoxFit.cover,
+                          onError: (error, stack) {
+                            debugPrint('error occured loading image $error');
+                          })
+                      : null,
+                ),
+                child: community.image == null
+                    ? Icon(
+                        FontAwesomeIcons.church,
+                        color: AppColors.primary,
+                        size: 20,
+                      )
+                    : null,
               ),
-            ),
-            const Gap(16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    community.community,
-                    style: const TextStyle(
-                      fontSize: 16,
+              const Gap(16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      community.community,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Gap(4),
+                    Row(
+                      children: [
+                        const Icon(
+                          FontAwesomeIcons.userGroup,
+                          size: 12,
+                          color: Colors.grey,
+                        ),
+                        const Gap(4),
+                        Text(
+                          '$membersCount Members',
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const Gap(12),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              GestureDetector(
+                onTap: () async {
+                  if (joined) {
+                    return NotificationService.showInfo(
+                        'You are already a Member');
+                  }
+                  await joinCommunity(context, communityId: community.id,
+                      onError: () {
+                    NotificationService.showError(
+                        'Error occured while joining community');
+                  });
+                  rebuild(() {
+                    joined = true;
+                    membersCount++;
+                  });
+                },
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    joined ? 'Joined' : 'Join',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const Gap(4),
-                  Row(
-                    children: [
-                      const Icon(
-                        FontAwesomeIcons.userGroup,
-                        size: 12,
-                        color: Colors.grey,
-                      ),
-                      const Gap(4),
-                      Text(
-                        '${community.members} Members',
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                        ),
-                      ),
-                      const Gap(12),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                'Join',
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
                 ),
-              ),
-            )
-          ],
-        ),
-      ),
+              )
+            ],
+          ),
+        );
+      }),
     );
   }
 }

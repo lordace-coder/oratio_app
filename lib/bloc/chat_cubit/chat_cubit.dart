@@ -1,7 +1,11 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/popup_notification/popup_notification.dart';
 import 'package:oratio_app/services/chat/chat_service.dart';
+import 'package:oratio_app/ui/pages/chat_page.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 // Chat State
@@ -114,7 +118,7 @@ class ChatCubit extends Cubit<ChatState> {
   }
 
   // Stream real-time updates for new messages
-  void subscribeToMessages() {
+  void subscribeToMessages(BuildContext context) {
     final currentUserId = (_pb.authStore.model as RecordModel).id;
     _pb.collection('messages').subscribe('*', (e) {
       if (e.action == 'create') {
@@ -126,9 +130,24 @@ class ChatCubit extends Cubit<ChatState> {
         final message = e.record!;
         if (e.record?.getStringValue('sender') != currentUserId) {
           PopupNotification.show(
-              title:
-                  '${message.expand['sender']?.first.getStringValue('username')} :',
-              message: message.getStringValue('message'));
+            onTap: () async {
+              await context
+                  .read<ProfileDataCubit>()
+                  .visitProfile(e.record!.getStringValue('sender'));
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => ChatPage(
+                      profile: (context.read<ProfileDataCubit>().state
+                              as ProfileDataLoaded)
+                          .guestProfile!),
+                ),
+              );
+            },
+            title:
+                '${message.expand['sender']?.first.getStringValue('username')} :',
+            message: message.getStringValue('message'),
+            icon: FontAwesomeIcons.message,
+          );
         }
         if (message.data['sender'] == currentUserId ||
             message.data['receiver'].toString().contains(currentUserId)) {

@@ -27,4 +27,6 @@ class RouteNames {
   // priest pages
   static String dashboard = 'dashboardPage';
   static String createEvent = 'createEventPage';
+  static String massRequests = 'mass-requests-page';
+  static String createCommunityPage = 'create-community-page';
 }

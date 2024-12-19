@@ -1,4 +1,4 @@
-package com.example.oratio_app
+package com.acemedia.oratio_app
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

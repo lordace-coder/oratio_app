@@ -8,21 +8,24 @@ import 'package:oratio_app/helpers/snackbars.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 Future<List<PrayerCommunity>> getCommunities(BuildContext context,
-    {VoidCallback? onError}) async {
+    {VoidCallback? onError, String? filter}) async {
   final PocketBase pb = context.read<PocketBaseServiceCubit>().state.pb;
   final List<PrayerCommunity> data = [];
   try {
-    final results = await pb.collection('prayer_community').getFullList();
-    return results
-        .map((i) => PrayerCommunity(
-              community: i.getStringValue('community'),
-              description: i.getStringValue('description'),
-              leader: {},
-              members: i.getListValue('members').length,
-              id: i.id,
-              allMembers: i.getListValue('members'),
-            ))
-        .toList();
+    final results =
+        await pb.collection('prayer_community').getFullList(filter: filter);
+    return results.map((i) {
+      final img = pb.getFileUrl(i, i.getStringValue('image')).toString();
+      return PrayerCommunity(
+        community: i.getStringValue('community'),
+        description: i.getStringValue('description'),
+        leader: {},
+        members: i.getListValue('members').length,
+        id: i.id,
+        allMembers: i.getListValue('members'),
+        image: img.isEmpty ? null : img,
+      );
+    }).toList();
   } catch (e) {
     print(e);
     onError?.call();
@@ -42,7 +45,7 @@ Future joinCommunity(BuildContext context,
         message: 'Welcome to ${community.getStringValue('community')}');
   } catch (e) {
     print('error $e');
-    showError(context, message: 'Sorry something went wrong');
+    onError?.call();
   }
 }
 

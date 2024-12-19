@@ -126,7 +126,7 @@ void main() async {
             final chat = ChatCubit(chatService, pbCubit.state.pb);
             try {
               chat.loadRecentChats();
-              chat.subscribeToMessages();
+              chat.subscribeToMessages(context);
             } catch (e) {
               debugPrint('Chat initialization error: $e');
             }

@@ -11,8 +11,10 @@ import 'package:pocketbase/pocketbase.dart';
 import 'package:http/http.dart' as http;
 
 class PrayerCommunityCreationPage extends StatefulWidget {
-  const PrayerCommunityCreationPage({super.key});
+  const PrayerCommunityCreationPage({super.key, this.communityId});
 
+  ///use id of an exisiting community to edit an exisiting community instead of creating a new one
+  final String? communityId;
   @override
   _PrayerCommunityCreationPageState createState() =>
       _PrayerCommunityCreationPageState();

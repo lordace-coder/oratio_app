@@ -10,6 +10,7 @@ class PrayerCommunity {
   int members;
   List allMembers;
   Map leader;
+  String? image;
   PrayerCommunity({
     required this.id,
     required this.community,
@@ -17,6 +18,7 @@ class PrayerCommunity {
     required this.members,
     required this.allMembers,
     required this.leader,
+    this.image,
   });
 
   PrayerCommunity copyWith({

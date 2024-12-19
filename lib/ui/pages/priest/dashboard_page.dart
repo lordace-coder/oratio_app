@@ -10,6 +10,7 @@ import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/networkProvider/paystack_payment.dart';
 import 'package:oratio_app/ui/bright/pages/create_community.dart';
 import 'package:oratio_app/ui/bright/pages/create_event.dart';
+import 'package:oratio_app/ui/bright/pages/mass_booking_page.dart';
 import 'package:oratio_app/ui/bright/pages/withdrawal_modal.dart';
 import 'package:oratio_app/ui/pages/home_screen.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
@@ -272,7 +273,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 _buildQuickActionButton(
                   icon: FontAwesomeIcons.book,
                   label: 'Mass\nRequests',
-                  onTap: showComingSoon,
+                  onTap: () {
+                    context.pushNamed(RouteNames.massRequests);
+                  },
                   color: Colors.blue,
                 ),
                 _buildQuickActionButton(
@@ -282,9 +285,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     // check if profile is loaded
                     if (profile is ProfileDataLoaded) {
                       if (profile.profile.parishLeading != null) {
-                        Navigator.of(context).push(MaterialPageRoute(
-                          builder: (ctx) => const PrayerCommunityCreationPage(),
-                        ));
+                        context.pushNamed(RouteNames.createCommunityPage);
                       } else {
                         NotificationService.showWarning(
                             'Priest isnt leading any parish currently, if this is an issue then refresh');
@@ -298,7 +299,6 @@ class _DashboardPageState extends State<DashboardPage> {
                   label: 'Create\nEvent',
                   onTap: () {
                     context.pushNamed(RouteNames.createEvent);
-                  
                   },
                   color: Colors.orange,
                 ),

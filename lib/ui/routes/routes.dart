@@ -3,7 +3,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:oratio_app/ui/bright/pages/create_community.dart';
 import 'package:oratio_app/ui/bright/pages/create_event.dart';
+import 'package:oratio_app/ui/bright/pages/mass_booking_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
@@ -237,7 +239,18 @@ class AppRouter {
                         },
                         child: const DashboardPage(),
                       );
-                    })
+                    }),
+                GoRoute(
+                  path: '/priest/${RouteNames.massRequests}',
+                  name: RouteNames.massRequests,
+                  builder: (context, state) => const BookedMassesPage(),
+                ),
+                GoRoute(
+                  path: '/priest/${RouteNames.createCommunityPage}',
+                  name: RouteNames.createCommunityPage,
+                  builder: (context, state) =>
+                      const PrayerCommunityCreationPage(),
+                ),
               ])
         ],
       );

@@ -3,13 +3,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:file_picker/file_picker.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
 import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/bloc/chat_cubit/message_cubit.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
+import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/networkProvider/users.dart';
 import 'package:oratio_app/services/file_downloader.dart';
+import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:uuid/uuid.dart';
@@ -47,25 +50,10 @@ class _ChatPageState extends State<ChatPage> {
     subscribeToMessages();
   }
 
-  // void _handleSendPressed(types.PartialText message) {
-  //   final textMessage = types.TextMessage(
-  //     author: _user,
-  //     createdAt: DateTime.now().millisecondsSinceEpoch,
-  //     id: const Uuid().v4(),
-  //     text: message.text,
-  //   );
-  //   context
-  //       .read<ChatCubit>()
-  //       .sendMessage(message: message.text, receiverId: widget.profile.userId);
-  //   //  LOAD MESSAGES AGAIN OR JUST ADD NEW TEXT TO MESSAGE
-  //   _addMessage(textMessage);
-  // }
-
   void subscribeToMessages() {
     pb.collection('messages').subscribe(
       '*',
       (e) {
-        print('updated inchat');
         if (e.action == 'create') {
           // Check if the message involves the current user
 
@@ -81,8 +69,6 @@ class _ChatPageState extends State<ChatPage> {
           if (mounted) {
             _addMessage(newMsg);
           }
-
-          print([e.record, 'new message in current chat']);
         }
       },
       filter: 'reciever.id = "${currentUser.id}"',
@@ -235,6 +221,19 @@ class _ChatPageState extends State<ChatPage> {
         );
   }
 
+  String? getAvatarUrl() {
+    if (widget.profile.user.getStringValue('avatar').isNotEmpty) {
+      final img = pb
+          .getFileUrl(
+              widget.profile.user, widget.profile.user.getStringValue('avatar'))
+          .toString();
+      if (img.isNotEmpty) {
+        return img;
+      }
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     _loadInitialMessages();
@@ -247,39 +246,50 @@ class _ChatPageState extends State<ChatPage> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Row(
-          children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              child: Text(
-                widget.profile.user.getStringValue('username')[0].toUpperCase(),
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onPrimary,
-                ),
+        title: GestureDetector(
+          onTap: () => context.pushNamed(RouteNames.profilepagevisitor,
+              pathParameters: {'id': widget.profile.userId}),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 20,
+                backgroundImage: getAvatarUrl() != null
+                    ? NetworkImage(getAvatarUrl()!)
+                    : null,
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                child: getAvatarUrl() != null
+                    ? null
+                    : Text(
+                        widget.profile.user
+                            .getStringValue('username')[0]
+                            .toUpperCase(),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        ),
+                      ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  getFullName(widget.profile.user),
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    getFullName(widget.profile.user),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const Text(
-                  'Online',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.green,
+                  const Text(
+                    'Online',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.green,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
         actions: [
           IconButton(

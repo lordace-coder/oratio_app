@@ -224,6 +224,24 @@ class _ChatItemState extends State<ChatItem>
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
 
+  String? getAvatarUrl() {
+    final pb = context.read<PocketBaseServiceCubit>().state.pb;
+    if (widget.chatPreview.profile.user.getStringValue('avatar').isNotEmpty) {
+      final img = pb
+          .getFileUrl(widget.chatPreview.profile.user,
+              widget.chatPreview.profile.user.getStringValue('avatar'))
+          .toString();
+      if (img.isNotEmpty) {
+        return img;
+      }
+    }
+    return null;
+  }
+
+  String getInitials() {
+    return '${widget.chatPreview.profile.user.getStringValue('first_name')[0]} ${widget.chatPreview.profile.user.getStringValue('last_name')[0]}';
+  }
+
   @override
   void initState() {
     super.initState();
@@ -282,12 +300,18 @@ class _ChatItemState extends State<ChatItem>
                   children: [
                     CircleAvatar(
                       radius: 28,
-                      backgroundColor:
-                          Theme.of(context).colorScheme.primaryContainer,
-                      child: Text(
-                        String.fromCharCode(65 + widget.index),
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
+                      backgroundImage: getAvatarUrl() != null
+                          ? NetworkImage(getAvatarUrl()!)
+                          : null,
+                      backgroundColor: getAvatarUrl() == null
+                          ? Theme.of(context).colorScheme.primaryContainer
+                          : null,
+                      child: getAvatarUrl() == null
+                          ? Text(
+                              getInitials(),
+                              style: Theme.of(context).textTheme.titleLarge,
+                            )
+                          : null,
                     ),
                     if (widget.index % 3 == 0)
                       Positioned(

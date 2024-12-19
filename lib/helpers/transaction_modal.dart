@@ -285,16 +285,13 @@ Future<String?>? showChurchSelect(BuildContext context) async {
 class TransactionDetail {
   final Function(BuildContext, int) handleTransaction;
 
-  ///function to be called when there is a change in the input,
-  ///
-  ///you can handle validation and confirm if user balance is sufficient
+
   final Function(String) onChange;
   final Widget icon;
   final String title;
   final String detail;
-
-  ///text for the submit button
   final String actionLabel;
+  
   TransactionDetail(
     this.actionLabel, {
     required this.handleTransaction,

@@ -1,17 +1,14 @@
 import 'dart:convert';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
-import 'package:oratio_app/popup_notification/popup_notification.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class ChatService {
   final PocketBase pb;
-
   ChatService(this.pb);
 
   Future<List<ChatPreview>> getRecentChats() async {
     try {
       final currentUserId = (pb.authStore.model as RecordModel).id;
-
       final messages = await pb.collection('messages').getList(
             page: 1,
             perPage: 50,
@@ -20,6 +17,7 @@ class ChatService {
             expand: 'sender,reciever',
             sort: '-created',
           );
+
       final chatMap = <String, ChatPreview>{};
 
       for (final RecordModel message in messages.items) {
@@ -28,7 +26,6 @@ class ChatService {
         final RecordModel otherParticipant = isSender
             ? message.expand['reciever']![0]
             : message.expand['sender']![0];
-
         final String otherParticipantId = otherParticipant.id;
 
         // Create profile for other participant
@@ -40,30 +37,33 @@ class ChatService {
           community: [], // You'll need to fetch this from your actual data
         );
 
+        // Format message preview with "You:" prefix if current user is sender
+        final String messagePreview = isSender
+            ? 'You: ${message.getStringValue('message')}'
+            : message.getStringValue('message');
+
         // Create or update chat preview
         if (!chatMap.containsKey(otherParticipantId)) {
           chatMap[otherParticipantId] = ChatPreview(
             participant: otherParticipantId,
             unreadCount: 0,
-            preview: message.getStringValue('message'),
+            preview: _truncateMessage(messagePreview),
             lastMessageAt: DateTime.parse(message.created),
             profile: profile,
           );
-     
         }
 
         // Update unread count
-        if (!message.getBoolValue('read')) {
+        if (!message.getBoolValue('read') && !isSender) {
           chatMap[otherParticipantId]!.unreadCount++;
         }
-        print([!message.getBoolValue('read'), !isSender]);
 
         // Update most recent message preview
         if (chatMap[otherParticipantId]!
             .lastMessageAt
             .isBefore(DateTime.parse(message.created))) {
           chatMap[otherParticipantId] = chatMap[otherParticipantId]!.copyWith(
-            preview: _truncateMessage(message.getStringValue('message')),
+            preview: _truncateMessage(messagePreview),
             lastMessageAt: DateTime.parse(message.created),
           );
         }

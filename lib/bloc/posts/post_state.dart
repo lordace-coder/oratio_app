@@ -1,6 +1,8 @@
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/helpers/functions.dart';
+import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:pocketbase/pocketbase.dart';
 // ignore: depend_on_referenced_packages
 import 'package:equatable/equatable.dart';
@@ -15,7 +17,11 @@ class Post extends Equatable {
   final String? image;
   final List commentCount;
   final String date;
+
+  ///author refers to the owner of the post whether parish or community or a single user
+  final RecordModel author;
   const Post({
+    required this.author,
     required this.communityId,
     required this.commentCount,
     required this.id,
@@ -25,6 +31,16 @@ class Post extends Equatable {
     required this.date,
     this.image,
   });
+
+  String? getAvatar(BuildContext context) {
+    final pb = getPocketBaseFromContext(context);
+    final avatarUrl =
+        pb.getFileUrl(author, author.getStringValue('image')).toString();
+    if (avatarUrl.isEmpty) {
+      return null;
+    }
+    return avatarUrl;
+  }
 
   @override
   List<Object?> get props => [id, post, likes, community, image];
@@ -38,7 +54,9 @@ class Post extends Equatable {
       post: record.getStringValue('post'),
       likes: List<String>.from(record.getListValue('likes')),
       community: record.expand['community']?.first.getStringValue('community'),
-      image: pb.getFileUrl(record, record.data['image']).toString(), communityId: record.getStringValue('community'),
+      image: pb.getFileUrl(record, record.data['image']).toString(),
+      communityId: record.getStringValue('community'),
+      author: record.expand['community']!.first,
     );
   }
 }

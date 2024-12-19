@@ -51,10 +51,14 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
             contentPadding: const EdgeInsets.all(10),
             leading: CircleAvatar(
               radius: 24,
-              // backgroundImage: NetworkImage(),
+              backgroundImage: widget.post.getAvatar(context) != null
+                  ? NetworkImage(widget.post.getAvatar(context)!)
+                  : null,
               backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-              child: Icon(FontAwesomeIcons.church,
-                  color: Theme.of(context).primaryColor),
+              child: widget.post.getAvatar(context) != null
+                  ? null
+                  : Icon(FontAwesomeIcons.church,
+                      color: Theme.of(context).primaryColor),
             ),
             title: Text(
               widget.post.community!,
@@ -74,9 +78,9 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
           if (widget.post.image!.isNotEmpty)
             GestureDetector(
               onLongPress: () async {
-                var _save = await confirm(context,
+                var save = await confirm(context,
                     content: const Text('Do you want to save this image?'));
-                if (_save) {
+                if (save) {
                   FileDownloadHandler.downloadRawFile(widget.post.image!);
                 }
               },
