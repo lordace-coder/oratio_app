@@ -5,7 +5,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:video_player/video_player.dart';
-import 'package:video_thumbnail/video_thumbnail.dart';
 
 // class CustomMessageBuilder implements MessageBuilder {
 //   @override
@@ -541,17 +540,7 @@ class _VideoMessageState extends State<VideoMessage> {
 
   Future<void> _generateThumbnail() async {
     try {
-      final thumbnail = await VideoThumbnail.thumbnailData(
-        video: widget.message.uri,
-        imageFormat: ImageFormat.JPEG,
-        maxWidth: 300,
-        quality: 75,
-      );
-      if (mounted) {
-        setState(() {
-          thumbnailUrl = thumbnail.toString();
-        });
-      }
+      if (mounted) {}
     } catch (e) {
       debugPrint('Error generating thumbnail: $e');
     }

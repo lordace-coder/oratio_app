@@ -4,6 +4,8 @@ import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:async';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:hive/hive.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/bible_readings/bible_reading_service.dart';
@@ -69,6 +71,12 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = MyHttpOverrides();
 
+  await Firebase.initializeApp();
+
+  // OneSignal setup
+  await OneSignal.Debug.setLogLevel(OSLogLevel.error);
+  OneSignal.initialize('2e3b5f47-0603-448b-a864-f14fdecadbab');
+  OneSignal.Notifications.requestPermission(true);
   final appDocumentDirectory = await getApplicationDocumentsDirectory();
 
   Hive.init(appDocumentDirectory.path);
