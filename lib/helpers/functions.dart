@@ -429,7 +429,7 @@ void openProfile(BuildContext context, String userId) {
     context.pushNamed(RouteNames.profile);
     return;
   }
-  context.pushNamed(RouteNames.profilepagevisitor);
+  context.pushNamed(RouteNames.profilepagevisitor,pathParameters:{'id':userId});
 }
 
 void openCommunity(BuildContext context, String id) {
