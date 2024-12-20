@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:oratio_app/ui/bright/pages/create_community.dart';
 import 'package:oratio_app/ui/bright/pages/create_event.dart';
 import 'package:oratio_app/ui/bright/pages/mass_booking_page.dart';
+import 'package:oratio_app/ui/widgets/image_viewer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
@@ -117,6 +118,11 @@ class AppRouter {
                   path: '/connect',
                   name: RouteNames.connect,
                   builder: (context, state) => const ConnectPage(),
+                ),
+                 GoRoute(
+                  path: '/image-viewer',
+                  name: RouteNames.imageView,
+                  builder: (context, state) =>   ImageViewer(),
                 ),
                 GoRoute(
                   path: '/profilepage',

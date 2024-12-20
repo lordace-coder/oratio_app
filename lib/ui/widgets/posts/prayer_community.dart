@@ -12,6 +12,7 @@ import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/helpers/user.dart';
 import 'package:oratio_app/services/file_downloader.dart';
 import 'package:oratio_app/ui/themes.dart';
+import 'package:oratio_app/ui/widgets/image_viewer.dart';
 import 'package:oratio_app/ui/widgets/posts/bottom_scaffold.dart';
 import 'package:pocketbase/pocketbase.dart';
 
@@ -142,6 +143,9 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
           // Post Image
           if (widget.post.image!.isNotEmpty)
             GestureDetector(
+              onTap: () {
+                openImageView(context, imageUrl: widget.post.image);
+              },
               onLongPress: () async {
                 var save = await confirm(context,
                     content: const Text('Do you want to save this image?'));
