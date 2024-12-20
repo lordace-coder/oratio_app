@@ -63,7 +63,6 @@ class PostCubit extends Cubit<PostState> {
   Future<void> updatePost(String id, Map<String, dynamic> data) async {
     try {
       await _pocketBase.collection('posts').update(id, body: data);
-      await fetchPosts(); // Refresh the post list
     } catch (e) {
       emit(PostError(e.toString()));
     }

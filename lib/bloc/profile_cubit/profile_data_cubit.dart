@@ -85,12 +85,15 @@ class ProfileDataCubit extends Cubit<ProfileDataState> {
           filter:
               'members ~ "${profile.userId}" || leader = "${profile.userId}"');
 
-      final myProfile = Profile(
-          user: pb.authStore.model,
-          userId: pb.authStore.model.id,
-          parish: [],
-          contact: '',
-          community: []);
+      Profile? myProfile;
+      if (state is ProfileDataLoaded) {
+        myProfile = (state as ProfileDataLoaded).profile;
+      }else{
+        await getMyProfile();
+        myProfile = (state as ProfileDataLoaded).profile;
+
+      }
+
       emit(ProfileDataLoaded(
           profile: myProfile,
           guestProfile: Profile(
