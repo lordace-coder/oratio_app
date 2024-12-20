@@ -11,7 +11,9 @@ class ProfileDataCubit extends Cubit<ProfileDataState> {
   ProfileDataCubit(this.pb) : super(ProfileDataInitial());
 
   Future getMyProfile() async {
-    emit(ProfileDataLoading());
+    if (state is ProfileDataLoaded) {
+      emit(ProfileDataLoading());
+    }
 
     try {
 // check if user is a priest
@@ -22,7 +24,6 @@ class ProfileDataCubit extends Cubit<ProfileDataState> {
                 .collection('parish')
                 .getList(filter: 'priest = "${pb.authStore.model.id}" '))
             .items;
-        print(data);
         if (data.isNotEmpty) {
           myParish = data.first;
         } else {
@@ -44,17 +45,20 @@ class ProfileDataCubit extends Cubit<ProfileDataState> {
           filter:
               'members ~ "${profile.userId}" || priest = "${profile.userId}"');
       final communities = await pb.collection('prayer_community').getFullList(
-          fields: "community",
+          fields: "community,id",
           filter:
               'members ~ "${profile.userId}" || leader = "${profile.userId}"');
       profile.community = communities;
-      print(profile.community);
-
       profile.parish = parishAttending;
       profile.contact =
           (pb.authStore.model as RecordModel).getStringValue("phone_number");
+      Profile? guestProfile;
+      if (state is ProfileDataLoaded) {
+        guestProfile = (state as ProfileDataLoaded).guestProfile;
+      }
       emit(ProfileDataLoaded(
         profile: profile,
+        guestProfile: guestProfile,
       ));
     } catch (e) {
       emit(ProfileDataError('$e'));

@@ -432,12 +432,11 @@ void openProfile(BuildContext context, String userId) {
   context.pushNamed(RouteNames.profilepagevisitor);
 }
 
-
-void openCommunity(BuildContext context,String id){
-  context.pushNamed(RouteNames.communityDetailPage,pathParameters: {'community':id});
+void openCommunity(BuildContext context, String id) {
+  context.pushNamed(RouteNames.communityDetailPage,
+      pathParameters: {'community': id});
 }
 
 void openParish(BuildContext context, String id) {
-  context.pushNamed(RouteNames.parishlanding,
-      pathParameters: {'id': id});
+  context.pushNamed(RouteNames.parishlanding, pathParameters: {'id': id});
 }

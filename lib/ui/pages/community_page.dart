@@ -7,6 +7,7 @@ import 'package:lottie/lottie.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/bloc/community.dart';
+import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/networkProvider/requests.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
@@ -160,49 +161,45 @@ class _CommunityPageState extends State<CommunityPage> {
                   ),
                 );
               }
-              if (communities.isNotEmpty) {
-                return SliverToBoxAdapter(
-                  child: Column(
-                    children: [
-                      Container(
-                        margin: const EdgeInsets.all(16),
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: TextField(
-                          controller: _searchController,
-                          onChanged: (query) {
-                            loadData(query: query);
-                          },
-                          decoration: const InputDecoration(
-                            hintText: 'Find Community...',
-                            border: InputBorder.none,
-                            icon: Icon(FontAwesomeIcons.magnifyingGlass,
-                                size: 16),
+              return SliverToBoxAdapter(
+                child: Column(
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
                           ),
+                        ],
+                      ),
+                      child: TextField(
+                        controller: _searchController,
+                        onChanged: (query) {
+                          loadData(query: query);
+                        },
+                        decoration: const InputDecoration(
+                          hintText: 'Find Community...',
+                          border: InputBorder.none,
+                          icon:
+                              Icon(FontAwesomeIcons.magnifyingGlass, size: 16),
                         ),
                       ),
-                      Column(
-                        children: [
-                          ...communities
-                              .map((i) => buildCommunityListItem(context, i))
-                        ],
-                      )
-                    ],
-                  ),
-                );
-              }
-              // default widget
-              return SliverToBoxAdapter(child: Container());
+                    ),
+                    Column(
+                      children: [
+                        ...communities
+                            .map((i) => buildCommunityListItem(context, i))
+                      ],
+                    )
+                  ],
+                ),
+              );
             },
           ),
         ],
@@ -306,9 +303,7 @@ class _CommunityPageState extends State<CommunityPage> {
     int membersCount = community.members;
     return InkWell(
       onTap: () {
-        context.pushNamed(RouteNames.communityDetailPage, pathParameters: {
-          'community': community.id,
-        });
+        openCommunity(context, community.id);
       },
       child: StatefulBuilder(builder: (context, rebuild) {
         return Container(
