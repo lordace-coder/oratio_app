@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "229174286646",
+    "project_id": "book-mass",
+    "storage_bucket": "book-mass.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:229174286646:android:5411b9a2175162a3fe3b97",
+        "android_client_info": {
+          "package_name": "com.acemedia.oratio"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBcjsqbrWNbR3UM2CQAjlj5hs28GKJO-bQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:229174286646:android:d5545c50ea73f7f0fe3b97",
+        "android_client_info": {
+          "package_name": "com.acemedia.oratio_a"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBcjsqbrWNbR3UM2CQAjlj5hs28GKJO-bQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

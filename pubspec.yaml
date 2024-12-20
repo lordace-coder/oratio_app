@@ -24,7 +24,7 @@ dependencies:
   permission_handler:
   shimmer: ^3.0.0
   url_launcher: ^6.3.0
-  onesignal_flutter: ^5.2.5
+  onesignal_flutter: ^5.2.9
   firebase_core: ^2.25.5
   image_picker: ^1.1.2
   flutter_slidable: ^3.1.1
@@ -48,8 +48,7 @@ dependencies:
   hive: ^2.2.3
   animate_do: ^3.3.4
   glass: ^2.0.0+2
-  video_player:
-  video_thumbnail:
+  video_player: ^2.8.1
 
 dev_dependencies:
   flutter_test:
