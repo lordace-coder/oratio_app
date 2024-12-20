@@ -492,10 +492,7 @@ class _FeedsListScreenState extends State<FeedsListScreen>
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          final postCubit = context.read<PostCubit>();
-
-          postCubit.loadMorePosts();
-          // context.pushNamed(RouteNames.createPrayerRequest);
+          context.pushNamed(RouteNames.createPrayerRequest);
         },
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,

@@ -90,6 +90,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: BlocBuilder<ChatCubit, ChatState>(
                     builder: (context, state) {
+                      print(state.runtimeType);
+
                       if (state is ChatLoading) {
                         return const SliverToBoxAdapter(
                           child: Center(

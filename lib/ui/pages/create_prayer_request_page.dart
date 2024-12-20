@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/bloc/prayer_requests/requests_cubit.dart';
 import 'package:oratio_app/helpers/snackbars.dart';
 import 'package:oratio_app/networkProvider/requests.dart';
+import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 
@@ -24,6 +26,17 @@ class _CreatePrayerRequestPageState extends State<CreatePrayerRequestPage> {
 
   // Key for the form validation
   final _formKey = GlobalKey<FormState>();
+
+  Future<bool> isCommunityLeader() async {
+    final PocketBase pb = context.read<PocketBaseServiceCubit>().state.pb;
+    try {
+      final res = await pb.collection('prayer_community').getList(
+          filter: 'leader.id ~ "${(pb.authStore.model as RecordModel).id}" ');
+
+      return res.items.isNotEmpty;
+    } catch (e) {}
+    return false;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -211,6 +224,32 @@ class _CreatePrayerRequestPageState extends State<CreatePrayerRequestPage> {
                           ),
                         ),
                       ),
+                      FutureBuilder(
+                          future: isCommunityLeader(),
+                          builder: (context, snapshot) {
+                            if (snapshot.data!) {
+                              return Center(
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 15),
+                                  child: InkWell(
+                                    onTap: () async {
+                                      await context
+                                          .pushNamed(RouteNames.createPost);
+                                    },
+                                    child: const Text(
+                                      'Create new post instead',
+                                      style: TextStyle(
+                                          fontSize: 18,
+                                          // fontWeight: FontWeight.bold,
+                                          color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          })
                     ],
                   ),
                 ),

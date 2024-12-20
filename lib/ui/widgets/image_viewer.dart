@@ -47,7 +47,7 @@ class ImageViewer extends StatelessWidget {
                     ? FileDownloadHandler.downloadRawFile(imageUrl!)
                     : imageBytes != null
                         ? FileDownloadHandler.downloadImageFromBytes(
-                            imageBytes!, DateTime.now().toString())
+                            imageBytes!, 'ORATIO-IMG-${DateTime.now().toString()}')
                         : null;
               },
               child: const Column(
@@ -73,7 +73,6 @@ void openImageView(
   Uint8List? imageBytes,
   String? imageUrl,
 }) async {
-  print('function called');
   Navigator.of(context).push(
     MaterialPageRoute(
       builder: (context) => ImageViewer(
@@ -84,8 +83,3 @@ void openImageView(
   );
 }
 
-// Example usage for memory image:
-// _openFullScreenImage(imageBytes: yourImageBytes);
-
-// Example usage for network image:
-// _openFullScreenImage(imageUrl: yourImageUrl);
