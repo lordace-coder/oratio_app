@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -7,6 +8,10 @@ import 'dart:io';
 import 'package:open_filex/open_filex.dart';
 
 class FileDownloadHandler {
+
+
+
+
   static Future<String> getDownloadPath(String fileName) async {
     Directory? directory;
     if (Platform.isAndroid) {
@@ -32,6 +37,8 @@ class FileDownloadHandler {
       throw Exception('Error opening file: $e');
     }
   }
+
+
 
   static Future<void> downloadRawFile(String url) async {
     var status = await Permission.storage.request();
@@ -107,4 +114,26 @@ class FileDownloadHandler {
       throw Exception('Failed to handle file: $e');
     }
   }
+    
+static Future<void> downloadImageFromBytes(Uint8List imageBytes, String fileName) async {
+    var status = await Permission.storage.request();
+    if (!status.isGranted) {
+      throw Exception('Storage permission not granted');
+    }
+
+    try {
+      final directory = await getExternalStorageDirectory();
+      final savePath = '${directory!.path}/$fileName';
+
+      // Write the bytes to a file
+      final file = File(savePath);
+      await file.writeAsBytes(imageBytes);
+
+      // Notify the user
+      NotificationService.showInfo("Image saved to $savePath");
+    } catch (e) {
+      throw Exception('Error saving image: $e');
+    }
+  }
 }
+
