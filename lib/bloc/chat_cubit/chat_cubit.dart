@@ -52,7 +52,6 @@ class ChatCubit extends Cubit<ChatState> {
       final chats = await _chatService.getRecentChats();
       emit(ChatsLoaded(chats));
     } catch (e) {
-      print(e);
       emit(ChatError('Failed to load chats: $e'));
     }
   }
@@ -66,7 +65,6 @@ class ChatCubit extends Cubit<ChatState> {
 
     try {
       //   final currentUserId = _pb.authStore.model.id;
-      // print({
       //   'sender': currentUserId,
       //   'receiver': receiverId,
       //   'message': message,
@@ -95,8 +93,6 @@ class ChatCubit extends Cubit<ChatState> {
     try {
       final currentUserId = _pb.authStore.model.id;
 
-      print(
-          'filter ${'receiver = "$currentUserId" && sender = "$otherParticipantId" && read = false'}');
       // Get unread messages
       final result = await _pb.collection('messages').getList(
             filter:

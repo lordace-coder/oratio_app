@@ -73,7 +73,6 @@ class MessageCubit extends Cubit<MessageState> {
           );
       final messages =
           response.map((item) => MessageModel.fromPocketBase(item)).toList();
-      print(messages.where((i) => i.received).length);
 
       emit(state.copyWith(
         messages: messages,
@@ -94,7 +93,6 @@ class MessageCubit extends Cubit<MessageState> {
       // Mark messages as read after loading
       await markMessagesAsRead(otherUserId);
     } catch (e) {
-      print(e);
       emit(state.copyWith(
         error: e.toString(),
         isLoading: false,
@@ -112,9 +110,7 @@ class MessageCubit extends Cubit<MessageState> {
       emit(MessageState(
         messages: results,
       ));
-    } catch (e) {
-      print('error gettings saved messages $e');
-    }
+    } catch (e) {}
   }
 
   Future<void> sendMessage({
@@ -122,7 +118,6 @@ class MessageCubit extends Cubit<MessageState> {
     required String receiverId,
   }) async {
     try {
-      print('called');
       final currentUserId = pb.authStore.model.id;
       final newMessage = MessageModel(
         id: const Uuid().v4(),
@@ -146,7 +141,6 @@ class MessageCubit extends Cubit<MessageState> {
         // await repository.markMessageAsReceived(newMessage.id);
       } catch (e) {
         // Message will remain in local storage if send fails
-        print('Failed to send message: $e');
         rethrow;
       }
 
@@ -154,13 +148,11 @@ class MessageCubit extends Cubit<MessageState> {
       final updatedMessages = [newMessage, ...state.messages];
       emit(state.copyWith(messages: updatedMessages));
     } catch (e) {
-      print('error $e');
       emit(state.copyWith(error: e.toString()));
     }
   }
 
   Future<void> markMessagesAsRead(String senderId) async {
-    print('markMessagesAsRead');
     try {
       final currentUserId = pb.authStore.model.id;
 
@@ -172,9 +164,7 @@ class MessageCubit extends Cubit<MessageState> {
         );
       }
       // emit(state.copyWith(messages: updatedMessages));
-    } catch (e) {
-      print('Error marking messages as read: $e');
-    }
+    } catch (e) {}
   }
 
   void _handleNewMessage(MessageModel message) {

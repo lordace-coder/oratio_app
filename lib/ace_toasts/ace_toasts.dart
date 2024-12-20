@@ -241,7 +241,6 @@ class NotificationService {
 
   static void _log(String message) {
     if (debugMode) {
-      print('NotificationService: $message');
     }
   }
 }
