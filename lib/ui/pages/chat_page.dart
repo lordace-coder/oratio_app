@@ -15,6 +15,8 @@ import 'package:oratio_app/networkProvider/users.dart';
 import 'package:oratio_app/services/file_downloader.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
+import 'package:oratio_app/ui/widgets/chats.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:uuid/uuid.dart';
 import 'package:http/http.dart' as http;
@@ -97,39 +99,41 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void _handleAttachmentPressed() {
-    showModalBottomSheet<void>(
-      context: context,
-      builder: (BuildContext context) => SafeArea(
-        child: SizedBox(
-          height: 144,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _handleFileSelection();
-                },
-                child: const Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Text('File'),
-                ),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Text('Cancel'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    // showModalBottomSheet<void>(
+    //   context: context,
+    //   builder: (BuildContext context) => SafeArea(
+    //     child: SizedBox(
+    //       height: 144,
+    //       child: Column(
+    //         crossAxisAlignment: CrossAxisAlignment.stretch,
+    //         children: <Widget>[
+    //           TextButton(
+    //             onPressed: () {
+    //               Navigator.pop(context);
+
+    //             },
+    //             child: const Align(
+    //               alignment: AlignmentDirectional.centerStart,
+    //               child: Text('File'),
+    //             ),
+    //           ),
+    //           TextButton(
+    //             onPressed: () => Navigator.pop(context),
+    //             child: const Align(
+    //               alignment: AlignmentDirectional.centerStart,
+    //               child: Text('Cancel'),
+    //             ),
+    //           ),
+    //         ],
+    //       ),
+    //     ),
+    //   ),
+    // );
+    _handleFileSelection();
   }
 
   void _handleFileSelection() async {
+    print('lala');
     final result = await FilePicker.platform.pickFiles(
       type: FileType.any,
       allowMultiple: false,
@@ -194,6 +198,25 @@ class _ChatPageState extends State<ChatPage> {
 
   void _handleMessageTap(BuildContext context, types.Message message) async {
     if (message is types.FileMessage) {
+      // Check and request storage permission
+
+      final status = await Permission.storage.status;
+      await FileDownloadHandler.downloadFile(message);
+      if (!status.isGranted) {
+        print('no permission');
+        final result = await Permission.storage.request();
+
+        if (!result.isGranted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content:
+                    Text('Storage permission is required to download files.')),
+          );
+          return;
+        }
+      }
+
+      // Proceed to download the file
       try {
         await FileDownloadHandler.downloadFile(message);
         // No need for a "downloaded" message since the file will open automatically
@@ -341,13 +364,22 @@ class _ChatPageState extends State<ChatPage> {
             }).toList();
 
             return Chat(
+              bubbleBuilder: (child,
+                      {required message, required nextMessageInGroup}) =>
+                  CustomBubble(
+                      message: message, isUser: message.author == _user),
+
               messages: messages,
               onAttachmentPressed: _handleAttachmentPressed,
               onMessageTap: _handleMessageTap,
               onPreviewDataFetched: _handlePreviewDataFetched,
               onSendPressed: _handleSendPressed,
-              showUserAvatars: true,
-              showUserNames: true,
+              // showUserAvatars: true,
+              customBottomWidget: CustomChatInput(
+                onSendMessage: _handleSendPressed,
+                onAttachmentPressed: _handleAttachmentPressed,
+              ),
+              // showUserNames: true,
               user: _user,
               theme: DefaultChatTheme(
                 backgroundColor: Theme.of(context).scaffoldBackgroundColor,

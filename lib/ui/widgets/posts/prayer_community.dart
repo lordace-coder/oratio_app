@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' as intl;
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/bloc/posts/post_cubit.dart';
@@ -25,6 +25,44 @@ class CommunityPostCard extends StatefulWidget {
 
 class _CommunityPostCardState extends State<CommunityPostCard> {
   bool? hasLiked;
+  bool _isExpanded = false;
+  static const int _maxLines = 3;
+  bool _shouldShowMoreButton = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Schedule the calculation for after the first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _calculateTextHeight();
+    });
+  }
+
+  void _calculateTextHeight() {
+    if (!mounted) return;
+
+    final textSpan = TextSpan(
+      text: widget.post.post,
+      style: Theme.of(context).textTheme.bodyLarge,
+    );
+
+    const TextDirection dir = TextDirection.ltr;
+    final textPainter = TextPainter(
+      text: textSpan,
+      textDirection: dir,
+      maxLines: _maxLines,
+    );
+
+    final constraintWidth =
+        MediaQuery.of(context).size.width - 40; // Account for padding
+    textPainter.layout(maxWidth: constraintWidth);
+
+    if (mounted) {
+      setState(() {
+        _shouldShowMoreButton = textPainter.didExceedMaxLines;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,12 +104,39 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
             ),
             subtitle: Text(widget.post.date),
           ),
-          // Post Content
+          // Post Content with See More
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: Text(
-              widget.post.post,
-              style: Theme.of(context).textTheme.bodyLarge,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.post.post,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                  maxLines: _isExpanded ? null : _maxLines,
+                  overflow: _isExpanded
+                      ? TextOverflow.visible
+                      : TextOverflow.ellipsis,
+                ),
+                if (_shouldShowMoreButton)
+                  GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _isExpanded = !_isExpanded;
+                      });
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        _isExpanded ? 'See less' : 'See more',
+                        style: TextStyle(
+                          color: Theme.of(context).primaryColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
           // Post Image
@@ -97,7 +162,6 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
               ),
             ),
           // Post Actions
-
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -158,7 +222,7 @@ class PrayerRequestCard extends StatefulWidget {
 class _PrayerRequestCardState extends State<PrayerRequestCard> {
   bool? isPraying;
   int isPrayingCount = 0;
-  DateFormat format = DateFormat("yyyy-MM-dd HH:mm:ss.SSS'Z'");
+  intl.DateFormat format = intl.DateFormat("yyyy-MM-dd HH:mm:ss.SSS'Z'");
   late PocketBase pb;
   PrayerRequest? _prayerRequest;
 
