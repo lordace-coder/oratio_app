@@ -69,6 +69,7 @@ class _FeedsListScreenState extends State<FeedsListScreen>
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     pb = context.read<PocketBaseServiceCubit>().state.pb;
     _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -83,10 +84,24 @@ class _FeedsListScreenState extends State<FeedsListScreen>
     });
   }
 
+  void _onScroll() {
+    if ((_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 100) &&
+        _tabController.index == 0) {
+      // Load more when we're 200 pixels from the bottom
+      final postCubit = context.read<PostCubit>();
+      print('fetching mre');
+      if (postCubit.state is PostLoaded) {
+        postCubit.loadMorePosts();
+      }
+    }
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
     _scrollController.dispose();
+
     super.dispose();
   }
 
@@ -103,6 +118,7 @@ class _FeedsListScreenState extends State<FeedsListScreen>
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: NestedScrollView(
+        controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
@@ -476,7 +492,10 @@ class _FeedsListScreenState extends State<FeedsListScreen>
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          context.pushNamed(RouteNames.createPrayerRequest);
+          final postCubit = context.read<PostCubit>();
+
+          postCubit.loadMorePosts();
+          // context.pushNamed(RouteNames.createPrayerRequest);
         },
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,

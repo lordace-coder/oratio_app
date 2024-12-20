@@ -34,7 +34,6 @@ class MyHttpOverrides extends HttpOverrides {
   }
 }
 
-
 class ConnectivityCubit extends Cubit<bool> {
   final Connectivity _connectivity = Connectivity();
   StreamSubscription? connectivitySubscription;
@@ -55,7 +54,7 @@ class ConnectivityCubit extends Cubit<bool> {
   }
 
   bool _checkInternetConnection() {
-    // TODO 
+    // TODO
     return true;
   }
 
@@ -89,9 +88,7 @@ void main() async {
         initial: pref.getString('pb_auth'),
       ),
     );
-  } catch (e) {
-    debugPrint('PocketBase initialization error: $e');
-  }
+  } catch (e) {}
   final repository = MessageRepository(
     pocketBase: pb!,
     messageBox: await Hive.openBox<MessageModel>('messages'),
@@ -100,9 +97,7 @@ void main() async {
   final notificationCubit = NotificationCubit(pbCubit.state.pb);
   try {
     await notificationCubit.fetchNotifications();
-  } catch (e) {
-    debugPrint('Notification fetch error: $e');
-  }
+  } catch (e) {}
   final appRouter = AppRouter(pref: pref);
 
   ChatService chatService = ChatService(pbCubit.state.pb);
@@ -128,9 +123,7 @@ void main() async {
             try {
               chat.loadRecentChats();
               chat.subscribeToMessages(context);
-            } catch (e) {
-              debugPrint('Chat initialization error: $e');
-            }
+            } catch (e) {}
             return chat;
           },
           lazy: false,
@@ -150,9 +143,7 @@ void main() async {
             final postCubit = PostCubit(pbCubit.state.pb);
             try {
               postCubit.fetchPosts();
-            } catch (e) {
-              debugPrint('Post fetch error: $e');
-            }
+            } catch (e) {}
             return postCubit;
           },
         ),
@@ -184,9 +175,7 @@ class MainApp extends StatelessWidget {
                   context.read<NotificationCubit>().fetchNotifications();
                   context.read<NotificationCubit>().realtimeConnection();
                   context.read<PostCubit>().fetchPosts();
-                } catch (e) {
-                  debugPrint('Data refresh error: $e');
-                }
+                } catch (e) {}
               } else {
                 NotificationService.showError('No internet connection');
               }

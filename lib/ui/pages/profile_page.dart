@@ -163,10 +163,10 @@ class ProfilePage extends StatelessWidget {
                           FontAwesomeIcons.church,
                           [
                             ...data.community.map((item) => _buildParishItem(
-                                item.getStringValue('community'),
-                                label: 'visit',
-                                onAction: () =>
-                                    openCommunity(context, item.id)))
+                                    item.getStringValue('community'),
+                                    label: 'visit', onAction: () {
+                                  openCommunity(context, item.id);
+                                }))
                           ],
                         ),
                         _buildSection(
