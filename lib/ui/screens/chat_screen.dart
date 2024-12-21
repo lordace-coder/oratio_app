@@ -21,25 +21,13 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  bool _showFloatingButton = false;
-
-  @override
-  void initState() {
-    super.initState();
-    final pb = context.read<PocketBaseServiceCubit>().state.pb;
-
-    _scrollController.addListener(() {
-      setState(() {
-        _showFloatingButton = _scrollController.offset > 200;
-      });
-    });
-  }
+  final bool _showFloatingButton = false;
+  int _selectedTabIndex = 0; // Track selected tab
 
   @override
   Widget build(BuildContext context) {
-    if (context.read<ChatCubit>().state is! ChatsLoaded) {
-      context.read<ChatCubit>().loadRecentChats();
-    }
+    // ... existing code ...
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
@@ -53,7 +41,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   snap: true,
                   elevation: 0,
                   backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                  expandedHeight: 120,
+                  expandedHeight:
+                      170, // Increased height to accommodate tab bar
                   flexibleSpace: FlexibleSpaceBar(
                     background: Column(
                       children: [
@@ -76,22 +65,15 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                         ),
                         _buildSearchBar(),
+                        _buildCustomTabBar(),
                       ],
                     ),
                   ),
                 ),
-                // SliverPadding(
-                //   padding: const EdgeInsets.symmetric(horizontal: 16),
-                //   sliver: SliverToBoxAdapter(
-                //     child: buildStorySection(context),
-                //   ),
-                // ),
                 SliverPadding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   sliver: BlocBuilder<ChatCubit, ChatState>(
                     builder: (context, state) {
-                      print(state.runtimeType);
-
                       if (state is ChatLoading) {
                         return const SliverToBoxAdapter(
                           child: Center(
@@ -99,6 +81,11 @@ class _ChatScreenState extends State<ChatScreen> {
                           ),
                         );
                       } else if (state is ChatsLoaded) {
+                        // !Filter chats based on selected tab
+                        final filteredChats = _selectedTabIndex == 0
+                            ? state.chats.toList()
+                            : state.chats.toList();
+
                         return AnimationLimiter(
                           child: SliverList(
                             delegate: SliverChildBuilderDelegate(
@@ -111,12 +98,12 @@ class _ChatScreenState extends State<ChatScreen> {
                                   child: FadeInAnimation(
                                     child: ChatItem(
                                       index: index,
-                                      chatPreview: state.chats[index],
+                                      chatPreview: filteredChats[index],
                                     ),
                                   ),
                                 ),
                               ),
-                              childCount: state.chats.length,
+                              childCount: filteredChats.length,
                             ),
                           ),
                         );
@@ -129,7 +116,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               ],
             ),
-            if (_showFloatingButton)
+            if (_showFloatingButton) // ... existing floating button code ...
               Positioned(
                 right: 16,
                 bottom: 16,
@@ -150,6 +137,90 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 
+  Widget _buildCustomTabBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Container(
+        height: 40,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(5),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: _buildTabItem(
+                title: 'Recent Chats',
+                isSelected: _selectedTabIndex == 0,
+                onTap: () => _onTabSelected(0),
+              ),
+            ),
+            Expanded(
+              child: _buildTabItem(
+                title: 'Message Requests',
+                isSelected: _selectedTabIndex == 1,
+                onTap: () => _onTabSelected(1),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabItem({
+    required String title,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 4),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              height: 2,
+              width: isSelected ? 24 : 0,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _onTabSelected(int index) {
+    setState(() {
+      _selectedTabIndex = index;
+    });
+    // Here you can trigger different data loading based on the selected tab
+    // For example:
+    // if (index == 0) {
+    //   context.read<ChatCubit>().loadRecentChats();
+    // } else {
+    //   context.read<ChatCubit>().loadMessageRequests();
+    // }
+  }
+
+  // ... rest of your existing code ...
+
   Widget _buildProfileButton() {
     return Hero(
       tag: 'finduser',
@@ -159,7 +230,7 @@ class _ChatScreenState extends State<ChatScreen> {
           radius: 20,
           backgroundColor: Theme.of(context).colorScheme.primaryContainer,
           child: IconButton(
-            icon: const Icon(Icons.person),
+            icon: const Icon(FontAwesomeIcons.user),
             onPressed: () {
               // Handle profile tap
               context.pushNamed(RouteNames.connect);

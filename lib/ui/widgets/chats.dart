@@ -134,6 +134,8 @@ class CustomBubble extends StatelessWidget {
             child: Image.network(
               message.uri,
               fit: BoxFit.cover,
+              height: 200,
+              width: 300,
               loadingBuilder: (context, child, loadingProgress) {
                 if (loadingProgress == null) return child;
                 return Container(

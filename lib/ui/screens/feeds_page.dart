@@ -226,6 +226,19 @@ class _FeedsListScreenState extends State<FeedsListScreen>
                                 children: [
                                   GestureDetector(
                                     onTap: () {
+                                      context.pushNamed(
+                                          RouteNames.createPrayerRequest);
+                                    },
+                                    child: const Icon(
+                                      FontAwesomeIcons.circlePlus,
+                                      color: Colors.white70,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const Gap(12),
+
+                                  GestureDetector(
+                                    onTap: () {
                                       context.pushNamed(RouteNames.connect);
                                     },
                                     child: const Icon(
@@ -490,14 +503,14 @@ class _FeedsListScreenState extends State<FeedsListScreen>
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          context.pushNamed(RouteNames.createPrayerRequest);
-        },
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
-        child: const Icon(Icons.add),
-      ),
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: () {
+      //     context.pushNamed(RouteNames.createPrayerRequest);
+      //   },
+      //   backgroundColor: Theme.of(context).primaryColor,
+      //   foregroundColor: Colors.white,
+      //   child: const Icon(Icons.add),
+      // ),
     );
   }
 }

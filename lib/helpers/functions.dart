@@ -429,12 +429,17 @@ void openProfile(BuildContext context, String userId) {
     context.pushNamed(RouteNames.profile);
     return;
   }
-  context.pushNamed(RouteNames.profilepagevisitor,pathParameters:{'id':userId});
+  context
+      .pushNamed(RouteNames.profilepagevisitor, pathParameters: {'id': userId});
 }
 
 void openCommunity(BuildContext context, String id) {
   context.pushNamed(RouteNames.communityDetailPage,
       pathParameters: {'community': id});
+}
+
+void openPostDetail(BuildContext context, String id) {
+  context.pushNamed(RouteNames.postDetailPage, pathParameters: {'post': id});
 }
 
 void openParish(BuildContext context, String id) {

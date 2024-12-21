@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/bloc/community.dart';
+import 'package:oratio_app/bloc/posts/post_state.dart';
 import 'package:oratio_app/helpers/snackbars.dart';
 import 'package:pocketbase/pocketbase.dart';
 
@@ -12,14 +13,15 @@ Future<List<PrayerCommunity>> getCommunities(BuildContext context,
   final PocketBase pb = context.read<PocketBaseServiceCubit>().state.pb;
   final List<PrayerCommunity> data = [];
   try {
-    final results =
-        await pb.collection('prayer_community').getFullList(filter: filter);
+    final results = await pb
+        .collection('prayer_community')
+        .getFullList(filter: filter, expand: 'leader');
     return results.map((i) {
       final img = pb.getFileUrl(i, i.getStringValue('image')).toString();
       return PrayerCommunity(
         community: i.getStringValue('community'),
         description: i.getStringValue('description'),
-        leader: {},
+        leader: i.expand['leader']!.first,
         members: i.getListValue('members').length,
         id: i.id,
         allMembers: i.getListValue('members'),
@@ -61,13 +63,13 @@ Future<PrayerCommunity?> getCommunity(BuildContext context,
     {VoidCallback? onError, required String communityId}) async {
   final PocketBase pb = context.read<PocketBaseServiceCubit>().state.pb;
   try {
-    final data = await pb.collection('prayer_community').getOne(
-          communityId,
-        );
+    final data = await pb
+        .collection('prayer_community')
+        .getOne(communityId, expand: 'leader');
     return PrayerCommunity(
       community: data.getStringValue('community'),
       description: data.getStringValue('description'),
-      leader: {},
+      leader: data.expand['leader']!.first,
       members: data.getListValue('members').length,
       id: data.id,
       allMembers: data.getListValue('members'),
@@ -76,6 +78,15 @@ Future<PrayerCommunity?> getCommunity(BuildContext context,
     print('error $e');
   }
   return null;
+}
+
+Future<RecordModel> getPost(BuildContext context,
+    {VoidCallback? onError, required String postId}) async {
+  final PocketBase pb = context.read<PocketBaseServiceCubit>().state.pb;
+  final data = await pb
+      .collection('posts')
+      .getOne(postId, expand: 'user, comments, community');
+  return data;
 }
 
 Future<List<RecordModel>> getParishList(
@@ -121,32 +132,6 @@ Future joinParish(BuildContext context,
     print('error $e');
     showError(context, message: 'Sorry something went wrong');
   }
-}
-
-Future<List<PrayerCommunity>> getFeaturedCommunities(BuildContext context,
-    {VoidCallback? onError}) async {
-  final PocketBase pb = context.read<PocketBaseServiceCubit>().state.pb;
-  final List<PrayerCommunity> data = [];
-  try {
-    final results = await pb
-        .collection('prayer_community')
-        .getFullList(expand: 'members', filter: '');
-    return results
-        .map((i) => PrayerCommunity(
-              community: i.getStringValue('community'),
-              description: i.getStringValue('description'),
-              leader: {},
-              members: i.getListValue('members').length,
-              id: i.id,
-              allMembers: i.getListValue('members'),
-            ))
-        .toList();
-  } catch (e) {
-    final err = e as ClientException;
-    NotificationService.showError('Error occured ${e.response['message']}',
-        duration: const Duration(seconds: 4));
-  }
-  return data;
 }
 
 Future<List<RecordModel>> findParish(BuildContext context,

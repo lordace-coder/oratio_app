@@ -201,9 +201,11 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
                 ),
                 const SizedBox(width: 24),
                 _PostAction(
-                  icon: Icons.share_outlined,
-                  label: 'Share',
-                  onTap: () {},
+                  icon: FontAwesomeIcons.eye,
+                  label: 'See Post',
+                  onTap: () {
+                    openPostDetail(context, widget.post.id);
+                  },
                 ),
               ],
             ),
