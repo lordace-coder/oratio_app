@@ -49,8 +49,7 @@ dependencies:
   animate_do: ^3.3.4
   glass: ^2.0.0+2
   video_player: ^2.8.1
-  audio_recorder:
-  audioplayers:
+ 
 
 dev_dependencies:
   flutter_test:

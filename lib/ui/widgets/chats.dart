@@ -112,45 +112,75 @@ class CustomBubble extends StatelessWidget {
   }
 
   Widget _buildImageMessage(types.FileMessage message) {
-    return Container(
-      decoration: BoxDecoration(
-        color: isUser
-            ? AppColors.primary
-            : const Color.fromARGB(255, 234, 234, 235),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
-          ),
-        ],
+    return ConstrainedBox(
+      constraints: const BoxConstraints(
+        maxWidth: 280, // Maximum width similar to WhatsApp
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            child: Image.network(
-              message.uri,
-              fit: BoxFit.cover,
-              height: 200,
-              width: 300,
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Container(
-                  height: 200,
-                  color: Colors.grey[300],
-                  child: const Center(child: CircularProgressIndicator()),
-                );
-              },
+      child: Container(
+        decoration: BoxDecoration(
+          color: isUser
+              ? AppColors.primary
+              : const Color.fromARGB(255, 234, 234, 235),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: _buildUserTimestamp(),
-          ),
-        ],
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(12)),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxHeight: 300, // Maximum height for the image
+                ),
+                child: Image.network(
+                  message.uri,
+                  fit: BoxFit.contain,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return SizedBox(
+                      width: 280,
+                      height: 200,
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                              : null,
+                        ),
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) {
+                    return const SizedBox(
+                      width: 280,
+                      height: 200,
+                      child: Center(
+                        child: Icon(
+                          Icons.error_outline,
+                          color: Colors.red,
+                          size: 32,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: _buildUserTimestamp(),
+            ),
+          ],
+        ),
       ),
     );
   }

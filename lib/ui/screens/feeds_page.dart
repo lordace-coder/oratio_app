@@ -116,7 +116,7 @@ class _FeedsListScreenState extends State<FeedsListScreen>
     final unreadNotificationCount =
         context.read<NotificationCubit>().unreadNotificationCount();
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.grey[350],
       body: NestedScrollView(
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),

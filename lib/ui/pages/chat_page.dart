@@ -13,9 +13,11 @@ import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/networkProvider/users.dart';
 import 'package:oratio_app/services/file_downloader.dart';
+import 'package:oratio_app/ui/pages/video_display_page.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/chats.dart';
+import 'package:oratio_app/ui/widgets/image_viewer.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:uuid/uuid.dart';
@@ -197,33 +199,18 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void _handleMessageTap(BuildContext context, types.Message message) async {
-    if (message is types.FileMessage) {
-      // Check and request storage permission
-
-      final status = await Permission.storage.status;
-      await FileDownloadHandler.downloadFile(message);
-      if (!status.isGranted) {
-        print('no permission');
-        final result = await Permission.storage.request();
-
-        if (!result.isGranted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content:
-                    Text('Storage permission is required to download files.')),
-          );
-          return;
-        }
-      }
-
-      // Proceed to download the file
-      try {
-        await FileDownloadHandler.downloadFile(message);
-        // No need for a "downloaded" message since the file will open automatically
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
+    if (message is types.ImageMessage) {
+      openImageView(context, message.uri, imageUrl: message.uri);
+    } else if (message is types.VideoMessage) {
+      openVideo(context, message.uri);
+    } else if (message is types.FileMessage) {
+      final mimeType = lookupMimeType(message.uri);
+      if (mimeType != null && mimeType.startsWith('image/')) {
+        openImageView(context, message.uri, imageUrl: message.uri);
+      } else if (mimeType != null && mimeType.startsWith('video/')) {
+        openVideo(context, message.uri);
+      } else {
+        // Handle other file types if necessary
       }
     }
   }
