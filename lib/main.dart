@@ -109,7 +109,10 @@ void main() async {
   final appRouter = AppRouter(pref: pref);
 
   ChatService chatService = ChatService(pbCubit.state.pb);
-
+  if (pb.authStore.model.id.isNotEmpty) {
+    
+    OneSignal.login(pb.authStore.model.id);
+  }
   runApp(
     MultiBlocProvider(
       providers: [

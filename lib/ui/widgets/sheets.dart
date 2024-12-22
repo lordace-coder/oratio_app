@@ -330,6 +330,7 @@ class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
                 );
               } catch (e) {
                 final err = e as ClientException;
+                print(e);
                 showError(context,
                     message: 'Error occured ${err.response['message']}');
               }
