@@ -227,6 +227,10 @@ class _CreatePrayerRequestPageState extends State<CreatePrayerRequestPage> {
                       FutureBuilder(
                           future: isCommunityLeader(),
                           builder: (context, snapshot) {
+                            if(snapshot.connectionState == ConnectionState.waiting || !snapshot.hasData) {
+                              return const SizedBox.shrink();
+                            }
+                              
                             if (snapshot.data!) {
                               return Center(
                                 child: Padding(

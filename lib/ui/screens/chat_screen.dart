@@ -10,6 +10,7 @@ import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/services/chat/chat_service.dart';
 import 'package:oratio_app/ui/pages/chat_page.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -26,8 +27,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ... existing code ...
-
+    final currentUser = context
+        .read<PocketBaseServiceCubit>()
+        .state
+        .pb
+        .authStore
+        .model as RecordModel;
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: SafeArea(
@@ -83,8 +88,12 @@ class _ChatScreenState extends State<ChatScreen> {
                       } else if (state is ChatsLoaded) {
                         // !Filter chats based on selected tab
                         final filteredChats = _selectedTabIndex == 0
-                            ? state.chats.toList()
-                            : state.chats.toList();
+                            ? state.chats
+                                .where((chat) => chat.isFriend(currentUser))
+                                .toList()
+                            : state.chats
+                                .where((chat) => !chat.isFriend(currentUser))
+                                .toList();
 
                         return AnimationLimiter(
                           child: SliverList(
@@ -210,13 +219,6 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {
       _selectedTabIndex = index;
     });
-    // Here you can trigger different data loading based on the selected tab
-    // For example:
-    // if (index == 0) {
-    //   context.read<ChatCubit>().loadRecentChats();
-    // } else {
-    //   context.read<ChatCubit>().loadMessageRequests();
-    // }
   }
 
   // ... rest of your existing code ...

@@ -162,6 +162,46 @@ class ChatCubit extends Cubit<ChatState> {
         expand: 'sender');
   }
 
+  RecordModel get currentUser => _pb.authStore.model;
+  int unreadCount(bool friend) {
+    int count = 0;
+    if (friend) {
+      getRecentChats().forEach((item) {
+        if (item.unreadCount > 0) {
+          count++;
+        }
+      });
+    } else {
+      getMessageRequests().forEach((item) {
+        if (item.unreadCount > 0) {
+          count++;
+        }
+      });
+    }
+
+    return count;
+  }
+
+  List<ChatPreview> getRecentChats() {
+    if (state is ChatsLoaded) {
+      return (state as ChatsLoaded)
+          .chats
+          .where((chat) => chat.isFriend(currentUser))
+          .toList();
+    }
+    return [];
+  }
+
+  List<ChatPreview> getMessageRequests() {
+    if (state is ChatsLoaded) {
+      return (state as ChatsLoaded)
+          .chats
+          .where((chat) => !chat.isFriend(currentUser))
+          .toList();
+    }
+    return [];
+  }
+
   @override
   Future<void> close() {
     _pb.collection('messages').unsubscribe('*');

@@ -10,13 +10,10 @@ import 'package:lottie/lottie.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/bloc/posts/post_cubit.dart';
-import 'package:oratio_app/bloc/posts/post_state.dart';
 import 'package:oratio_app/helpers/functions.dart';
-import 'package:oratio_app/helpers/user.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/networkProvider/requests.dart';
 import 'package:oratio_app/services/file_downloader.dart';
-import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/widgets/image_viewer.dart';
 import 'package:oratio_app/ui/widgets/posts/bottom_scaffold.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -191,7 +188,6 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    hasLiked ??= (data!.getListValue('likes')).contains(data!.id);
     if (_loading || data == null) {
       return Scaffold(
         body: Container(
@@ -199,6 +195,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
         ),
       );
     }
+    final userId = context.read<PocketBaseServiceCubit>().state.pb.authStore.model.id;
+    hasLiked ??= (data!.getListValue('likes')).contains(userId);
 
     final avatarUrl = getAvatarUrl(
       context,

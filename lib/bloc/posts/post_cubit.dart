@@ -39,6 +39,7 @@ class PostCubit extends Cubit<PostState> {
 
       emit(PostLoaded(_currentPosts));
     } catch (e) {
+      print(e);
       emit(PostError(e.toString()));
     }
   }

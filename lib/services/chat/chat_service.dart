@@ -181,4 +181,9 @@ class ChatPreview {
         lastMessageAt.hashCode ^
         profile.hashCode;
   }
+
+  bool isFriend(RecordModel currentUser) {
+    return profile.user.getListValue("followers").contains(currentUser.id) &&
+        currentUser.getListValue("followers").contains(profile.userId);
+  }
 }
