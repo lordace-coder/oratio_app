@@ -71,10 +71,15 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
         as RecordModel;
 
     hasLiked ??= widget.post.likes.contains(user.id);
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(
+        horizontal: 5,
+      ),
+      margin: const EdgeInsets.symmetric(vertical: 1),
+
+      // elevation: 1,
+      // shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -144,7 +149,8 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
           if (widget.post.image!.isNotEmpty)
             GestureDetector(
               onTap: () {
-                openImageView(context, imageUrl: widget.post.image);
+                openImageView(context, widget.post.image!,
+                    imageUrl: widget.post.image);
               },
               onLongPress: () async {
                 var save = await confirm(context,
@@ -201,9 +207,11 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
                 ),
                 const SizedBox(width: 24),
                 _PostAction(
-                  icon: Icons.share_outlined,
-                  label: 'Share',
-                  onTap: () {},
+                  icon: FontAwesomeIcons.eye,
+                  label: 'View Post',
+                  onTap: () {
+                    openPostDetail(context, widget.post.id);
+                  },
                 ),
               ],
             ),

@@ -116,7 +116,7 @@ class _FeedsListScreenState extends State<FeedsListScreen>
     final unreadNotificationCount =
         context.read<NotificationCubit>().unreadNotificationCount();
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.grey[350],
       body: NestedScrollView(
         controller: _scrollController,
         physics: const AlwaysScrollableScrollPhysics(),
@@ -224,6 +224,19 @@ class _FeedsListScreenState extends State<FeedsListScreen>
                               ),
                               Row(
                                 children: [
+                                  GestureDetector(
+                                    onTap: () {
+                                      context.pushNamed(
+                                          RouteNames.createPrayerRequest);
+                                    },
+                                    child: const Icon(
+                                      FontAwesomeIcons.circlePlus,
+                                      color: Colors.white70,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const Gap(12),
+
                                   GestureDetector(
                                     onTap: () {
                                       context.pushNamed(RouteNames.connect);
@@ -490,14 +503,14 @@ class _FeedsListScreenState extends State<FeedsListScreen>
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          context.pushNamed(RouteNames.createPrayerRequest);
-        },
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
-        child: const Icon(Icons.add),
-      ),
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: () {
+      //     context.pushNamed(RouteNames.createPrayerRequest);
+      //   },
+      //   backgroundColor: Theme.of(context).primaryColor,
+      //   foregroundColor: Colors.white,
+      //   child: const Icon(Icons.add),
+      // ),
     );
   }
 }

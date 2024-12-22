@@ -69,7 +69,7 @@ class ImageViewer extends StatelessWidget {
 // ...existing code...
 
 void openImageView(
-  BuildContext context, {
+  BuildContext context, String uri, {
   Uint8List? imageBytes,
   String? imageUrl,
 }) async {

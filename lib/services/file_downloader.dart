@@ -8,10 +8,6 @@ import 'dart:io';
 import 'package:open_filex/open_filex.dart';
 
 class FileDownloadHandler {
-
-
-
-
   static Future<String> getDownloadPath(String fileName) async {
     Directory? directory;
     if (Platform.isAndroid) {
@@ -38,9 +34,7 @@ class FileDownloadHandler {
     }
   }
 
-
-
-  static Future<void> downloadRawFile(String url) async {
+  static Future<void> downloadRawFile(String url, {bool? isvideo}) async {
     var status = await Permission.storage.request();
     if (!status.isGranted) {
       throw Exception('Storage permission not granted');
@@ -57,20 +51,34 @@ class FileDownloadHandler {
       }
 
       // Download file using Dio
-      NotificationService.showInfo("Saving Image...");
-      await Dio().download(
-        url,
-        savePath,
-        onReceiveProgress: (received, total) {
-          if (total != -1) {
-            double progress = (received / total) * 100;
-            print('Download Progress: ${progress.toStringAsFixed(0)}%');
-          }
-        },
-      );
+      if (isvideo == true) {
+        NotificationService.showInfo("Downloading Video...");
+        await Dio().download(
+          url,
+          savePath,
+          onReceiveProgress: (received, total) {
+            if (total != -1) {
+              double progress = (received / total) * 100;
+              print('Download Progress: ${progress.toStringAsFixed(0)}%');
+            }
+          },
+        );
+      } else {
+        NotificationService.showInfo("Saving Image...");
+        await Dio().download(
+          url,
+          savePath,
+          onReceiveProgress: (received, total) {
+            if (total != -1) {
+              double progress = (received / total) * 100;
+              print('Download Progress: ${progress.toStringAsFixed(0)}%');
+            }
+          },
+        );
+      }
 
       // Open the file after download
-      await openFile(savePath);
+      // await openFile(savePath);
     } catch (e) {
       print('Error handling file: $e');
       throw Exception('Failed to handle file: $e');
@@ -114,8 +122,9 @@ class FileDownloadHandler {
       throw Exception('Failed to handle file: $e');
     }
   }
-    
-static Future<void> downloadImageFromBytes(Uint8List imageBytes, String fileName) async {
+
+  static Future<void> downloadImageFromBytes(
+      Uint8List imageBytes, String fileName) async {
     var status = await Permission.storage.request();
     if (!status.isGranted) {
       throw Exception('Storage permission not granted');
@@ -136,4 +145,3 @@ static Future<void> downloadImageFromBytes(Uint8List imageBytes, String fileName
     }
   }
 }
-

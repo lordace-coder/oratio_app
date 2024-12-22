@@ -7,6 +7,7 @@ import 'package:oratio_app/ui/bright/pages/create_community.dart';
 import 'package:oratio_app/ui/bright/pages/create_event.dart';
 import 'package:oratio_app/ui/bright/pages/mass_booking_page.dart';
 import 'package:oratio_app/ui/pages/create_new_post.dart';
+import 'package:oratio_app/ui/pages/post_detail_page.dart';
 import 'package:oratio_app/ui/widgets/image_viewer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -120,12 +121,12 @@ class AppRouter {
                   name: RouteNames.connect,
                   builder: (context, state) => const ConnectPage(),
                 ),
-                                GoRoute(
+                GoRoute(
                   path: '/createpost',
                   name: RouteNames.createPost,
                   builder: (context, state) => const CreatePostPage(),
                 ),
-               
+
                 GoRoute(
                   path: '/profilepage',
                   name: RouteNames.profile,
@@ -177,6 +178,14 @@ class AppRouter {
                   name: RouteNames.communityDetailPage,
                   builder: (context, state) => PrayerCommunityDetail(
                     communityId: state.pathParameters['community'].toString(),
+                  ),
+                ),
+
+                GoRoute(
+                  path: '/${RouteNames.postDetailPage}/:post',
+                  name: RouteNames.postDetailPage,
+                  builder: (context, state) => PostDetailPage(
+                    postId: state.pathParameters['post'].toString(),
                   ),
                 ),
 

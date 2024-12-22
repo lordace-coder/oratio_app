@@ -170,20 +170,20 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                                 ),
                               ),
                               const Gap(16),
-                              const Column(
+                              Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
+                                  const Text(
                                     'Community Leader',
                                     style: TextStyle(
                                       color: Colors.grey,
                                       fontSize: 14,
                                     ),
                                   ),
-                                  Gap(4),
+                                  const Gap(4),
                                   Text(
-                                    'Rev. John Ezechukwu',
-                                    style: TextStyle(
+                                    '${data.leader.getStringValue('first_name')} ${data.leader.getStringValue('last_name')}',
+                                    style: const TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
                                     ),

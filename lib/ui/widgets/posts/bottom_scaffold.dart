@@ -418,6 +418,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                       ? null
                       : NetworkImage(getProfilePic(context,
                           user: pb.authStore.model as RecordModel)!),
+                  child: const Icon(FontAwesomeIcons.user),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -492,6 +493,7 @@ class CommentItem extends StatelessWidget {
             child: CircleAvatar(
               radius: 20,
               backgroundImage: img == null ? null : NetworkImage(img),
+              child: img == null ? const Icon(FontAwesomeIcons.user) : null,
             ),
           ),
           const SizedBox(width: 12),

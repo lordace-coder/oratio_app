@@ -2,6 +2,7 @@
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 class PrayerCommunity {
   String id;
@@ -9,7 +10,7 @@ class PrayerCommunity {
   String description;
   int members;
   List allMembers;
-  Map leader;
+  RecordModel leader;
   String? image;
   PrayerCommunity({
     required this.id,
@@ -27,7 +28,7 @@ class PrayerCommunity {
     String? description,
     int? members,
     List? allMembers,
-    Map? leader,
+    RecordModel? leader,
   }) {
     return PrayerCommunity(
       id: id ?? this.id,
@@ -57,9 +58,7 @@ class PrayerCommunity {
         description: map['description'] as String,
         members: map['members'] as int,
         allMembers: map['allMembers'] as List,
-        leader: Map.from(
-          (map['leader'] as Map),
-        ));
+        leader: RecordModel.fromJson(map['leader']));
   }
 
   String toJson() => json.encode(toMap());
@@ -80,8 +79,7 @@ class PrayerCommunity {
         other.community == community &&
         other.description == description &&
         other.members == members &&
-        other.allMembers == allMembers &&
-        mapEquals(other.leader, leader);
+        other.allMembers == allMembers;
   }
 
   @override
