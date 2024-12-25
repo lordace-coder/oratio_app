@@ -66,6 +66,7 @@ Future<PrayerCommunity?> getCommunity(BuildContext context,
     final data = await pb
         .collection('prayer_community')
         .getOne(communityId, expand: 'leader');
+    final image = pb.getFileUrl(data, data.getStringValue('image')).toString();
     return PrayerCommunity(
       community: data.getStringValue('community'),
       description: data.getStringValue('description'),
@@ -73,6 +74,7 @@ Future<PrayerCommunity?> getCommunity(BuildContext context,
       members: data.getListValue('members').length,
       id: data.id,
       allMembers: data.getListValue('members'),
+      image: image,
     );
   } catch (e) {
     print('error $e');

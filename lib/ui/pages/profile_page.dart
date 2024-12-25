@@ -5,10 +5,13 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
+
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/helpers/user.dart';
 import 'package:oratio_app/networkProvider/users.dart';
+import 'package:oratio_app/ui/pages/edit_profile_page.dart';
+import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 
@@ -123,8 +126,17 @@ class ProfilePage extends StatelessWidget {
                                     letterSpacing: 0.5,
                                   ),
                                 ),
+                                // Text(
+                                //   data.user.getStringValue('username'),
+                                //   style: const TextStyle(
+                                //     fontSize: 14,
+                                //     color: Colors.white,
+                                //     fontWeight: FontWeight.w300,
+                                //     letterSpacing: 0.5,
+                                //   ),
+                                // ),
                                 Text(
-                                  data.user.getStringValue('username'),
+                                  '${(pb.authStore.model as RecordModel).getListValue('followers').length} followers · 4 following',
                                   style: const TextStyle(
                                     fontSize: 14,
                                     color: Colors.white,
@@ -133,6 +145,16 @@ class ProfilePage extends StatelessWidget {
                                   ),
                                 ),
                                 const Gap(12),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    _buildActionButton(
+                                        'Edit Profile', Icons.edit, () {
+                                      editProfile(context, data.userId);
+                                    }),
+                                  ],
+                                )
                               ],
                             ),
                           ),
@@ -173,7 +195,8 @@ class ProfilePage extends StatelessWidget {
                           "Contact Information",
                           FontAwesomeIcons.addressBook,
                           [
-                            _buildContactItem(data.contact),
+                            _buildContactItem(
+                                data.contact, context, data.userId),
                             // _buildAddButton("Add Contact Information"),
                           ],
                         ),
@@ -339,24 +362,28 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _buildContactItem(String contact) {
+  Widget _buildContactItem(
+      String contact, BuildContext context, String profileId) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
           Expanded(
             child: Text(
-              contact,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Color(0xFF4A4A4A),
-              ),
+              contact.isNotEmpty ? contact : 'Add contact',
+              style: TextStyle(
+                  fontSize: 16,
+                  color: contact.isNotEmpty
+                      ? const Color(0xFF4A4A4A)
+                      : Colors.black.withOpacity(0.3),
+                  fontStyle: contact.isNotEmpty ? null : FontStyle.italic),
             ),
           ),
           TextButton(
-            onPressed: () {
-              NotificationService.showSuccess('Contact updated succesfully',
-                  duration: const Duration(seconds: 3));
+            onPressed: () async {
+              Navigator.push(context, MaterialPageRoute(builder: (context) {
+                return EditProfilePage(profileId: profileId);
+              }));
             },
             child: const Text(
               "Edit",

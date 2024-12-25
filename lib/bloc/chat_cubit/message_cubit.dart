@@ -91,7 +91,7 @@ class MessageCubit extends Cubit<MessageState> {
       });
 
       // Mark messages as read after loading
-      await markMessagesAsRead(otherUserId);
+      await markMessagesAsRead();
     } catch (e) {
       emit(state.copyWith(
         error: e.toString(),
@@ -125,7 +125,7 @@ class MessageCubit extends Cubit<MessageState> {
         receiverId: receiverId,
         message: message,
         created: DateTime.now(),
-        read: true,
+        read: false,
       );
 
       // Save locally first
@@ -152,17 +152,18 @@ class MessageCubit extends Cubit<MessageState> {
     }
   }
 
-  Future<void> markMessagesAsRead(String senderId) async {
+  Future<void> markMessagesAsRead() async {
     try {
       final currentUserId = pb.authStore.model.id;
 
       for (var msg in state.messages) {
-        if (msg.read) continue;
+        if (msg.read || msg.senderId == currentUserId) continue;
         await pb.collection('messages').update(
           msg.id,
           body: {'read': true},
         );
       }
+
       // emit(state.copyWith(messages: updatedMessages));
     } catch (e) {}
   }

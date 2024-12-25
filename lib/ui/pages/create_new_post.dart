@@ -4,19 +4,21 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
+import 'package:oratio_app/bloc/posts/post_state.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:oratio_app/helpers/snackbars.dart';
 import 'package:mime/mime.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:oratio_app/networkProvider/priest_requests.dart';
 
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class CreatePostPage extends StatefulWidget {
-  const CreatePostPage({super.key});
-
+  const CreatePostPage({super.key, this.postToEdit});
+  final Post? postToEdit;
   @override
   _CreatePostPageState createState() => _CreatePostPageState();
 }
@@ -25,7 +27,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _descriptionController = TextEditingController();
   String? _selectedCommunity;
-  File? _selectedImage;
+  String? _selectedImage;
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
 
@@ -33,8 +35,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
     return {
       'community': _selectedCommunity,
       'post': _descriptionController.text.trim(),
-
-      // 'leaderChurch': _selectedLeader?['church'],
     };
   }
 
@@ -53,6 +53,29 @@ class _CreatePostPageState extends State<CreatePostPage> {
     return [];
   }
 
+  void updatePost() async {
+    if (_validateAndSubmit()) {
+      setState(() {
+        _isLoading = true;
+      });
+      try {
+        final pb = getPocketBaseFromContext(context);
+        await pb
+            .collection('posts')
+            .update(widget.postToEdit!.id, body: _collectFormData());
+        NotificationService.showSuccess('Updated Post!');
+        context.pop();
+      } catch (e) {
+        NotificationService.showError('Failed to update post');
+        context.pop();
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   void createPost() async {
     if (_validateAndSubmit()) {
       setState(() {
@@ -62,11 +85,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
       try {
         final pb = context.read<PocketBaseServiceCubit>().state.pb;
         final data = _collectFormData();
-        print('Post Data: $data');
-        final bytes = await _selectedImage?.readAsBytes();
-        final mimeType = lookupMimeType(_selectedImage!.path);
-        print(mimeType);
-
+        final bytes = await File(_selectedImage!).readAsBytes();
+        final mimeType = lookupMimeType(_selectedImage!);
         if (mimeType != 'image/jpeg' && mimeType != 'image/png') {
           throw Exception('Invalid image type. Only JPEG and PNG are allowed.');
         }
@@ -75,7 +95,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
           http.MultipartFile.fromBytes(
             'image',
             bytes as List<int>,
-            filename: _selectedImage?.path,
+            filename: _selectedImage!,
             contentType: MediaType.parse(mimeType!),
           )
         ]);
@@ -93,7 +113,16 @@ class _CreatePostPageState extends State<CreatePostPage> {
       }
     }
   }
-  
+
+  @override
+  void initState() {
+    if (widget.postToEdit != null) {
+      _descriptionController.text = widget.postToEdit!.post;
+      _selectedCommunity = widget.postToEdit!.communityId;
+      _selectedImage = widget.postToEdit!.image;
+    }
+    super.initState();
+  }
 
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(
@@ -102,8 +131,21 @@ class _CreatePostPageState extends State<CreatePostPage> {
       final mimeType = lookupMimeType(image.path);
       if (mimeType == 'image/jpeg' || mimeType == 'image/png') {
         setState(() {
-          _selectedImage = File(image.path);
+          _selectedImage = image.path;
         });
+        final pb = getPocketBaseFromContext(context);
+        final bytes = await File(_selectedImage!).readAsBytes();
+
+        if (widget.postToEdit != null) {
+          await pb.collection('posts').update(widget.postToEdit!.id, files: [
+            http.MultipartFile.fromBytes(
+              'avatar',
+              bytes as List<int>,
+              filename: _selectedImage!,
+            )
+          ]);
+          NotificationService.showInfo('Updated post image');
+        }
       } else {
         showError(context,
             message: 'Invalid image type. Only JPEG and PNG are allowed.');
@@ -121,7 +163,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: Text(
-          'Create New Post',
+          widget.postToEdit != null ? 'Edit Post' : 'Create New Post',
           style: TextStyle(
             fontFamily: 'Montserrat',
             fontWeight: FontWeight.w600,
@@ -207,11 +249,16 @@ class _CreatePostPageState extends State<CreatePostPage> {
                                   children: [
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(20),
-                                      child: Image.file(
-                                        _selectedImage!,
-                                        fit: BoxFit.cover,
-                                        width: double.infinity,
-                                      ),
+                                      child: widget.postToEdit != null
+                                          ? Image.network(
+                                              fit: BoxFit.cover,
+                                              widget.postToEdit!.image!,
+                                            )
+                                          : Image.file(
+                                              File(_selectedImage!),
+                                              fit: BoxFit.cover,
+                                              width: double.infinity,
+                                            ),
                                     ),
                                     Container(
                                       decoration: BoxDecoration(
@@ -302,7 +349,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Description',
+                            'Post',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
@@ -404,7 +451,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
                                   onChanged: (String? newValue) {
                                     setState(
                                         () => _selectedCommunity = newValue);
-                                    print(_selectedCommunity!);
                                   },
                                 );
                               }),
@@ -420,7 +466,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
                       height: 56,
                       child: ElevatedButton(
                         onPressed: () {
-                          createPost();
+                          widget.postToEdit != null
+                              ? updatePost()
+                              : createPost();
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
@@ -430,7 +478,11 @@ class _CreatePostPageState extends State<CreatePostPage> {
                           elevation: 0,
                         ),
                         child: Text(
-                          _isLoading ? 'Please wait..' : 'Share Post',
+                          _isLoading
+                              ? 'Please wait..'
+                              : widget.postToEdit != null
+                                  ? 'Update Post'
+                                  : 'Share Post',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,

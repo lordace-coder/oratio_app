@@ -1,20 +1,26 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mime/mime.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
+import 'package:oratio_app/bloc/community.dart';
 import 'package:oratio_app/helpers/snackbars.dart';
+import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/networkProvider/users.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 class PrayerCommunityCreationPage extends StatefulWidget {
-  const PrayerCommunityCreationPage({super.key, this.communityId});
+  const PrayerCommunityCreationPage({super.key, this.community});
 
   ///use id of an exisiting community to edit an exisiting community instead of creating a new one
-  final String? communityId;
+  final PrayerCommunity? community;
   @override
   _PrayerCommunityCreationPageState createState() =>
       _PrayerCommunityCreationPageState();
@@ -31,17 +37,27 @@ class _PrayerCommunityCreationPageState
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _leaderSearchController = TextEditingController();
 
-  XFile? _selectedImage;
+  String? _selectedImage;
   final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
 
   List<RecordModel> _filteredLeaders = [];
   RecordModel? _selectedLeader;
   bool _showLeaderSearch = true;
+  RecordModel? community;
+
+  void getCommunity() async {}
 
   @override
   void initState() {
     super.initState();
+
+    if (widget.community != null) {
+      _selectedLeader = widget.community!.leader;
+      _selectedImage = widget.community!.image;
+      _communityNameController.text = widget.community!.community;
+      _descriptionController.text = widget.community!.description;
+    }
     _filteredLeaders = [];
     _leaderSearchController.addListener(_onLeaderSearchChange);
   }
@@ -58,13 +74,35 @@ class _PrayerCommunityCreationPageState
         maxHeight: 1800,
       );
 
+      final pb = getPocketBaseFromContext(context);
+
       if (pickedFile != null) {
         setState(() {
-          _selectedImage = pickedFile;
+          _selectedImage = pickedFile.path;
         });
+      }
+
+      if (widget.community != null) {
+        final bytes = await File(_selectedImage!).readAsBytes();
+        final mimeType = lookupMimeType(_selectedImage!);
+        if (mimeType != 'image/jpeg' && mimeType != 'image/png') {
+          throw Exception('Invalid image type. Only JPEG and PNG are allowed.');
+        }
+        await pb
+            .collection('prayer_community')
+            .update(widget.community!.id, files: [
+          http.MultipartFile.fromBytes(
+            'image',
+            bytes as List<int>,
+            filename: pickedFile!.path,
+            contentType: MediaType.parse(mimeType!),
+          )
+        ]);
+        NotificationService.showInfo('Updated Community Image');
       }
     } catch (e) {
       showError(context, message: 'Error picking image: $e');
+      print(e);
     }
   }
 
@@ -120,19 +158,44 @@ class _PrayerCommunityCreationPageState
         final pb = context.read<PocketBaseServiceCubit>().state.pb;
         final data = _collectFormData();
         print('Community Data: $data');
-        final bytes = await _selectedImage?.readAsBytes();
+        final bytes = await File(_selectedImage!).readAsBytes();
         await pb.collection('prayer_community').create(body: data, files: [
           http.MultipartFile.fromBytes(
             'image',
             bytes as List<int>,
-            filename: _selectedImage?.name,
+            filename: _selectedImage,
           )
         ]);
         NotificationService.showInfo('Created Community Succesfully');
         _clearForm();
+        context.pop();
       } catch (e) {
         print(e);
         showError(context, message: 'Failed to create community: $e');
+      } finally {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void updateCommunity() async {
+    if (_validateInputs()) {
+      setState(() {
+        _isLoading = true;
+      });
+      try {
+        final pb = context.read<PocketBaseServiceCubit>().state.pb;
+        final data = _collectFormData();
+        await pb
+            .collection('prayer_community')
+            .update(widget.community!.id, body: data);
+        NotificationService.showSuccess('Updated Community Succesfully');
+        _clearForm();
+        context.pop();
+      } catch (e) {
+        NotificationService.showError('Error Updating details: $e');
       } finally {
         setState(() {
           _isLoading = false;
@@ -173,9 +236,11 @@ class _PrayerCommunityCreationPageState
             pinned: true,
             backgroundColor: AppColors.primary,
             flexibleSpace: FlexibleSpaceBar(
-              title: const Text(
-                'Create Your Community',
-                style: TextStyle(
+              title: Text(
+                widget.community != null
+                    ? 'Update Community'
+                    : 'Create Your Community',
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -218,12 +283,55 @@ class _PrayerCommunityCreationPageState
                       ],
                     ),
                     child: _selectedImage != null
-                        ? ClipRRect(
-                            borderRadius: BorderRadius.circular(20),
-                            child: Image.file(
-                              File(_selectedImage!.path),
-                              fit: BoxFit.cover,
-                            ),
+                        ? Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(20),
+                                child: (widget.community != null &&
+                                        _selectedImage !=
+                                            widget.community!.image)
+                                    ? Image.file(
+                                        File(_selectedImage!),
+                                        fit: BoxFit.cover,
+                                      )
+                                    : (widget.community != null)
+                                        ? Image.network(
+                                            _selectedImage!,
+                                            fit: BoxFit.cover,
+                                          )
+                                        : Image.file(
+                                            File(_selectedImage!),
+                                            fit: BoxFit.cover,
+                                          ),
+                              ),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.5),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.add_photo_alternate_outlined,
+                                        size: 40,
+                                        color: Colors.white,
+                                      ),
+                                      SizedBox(height: 8),
+                                      Text(
+                                        'Change Image',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
                           )
                         : Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -250,7 +358,9 @@ class _PrayerCommunityCreationPageState
                   _buildCustomInput(
                     controller: _leaderSearchController,
                     focusNode: _leaderSearchFocusNode,
-                    hint: 'Find a Community Leader',
+                    hint: widget.community != null
+                        ? widget.community!.leader.getStringValue('username')
+                        : 'Find a Community Leader',
                     icon: Icons.search,
                     onChanged: _filterLeaders,
                   ),
@@ -274,6 +384,7 @@ class _PrayerCommunityCreationPageState
                         itemCount: _filteredLeaders.length,
                         itemBuilder: (context, index) {
                           final leader = _filteredLeaders[index];
+
                           return ListTile(
                             leading: CircleAvatar(
                               backgroundImage:
@@ -283,6 +394,9 @@ class _PrayerCommunityCreationPageState
                                               leader.getStringValue("avatar"))
                                           .toString())
                                       : null,
+                              child: leader.getStringValue("avatar").isNotEmpty
+                                  ? null
+                                  : const Icon(FontAwesomeIcons.user),
                             ),
                             title: Text(leader.getStringValue("username")),
                             // TODO DISPLAY CHURCH
@@ -315,11 +429,21 @@ class _PrayerCommunityCreationPageState
                     child: Row(
                       children: [
                         CircleAvatar(
-                          backgroundImage: NetworkImage(pb
-                              .getFileUrl(_selectedLeader!,
-                                  _selectedLeader!.getStringValue('avatar'))
-                              .toString()),
+                          backgroundImage:
+                              _selectedLeader?.getStringValue('avatar') != null
+                                  ? NetworkImage(pb
+                                      .getFileUrl(
+                                          _selectedLeader!,
+                                          _selectedLeader!
+                                              .getStringValue('avatar'))
+                                      .toString())
+                                  : null,
                           radius: 25,
+                          child: _selectedLeader!
+                                  .getStringValue("avatar")
+                                  .isNotEmpty
+                              ? null
+                              : const Icon(FontAwesomeIcons.user),
                         ),
                         const SizedBox(width: 15),
                         Expanded(
@@ -381,7 +505,11 @@ class _PrayerCommunityCreationPageState
 
                 // Create Community Button
                 ElevatedButton(
-                  onPressed: _isLoading ? null : _createCommunity,
+                  onPressed: _isLoading
+                      ? null
+                      : widget.community != null
+                          ? updateCommunity
+                          : _createCommunity,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     disabledBackgroundColor: AppColors.primary.withOpacity(0.5),
@@ -399,9 +527,11 @@ class _PrayerCommunityCreationPageState
                             strokeWidth: 3,
                           ),
                         )
-                      : const Text(
-                          'Start Your Community',
-                          style: TextStyle(
+                      : Text(
+                          widget.community != null
+                              ? 'Update Community'
+                              : 'Start Your Community',
+                          style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,

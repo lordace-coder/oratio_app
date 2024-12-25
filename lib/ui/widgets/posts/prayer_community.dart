@@ -11,6 +11,7 @@ import 'package:oratio_app/bloc/prayer_requests/requests_state.dart';
 import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/helpers/user.dart';
 import 'package:oratio_app/services/file_downloader.dart';
+import 'package:oratio_app/ui/pages/create_new_post.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/image_viewer.dart';
 import 'package:oratio_app/ui/widgets/posts/bottom_scaffold.dart';
@@ -109,6 +110,20 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Text(widget.post.date),
+            trailing: user.id == widget.post.author.getStringValue('leader')
+                ? GestureDetector(
+                    onTap: () {
+                      Navigator.push(context,
+                          MaterialPageRoute(builder: (context) {
+                        return CreatePostPage(postToEdit: widget.post);
+                      }));
+                    },
+                    child: const Text(
+                      'Edit Post',
+                      style: TextStyle(color: Colors.black),
+                    ),
+                  )
+                : null,
           ),
           // Post Content with See More
           Padding(
@@ -324,10 +339,11 @@ class _PrayerRequestCardState extends State<PrayerRequestCard> {
     }
     final pb = context.read<PocketBaseServiceCubit>().state.pb;
 
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return Container(
+      margin: const EdgeInsets.symmetric(
+        vertical: 1,
+      ),
+      color: Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

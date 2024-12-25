@@ -1,13 +1,18 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/networkProvider/requests.dart';
 import 'package:oratio_app/services/servces.dart';
+import 'package:oratio_app/ui/bright/pages/create_community.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/buttons.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 class PrayerCommunityDetail extends StatefulWidget {
   const PrayerCommunityDetail({super.key, required this.communityId});
@@ -19,6 +24,15 @@ class PrayerCommunityDetail extends StatefulWidget {
 }
 
 class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
+  String getAvaterUrl(RecordModel record) {
+    final pb = getPocketBaseFromContext(context);
+
+    final image =
+        pb.getFileUrl(record, record.getStringValue('avatar')).toString();
+    print(image);
+    return image;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -29,6 +43,7 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
             if (snapshot.connectionState == ConnectionState.done &&
                 snapshot.hasData) {
               final data = snapshot.data!;
+              print(data.image);
               final isMember = (data.allMembers).contains(getUser(context).id);
               return Stack(
                 children: [
@@ -64,6 +79,11 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                               // Content Overlay
                               Container(
                                 decoration: BoxDecoration(
+                                  image: data.image == null
+                                      ? null
+                                      : DecorationImage(
+                                          image: NetworkImage(data.image!),
+                                          fit: BoxFit.cover),
                                   gradient: LinearGradient(
                                     begin: Alignment.topCenter,
                                     end: Alignment.bottomCenter,
@@ -156,19 +176,26 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                           child: Row(
                             children: [
                               Container(
-                                width: 60,
-                                height: 60,
-                                decoration: BoxDecoration(
-                                  color:
-                                      const Color(0xFF8E2DE2).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: const Icon(
-                                  FontAwesomeIcons.userTie,
-                                  color: Color(0xFF8E2DE2),
-                                  size: 24,
-                                ),
-                              ),
+                                  width: 60,
+                                  height: 60,
+                                  decoration: BoxDecoration(
+                                      color: const Color(0xFF8E2DE2)
+                                          .withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(20),
+                                      image: DecorationImage(
+                                          image: NetworkImage(
+                                            getAvaterUrl(data.leader),
+                                          ),
+                                          fit: BoxFit.cover)),
+                                  child: data.leader
+                                          .getStringValue('avatar')
+                                          .isEmpty
+                                      ? const Icon(
+                                          FontAwesomeIcons.userTie,
+                                          color: Color(0xFF8E2DE2),
+                                          size: 24,
+                                        )
+                                      : null),
                               const Gap(16),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -274,8 +301,7 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                               ),
                             ),
                           ),
-                          IconButton(
-                            onPressed: () {},
+                          PopupMenuButton(
                             icon: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
@@ -288,7 +314,23 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                                 size: 16,
                               ),
                             ),
-                          ),
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(
+                                  value: 'edit', child: Text('Edit Community'))
+                            ],
+                            onSelected: (value) {
+                              if (value == 'edit') {
+                                
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            PrayerCommunityCreationPage(
+                                              community: data,
+                                            )));
+                              }
+                            },
+                          )
                         ],
                       ),
                     ),

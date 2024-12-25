@@ -1,6 +1,9 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
-import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
+
 import 'package:pocketbase/pocketbase.dart';
+
+import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 
 class ChatService {
   final PocketBase pb;
@@ -52,6 +55,8 @@ class ChatService {
             preview: _truncateMessage(messagePreview),
             lastMessageAt: DateTime.parse(message.created),
             profile: profile,
+            read: isSender ? message.getBoolValue('read') : false,
+            isSender: isSender,
           );
         }
 
@@ -93,6 +98,8 @@ class ChatPreview {
   final String preview;
   final DateTime lastMessageAt;
   final Profile profile;
+  bool? read;
+  bool? isSender;
 
   ChatPreview({
     required this.participant,
@@ -100,21 +107,26 @@ class ChatPreview {
     required this.preview,
     required this.lastMessageAt,
     required this.profile,
+    this.read,
+    required this.isSender,
   });
 
-  ChatPreview copyWith({
-    String? participant,
-    int? unreadCount,
-    String? preview,
-    DateTime? lastMessageAt,
-    Profile? profile,
-  }) {
+  ChatPreview copyWith(
+      {String? participant,
+      int? unreadCount,
+      String? preview,
+      DateTime? lastMessageAt,
+      Profile? profile,
+      bool? read,
+      bool? isSender}) {
     return ChatPreview(
       participant: participant ?? this.participant,
       unreadCount: unreadCount ?? this.unreadCount,
       preview: preview ?? this.preview,
       lastMessageAt: lastMessageAt ?? this.lastMessageAt,
       profile: profile ?? this.profile,
+      read: read ?? this.read,
+      isSender: isSender,
     );
   }
 
@@ -124,42 +136,16 @@ class ChatPreview {
       'unreadCount': unreadCount,
       'preview': preview,
       'lastMessageAt': lastMessageAt.millisecondsSinceEpoch,
-      'profile': {
-        'userId': profile.userId,
-        'contact': profile.contact,
-      },
+      'profile': profile,
+      'read': read,
     };
-  }
-
-  factory ChatPreview.fromMap(Map<String, dynamic> map) {
-    return ChatPreview(
-      participant: map['participant'] as String,
-      unreadCount: map['unreadCount'] as int,
-      preview: map['preview'] as String,
-      lastMessageAt:
-          DateTime.fromMillisecondsSinceEpoch(map['lastMessageAt'] as int),
-      profile: Profile(
-        user: map['profile']['user'] as RecordModel,
-        userId: map['profile']['userId'] as String,
-        parish: (map['profile']['parish'] as List<dynamic>)
-            .map((e) => e as RecordModel)
-            .toList(),
-        contact: map['profile']['contact'] as String,
-        community: (map['profile']['community'] as List<dynamic>)
-            .map((e) => e as RecordModel)
-            .toList(),
-      ),
-    );
   }
 
   String toJson() => json.encode(toMap());
 
-  factory ChatPreview.fromJson(String source) =>
-      ChatPreview.fromMap(json.decode(source) as Map<String, dynamic>);
-
   @override
   String toString() {
-    return 'ChatPreview(participant: $participant, unreadCount: $unreadCount, preview: $preview, lastMessageAt: $lastMessageAt, profile: $profile)';
+    return 'ChatPreview(participant: $participant, unreadCount: $unreadCount, preview: $preview, lastMessageAt: $lastMessageAt, profile: $profile, read: $read)';
   }
 
   @override
@@ -170,7 +156,8 @@ class ChatPreview {
         other.unreadCount == unreadCount &&
         other.preview == preview &&
         other.lastMessageAt == lastMessageAt &&
-        other.profile == profile;
+        other.profile == profile &&
+        other.read == read;
   }
 
   @override
@@ -179,10 +166,17 @@ class ChatPreview {
         unreadCount.hashCode ^
         preview.hashCode ^
         lastMessageAt.hashCode ^
-        profile.hashCode;
+        profile.hashCode ^
+        read.hashCode;
   }
 
   bool isFriend(RecordModel currentUser) {
+    print([
+      currentUser.getStringValue('username'),
+      profile.user.getListValue("followers"),
+      currentUser.id,
+      currentUser.getListValue("followers").contains(profile.userId)
+    ]);
     return profile.user.getListValue("followers").contains(currentUser.id) &&
         currentUser.getListValue("followers").contains(profile.userId);
   }

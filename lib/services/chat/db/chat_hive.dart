@@ -98,7 +98,7 @@ class MessageModel extends HiveObject {
           'reciever'), // note the spelling 'reciever' matches your schema
       message: record.getStringValue('message'),
       filePath: record.getStringValue('file'),
-      created: DateTime.now(),
+      created: DateTime.parse(record.created),
       received: record.getBoolValue('recieved'),
       read: record.getBoolValue(
           'read'), // note the spelling 'recieved' matches your schema

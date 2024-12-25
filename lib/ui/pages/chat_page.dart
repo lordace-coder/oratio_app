@@ -5,9 +5,11 @@ import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:mime/mime.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/blocs.dart';
+import 'package:oratio_app/bloc/chat_cubit/chat_cubit.dart';
 import 'package:oratio_app/bloc/chat_cubit/message_cubit.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/helpers/functions.dart';
@@ -54,6 +56,9 @@ class _ChatPageState extends State<ChatPage> {
         firstName: widget.profile.user.getStringValue('first_name'),
         lastName: widget.profile.user.getStringValue('last_name'));
     subscribeToMessages();
+    context.read<MessageCubit>().markMessagesAsRead().then((_) {
+      context.read<ChatCubit>().loadRecentChats();
+    });
   }
 
   void subscribeToMessages() {
@@ -71,6 +76,7 @@ class _ChatPageState extends State<ChatPage> {
           final newMsg = types.TextMessage(
               author: _otherUser,
               id: message.id,
+              
               text: message.getStringValue('message'));
           if (mounted) {
             _addMessage(newMsg);
@@ -338,14 +344,18 @@ class _ChatPageState extends State<ChatPage> {
                           msg.filePath!)
                       .toString(),
                   createdAt: msg.created.millisecondsSinceEpoch,
+                  status: msg.read ? types.Status.seen : types.Status.sent,
                 );
               } else {
                 // Handle text message
+                final createdAtUtc = msg.created.toUtc().millisecondsSinceEpoch;
+
                 return types.TextMessage(
                   author: msg.senderId == _user.id ? _user : _otherUser,
                   id: msg.id,
                   text: msg.message,
-                  createdAt: msg.created.millisecondsSinceEpoch,
+                  status: msg.read ? types.Status.seen : types.Status.sent,
+                  createdAt: createdAtUtc,
                 );
               }
             }).toList();
@@ -366,6 +376,9 @@ class _ChatPageState extends State<ChatPage> {
                 onSendMessage: _handleSendPressed,
                 onAttachmentPressed: _handleAttachmentPressed,
               ),
+              dateIsUtc: true,
+
+              dateHeaderThreshold: 7200000,
               // showUserNames: true,
               user: _user,
               theme: DefaultChatTheme(
