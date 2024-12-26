@@ -22,6 +22,8 @@ void handleAccountFunding(
           onSuccess: () {});
 }
 
+
+
 Future<void> collectPayment(BuildContext context) async {
   TextEditingController controller = TextEditingController();
   String email = (context
@@ -440,6 +442,10 @@ void openCommunity(BuildContext context, String id) {
 
 void openPostDetail(BuildContext context, String id) {
   context.pushNamed(RouteNames.postDetailPage, pathParameters: {'post': id});
+}
+
+void editProfile(BuildContext context, String id) {
+  context.pushNamed(RouteNames.editprofile, pathParameters: {'id': id});
 }
 
 void openParish(BuildContext context, String id) {

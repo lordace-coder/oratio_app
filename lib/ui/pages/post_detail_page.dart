@@ -11,6 +11,7 @@ import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/bloc/posts/post_cubit.dart';
 import 'package:oratio_app/helpers/functions.dart';
+import 'package:oratio_app/helpers/user.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/networkProvider/requests.dart';
 import 'package:oratio_app/services/file_downloader.dart';
@@ -195,7 +196,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
         ),
       );
     }
-    final userId = context.read<PocketBaseServiceCubit>().state.pb.authStore.model.id;
+    final userId =
+        context.read<PocketBaseServiceCubit>().state.pb.authStore.model.id;
     hasLiked ??= (data!.getListValue('likes')).contains(userId);
 
     final avatarUrl = getAvatarUrl(
@@ -207,7 +209,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
       getComments(context);
       searched = true;
     }
-
+    final pb = getPocketBaseFromContext(context);
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: Column(
@@ -522,9 +524,22 @@ class _PostDetailPageState extends State<PostDetailPage> {
             ),
             child: Row(
               children: [
-                const CircleAvatar(
-                  radius: 18,
-                  child: Icon(FontAwesomeIcons.user),
+                Padding(
+                  padding: const EdgeInsets.only(left: 10),
+                  child: CircleAvatar(
+                    radius: 18,
+                    backgroundImage: getProfilePic(context,
+                                user: pb.authStore.model as RecordModel) ==
+                            null
+                        ? null
+                        : NetworkImage(getProfilePic(context,
+                            user: pb.authStore.model as RecordModel)!),
+                    child: getProfilePic(context,
+                                user: pb.authStore.model as RecordModel) ==
+                            null
+                        ? const Icon(FontAwesomeIcons.user)
+                        : null,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(

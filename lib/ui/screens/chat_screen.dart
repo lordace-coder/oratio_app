@@ -69,7 +69,11 @@ class _ChatScreenState extends State<ChatScreen> {
                             ],
                           ),
                         ),
-                        _buildSearchBar(),
+                        GestureDetector(
+                            onTap: () async {
+                              await context.pushNamed(RouteNames.searchPage);
+                            },
+                            child: _buildSearchBar()),
                         _buildCustomTabBar(),
                       ],
                     ),
@@ -88,12 +92,8 @@ class _ChatScreenState extends State<ChatScreen> {
                       } else if (state is ChatsLoaded) {
                         // !Filter chats based on selected tab
                         final filteredChats = _selectedTabIndex == 0
-                            ? state.chats
-                                .where((chat) => chat.isFriend(currentUser))
-                                .toList()
-                            : state.chats
-                                .where((chat) => !chat.isFriend(currentUser))
-                                .toList();
+                            ? context.watch<ChatCubit>().getRecentChats()
+                            : context.watch<ChatCubit>().getMessageRequests();
 
                         return AnimationLimiter(
                           child: SliverList(
@@ -232,7 +232,7 @@ class _ChatScreenState extends State<ChatScreen> {
           radius: 20,
           backgroundColor: Theme.of(context).colorScheme.primaryContainer,
           child: IconButton(
-            icon: const Icon(FontAwesomeIcons.user),
+            icon: const Icon(FontAwesomeIcons.plus),
             onPressed: () {
               // Handle profile tap
               context.pushNamed(RouteNames.connect);
@@ -252,32 +252,22 @@ class _ChatScreenState extends State<ChatScreen> {
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(25),
         ),
-        child: Row(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Icon(
-                FontAwesomeIcons.search,
-                size: 16,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-            Expanded(
-              child: TextFormField(
-                controller: searchController,
-                decoration: InputDecoration(
-                  hintText: 'Search conversations...',
-                  border: InputBorder.none,
-                  hintStyle: TextStyle(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurfaceVariant
-                        .withOpacity(0.7),
-                  ),
+        child: Hero(
+          tag: 'search',
+          child: Row(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Icon(
+                  FontAwesomeIcons.search,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
-            ),
-          ],
+              Text('Search friends...',
+                  style: TextStyle(color: Colors.black.withOpacity(0.5)))
+            ],
+          ),
         ),
       ),
     );
@@ -474,7 +464,17 @@ class _ChatItemState extends State<ChatItem>
                                   fontSize: 12,
                                 ),
                               ),
-                            ),
+                            )
+                          else if (widget.chatPreview.unreadCount == 0 &&
+                              widget.chatPreview.isSender!)
+                            Icon(
+                              widget.chatPreview.read == null ||
+                                      !widget.chatPreview.read!
+                                  ? Icons.done
+                                  : Icons.done_all,
+                              color: Colors.black.withOpacity(0.5),
+                              size: 20,
+                            )
                         ],
                       ),
                     ],
@@ -485,6 +485,27 @@ class _ChatItemState extends State<ChatItem>
           ),
         ),
       ),
+    );
+  }
+}
+
+class SearchPage extends StatelessWidget {
+  const SearchPage({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: PreferredSize(
+          preferredSize: const Size.fromHeight(100),
+          child: Container(
+            child: const Center(
+              child: Hero(
+                  tag: 'search',
+                  child: Text(
+                    'Search Friends',
+                    style: TextStyle(fontSize: 18),
+                  )),
+            ),
+          )),
     );
   }
 }

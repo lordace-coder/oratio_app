@@ -105,7 +105,7 @@ class CustomBubble extends StatelessWidget {
                 fontSize: 16, color: isUser ? Colors.white : Colors.black),
           ),
           const SizedBox(height: 4),
-          isUser ? _buildUserTimestamp() : const SizedBox.shrink(),
+          _buildUserTimestamp(message.createdAt!, isUser),
         ],
       ),
     );
@@ -177,7 +177,7 @@ class CustomBubble extends StatelessWidget {
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
-              child: _buildUserTimestamp(),
+              child: _buildUserTimestamp(message.createdAt!, isUser),
             ),
           ],
         ),
@@ -234,7 +234,7 @@ class CustomBubble extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          _buildUserTimestamp(),
+          _buildUserTimestamp(message.createdAt!, isUser),
         ],
       ),
     );
@@ -293,7 +293,7 @@ class CustomBubble extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          _buildUserTimestamp(),
+          _buildUserTimestamp(message.createdAt!, isUser),
         ],
       ),
     );
@@ -345,32 +345,35 @@ class CustomBubble extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
-          _buildUserTimestamp(),
+          _buildUserTimestamp(message.createdAt!, isUser),
         ],
       ),
     );
   }
 
-  Widget _buildUserTimestamp() {
+  Widget _buildUserTimestamp(int timestamp, bool isUser) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          _formatTime(message.createdAt ?? 0),
+          _formatTime(timestamp),
           style: TextStyle(
             fontSize: 12,
-            color: Colors.white.withOpacity(0.5),
+            color: isUser
+                ? Colors.white.withOpacity(0.5)
+                : Colors.black.withOpacity(0.5),
           ),
         ),
         if (isUser) ...[
           const SizedBox(width: 4),
-          Icon(
-            message.status == types.Status.seen ? Icons.done_all : Icons.done,
-            size: 16,
-            color: message.status == types.Status.seen
-                ? Colors.green
-                : Colors.white.withOpacity(0.5),
-          ),
+          if (isUser)
+            Icon(
+              message.status == types.Status.seen ? Icons.done_all : Icons.done,
+              size: 16,
+              color: message.status == types.Status.seen
+                  ? Colors.green
+                  : Colors.white.withOpacity(0.5),
+            ),
         ],
       ],
     );

@@ -4,6 +4,7 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/networkProvider/requests.dart';
 import 'package:oratio_app/networkProvider/users.dart';
 import 'package:oratio_app/services/servces.dart';
@@ -32,6 +33,7 @@ class _ParishLandingPageState extends State<ParishLandingPage> {
               final data = snapshot.data!;
               final parishMember =
                   isParishMember(church: data, context: context);
+              final pb = getPocketBaseFromContext(context);
               return Stack(
                 children: [
                   SingleChildScrollView(
@@ -74,6 +76,12 @@ class _ParishLandingPageState extends State<ParishLandingPage> {
                                       Colors.black.withOpacity(0.4),
                                     ],
                                   ),
+                                  image: DecorationImage(
+                                      image: NetworkImage(pb
+                                          .getFileUrl(data,
+                                              data.getStringValue('image'))
+                                          .toString()),
+                                      fit: BoxFit.cover),
                                   borderRadius: const BorderRadius.only(
                                     bottomLeft: Radius.circular(32),
                                     bottomRight: Radius.circular(32),
@@ -164,12 +172,24 @@ class _ParishLandingPageState extends State<ParishLandingPage> {
                                   color:
                                       const Color(0xFF8E2DE2).withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(20),
+                                  image: DecorationImage(
+                                      image: NetworkImage(pb
+                                          .getFileUrl(
+                                              data.expand['priest']!.first,
+                                              data.expand['priest']!.first
+                                                  .getStringValue('avatar'))
+                                          .toString()),
+                                      fit: BoxFit.cover),
                                 ),
-                                child: const Icon(
-                                  FontAwesomeIcons.userTie,
-                                  color: Color(0xFF8E2DE2),
-                                  size: 24,
-                                ),
+                                child: data.expand['priest']!.first
+                                        .getStringValue('avatar')
+                                        .isEmpty
+                                    ? const Icon(
+                                        FontAwesomeIcons.userTie,
+                                        color: Color(0xFF8E2DE2),
+                                        size: 24,
+                                      )
+                                    : null,
                               ),
                               const Gap(16),
                               Column(

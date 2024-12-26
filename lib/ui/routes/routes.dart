@@ -7,7 +7,9 @@ import 'package:oratio_app/ui/bright/pages/create_community.dart';
 import 'package:oratio_app/ui/bright/pages/create_event.dart';
 import 'package:oratio_app/ui/bright/pages/mass_booking_page.dart';
 import 'package:oratio_app/ui/pages/create_new_post.dart';
+import 'package:oratio_app/ui/pages/edit_profile_page.dart';
 import 'package:oratio_app/ui/pages/post_detail_page.dart';
+import 'package:oratio_app/ui/screens/chat_screen.dart';
 import 'package:oratio_app/ui/widgets/image_viewer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -188,11 +190,20 @@ class AppRouter {
                     postId: state.pathParameters['post'].toString(),
                   ),
                 ),
-
+              GoRoute(path: '/editprofile/:id',
+              name: RouteNames.editprofile,
+              builder: (context, state) => EditProfilePage(profileId: state.pathParameters['id'].toString()
+            
+          ,)),
                 GoRoute(
                   path: '/mass',
                   name: RouteNames.mass,
                   builder: (context, state) => const MassBookingPage(),
+                ),
+                 GoRoute(
+                  path: '/searchpage',
+                  name: RouteNames.searchPage,
+                  builder: (context, state) => const SearchPage(),
                 ),
 
                 GoRoute(

@@ -38,7 +38,10 @@ class ProfileVisitorPage extends StatelessWidget {
             }
             if (state is ProfileDataLoaded) {
               final pb = context.read<PocketBaseServiceCubit>().state.pb;
-
+              if (state.guestProfile == null) {
+                return const Center(
+                    child: CircularProgressIndicator.adaptive());
+              }
               final data = state.guestProfile;
               return CustomScrollView(slivers: [
                 // Custom App Bar with Gradient and Profile Info
