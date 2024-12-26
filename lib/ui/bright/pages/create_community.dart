@@ -119,7 +119,6 @@ class _PrayerCommunityCreationPageState
       try {
         final pb = context.read<PocketBaseServiceCubit>().state.pb;
         final data = _collectFormData();
-        print('Community Data: $data');
         final bytes = await _selectedImage?.readAsBytes();
         await pb.collection('prayer_community').create(body: data, files: [
           http.MultipartFile.fromBytes(
@@ -131,7 +130,6 @@ class _PrayerCommunityCreationPageState
         NotificationService.showInfo('Created Community Succesfully');
         _clearForm();
       } catch (e) {
-        print(e);
         showError(context, message: 'Failed to create community: $e');
       } finally {
         setState(() {
@@ -141,14 +139,6 @@ class _PrayerCommunityCreationPageState
     }
   }
 
-  void _showErrorSnackbar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red[700],
-      ),
-    );
-  }
 
   Map<String, dynamic> _collectFormData() {
     return {
@@ -283,6 +273,7 @@ class _PrayerCommunityCreationPageState
                                               leader.getStringValue("avatar"))
                                           .toString())
                                       : null,
+                                      child: leader.getStringValue("avatar").isNotEmpty ? null : Icon(Icons.person,color: AppColors.primary,),
                             ),
                             title: Text(leader.getStringValue("username")),
                             // TODO DISPLAY CHURCH

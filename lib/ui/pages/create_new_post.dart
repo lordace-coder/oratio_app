@@ -1,16 +1,17 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:mime/mime.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
-import 'dart:io';
-import 'package:http/http.dart' as http;
 import 'package:oratio_app/helpers/snackbars.dart';
-import 'package:mime/mime.dart';
-import 'package:http_parser/http_parser.dart';
-
+import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 
@@ -39,17 +40,26 @@ class _CreatePostPageState extends State<CreatePostPage> {
   }
 
   Future<List<RecordModel>> getUserCommunities() async {
-    final profileCubit = context.read<ProfileDataCubit>();
-    await profileCubit.getMyProfile();
-    return (profileCubit.state as ProfileDataLoaded).profile.community;
+    final pb = getPocketBaseFromContext(context);
+    final communities = await pb
+        .collection('prayer_community')
+        .getList(filter: 'leader = "${pb.authStore.model.id}"');
+    return communities.items;
   }
 
   List<RecordModel> getInitialData() {
     try {
       final profileCubit = context.read<ProfileDataCubit>();
-
-      return (profileCubit.state as ProfileDataLoaded).profile.community;
-    } catch (e) {}
+      return (profileCubit.state as ProfileDataLoaded)
+          .profile
+          .community
+          .where((item) =>
+              item.getStringValue('leader') ==
+              (profileCubit.state as ProfileDataLoaded).profile.userId)
+          .toList();
+    } catch (e) {
+      
+    }
     return [];
   }
 
@@ -62,10 +72,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
       try {
         final pb = context.read<PocketBaseServiceCubit>().state.pb;
         final data = _collectFormData();
-        print('Post Data: $data');
         final bytes = await _selectedImage?.readAsBytes();
         final mimeType = lookupMimeType(_selectedImage!.path);
-        print(mimeType);
 
         if (mimeType != 'image/jpeg' && mimeType != 'image/png') {
           throw Exception('Invalid image type. Only JPEG and PNG are allowed.');
@@ -84,7 +92,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
         _clearForm();
         context.pop();
       } catch (e) {
-        print(e);
         showError(context, message: 'Failed to create Post: $e');
       } finally {
         setState(() {
@@ -93,7 +100,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
       }
     }
   }
-  
 
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(

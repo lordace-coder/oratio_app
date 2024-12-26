@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static Color primary = const Color(0xff202ADA);
+  static Color primary = const Color(0xff0CC1E0);
   static Color dimGray = const Color(0xffD9D9D9).withOpacity(28 / 100);
   static Color gray = const Color(0xffD9D9D9);
   static Color textDim = Colors.white.withOpacity(.5);

@@ -1,10 +1,44 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:oratio_app/bloc/blocs.dart';
+import 'package:oratio_app/helpers/functions.dart';
+import 'package:oratio_app/networkProvider/priest_requests.dart';
+import 'package:oratio_app/networkProvider/users.dart';
+import 'package:oratio_app/ui/routes/route_names.dart';
+import 'package:pocketbase/pocketbase.dart';
 
-class SettingsPage extends StatelessWidget {
+class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
   @override
+  State<SettingsPage> createState() => _SettingsPageState();
+}
+
+class _SettingsPageState extends State<SettingsPage> {
+  late PocketBase pocketBase;
+
+  @override
+  void initState() {
+    super.initState();
+    pocketBase = context.read<PocketBaseServiceCubit>().state.pb;
+  }
+
+  String? getAvatar(BuildContext context) {
+    final pb = getPocketBaseFromContext(context);
+    final avatarUrl = pb
+        .getFileUrl(pocketBase.authStore.model,
+            pocketBase.authStore.model.getStringValue('avatar'))
+        .toString();
+    if (avatarUrl.isEmpty) {
+      return null;
+    }
+    return avatarUrl;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final user = pocketBase.authStore.model as RecordModel;
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -36,29 +70,26 @@ class SettingsPage extends StatelessWidget {
                           ),
                         ),
                         child: CircleAvatar(
-                          radius: 35,
-                          backgroundColor: Colors.grey[900],
-                          child: const CircleAvatar(
-                            radius: 32,
-                            backgroundImage:
-                                NetworkImage('https://picsum.photos/200'),
-                          ),
+                          radius: 32,
+                          backgroundImage: getAvatar(context) != null
+                              ? NetworkImage(getAvatar(context)!)
+                              : null,
                         ),
                       ),
                       const SizedBox(width: 20),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Alex Johnson',
-                            style: TextStyle(
+                          Text(
+                            getFullName(user),
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           Text(
-                            'Premium Member',
+                            user.getStringValue("email"),
                             style: TextStyle(
                               color: Colors.blue[400],
                               fontSize: 14,
@@ -106,24 +137,30 @@ class SettingsPage extends StatelessWidget {
                         title: 'Notifications',
                         subtitle: '3 unread',
                         gradient: [Colors.purple[400]!, Colors.pink[400]!],
+                        onTap: () {
+                          context.pushNamed(RouteNames.notifications);
+                        },
                       ),
                       _buildQuickActionCard(
                         icon: Icons.security_outlined,
                         title: 'Security',
                         subtitle: 'Fingerprint',
                         gradient: [Colors.blue[400]!, Colors.cyan[400]!],
+                        onTap: () {},
                       ),
                       _buildQuickActionCard(
                         icon: Icons.backup_outlined,
                         title: 'Backup',
                         subtitle: 'Last: 3h ago',
                         gradient: [Colors.orange[400]!, Colors.amber[400]!],
+                        onTap: () {},
                       ),
                       _buildQuickActionCard(
                         icon: Icons.storage_outlined,
                         title: 'Storage',
                         subtitle: '45% used',
                         gradient: [Colors.teal[400]!, Colors.green[400]!],
+                        onTap: () {},
                       ),
                     ],
                   ),
@@ -154,12 +191,12 @@ class SettingsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickActionCard({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required List<Color> gradient,
-  }) {
+  Widget _buildQuickActionCard(
+      {required IconData icon,
+      required String title,
+      required String subtitle,
+      required List<Color> gradient,
+      required Function() onTap}) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
@@ -167,10 +204,8 @@ class SettingsPage extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFF2A35E8)
-                .withOpacity(0.15), // Lighter variation of background
-            const Color(0xFF1C24BD)
-                .withOpacity(0.25), // Darker variation of background
+            const Color(0xFF2A35E8).withOpacity(0.15),
+            const Color(0xFF1C24BD).withOpacity(0.25),
           ],
         ),
         border: Border.all(
@@ -188,7 +223,9 @@ class SettingsPage extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {},
+          onTap: () {
+            onTap.call();
+          },
           borderRadius: BorderRadius.circular(20),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -249,30 +286,38 @@ class SettingsPage extends StatelessWidget {
         title: 'Account Settings',
         subtitle: 'Update your profile details',
         iconGradient: [Colors.purple[400]!, Colors.pink[400]!],
+        onTap: () {},
       ),
       _SettingsItem(
         icon: Icons.palette_outlined,
         title: 'Appearance',
         subtitle: 'Customize your app theme',
         iconGradient: [Colors.blue[400]!, Colors.cyan[400]!],
+        onTap: () {},
       ),
       _SettingsItem(
         icon: Icons.language_outlined,
         title: 'Language',
         subtitle: 'Change app language',
         iconGradient: [Colors.orange[400]!, Colors.amber[400]!],
+        onTap: () {},
       ),
       _SettingsItem(
         icon: Icons.help_outline,
         title: 'Help & Support',
         subtitle: 'Get help from our team',
         iconGradient: [Colors.teal[400]!, Colors.green[400]!],
+        onTap: () {
+          openWhatsApp(
+              phoneNumber: '+2349061299286', message: 'Customer support ');
+        },
       ),
       _SettingsItem(
         icon: Icons.info_outline,
         title: 'About',
         subtitle: 'Version 1.0.0',
         iconGradient: [Colors.indigo[400]!, Colors.blue[400]!],
+        onTap: () {},
       ),
     ];
 
@@ -289,7 +334,7 @@ class SettingsPage extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: ListTile(
-          onTap: () {},
+          onTap: item.onTap,
           contentPadding: const EdgeInsets.all(16),
           leading: Container(
             padding: const EdgeInsets.all(8),
@@ -329,9 +374,11 @@ class _SettingsItem {
   final IconData icon;
   final String title;
   final String subtitle;
+  final Function() onTap;
   final List<Color> iconGradient;
 
   _SettingsItem({
+    required this.onTap,
     required this.icon,
     required this.title,
     required this.subtitle,
