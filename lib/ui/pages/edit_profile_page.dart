@@ -1,21 +1,18 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
-import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
-import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
-import 'package:http/http.dart' as http;
-import 'package:http_parser/http_parser.dart';
 
 class EditProfilePage extends StatefulWidget {
-  final String profileId;
-  const EditProfilePage({super.key, required this.profileId});
+  const EditProfilePage({
+    super.key,
+  });
 
   @override
   State<EditProfilePage> createState() => _EditProfilePageState();

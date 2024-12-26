@@ -190,17 +190,16 @@ class AppRouter {
                     postId: state.pathParameters['post'].toString(),
                   ),
                 ),
-              GoRoute(path: '/editprofile/:id',
-              name: RouteNames.editprofile,
-              builder: (context, state) => EditProfilePage(profileId: state.pathParameters['id'].toString()
-            
-          ,)),
+                GoRoute(
+                    path: '/editprofile',
+                    name: RouteNames.editprofile,
+                    builder: (context, state) => const EditProfilePage()),
                 GoRoute(
                   path: '/mass',
                   name: RouteNames.mass,
                   builder: (context, state) => const MassBookingPage(),
                 ),
-                 GoRoute(
+                GoRoute(
                   path: '/searchpage',
                   name: RouteNames.searchPage,
                   builder: (context, state) => const SearchPage(),

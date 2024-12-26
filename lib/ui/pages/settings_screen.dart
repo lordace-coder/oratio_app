@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/networkProvider/users.dart';
+import 'package:oratio_app/services/user_settings_service.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:pocketbase/pocketbase.dart';
+import 'package:confirm_dialog/confirm_dialog.dart' as dialogs;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -99,7 +103,9 @@ class _SettingsPageState extends State<SettingsPage> {
                       ),
                       const Spacer(),
                       IconButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          context.pushNamed(RouteNames.editprofile);
+                        },
                         icon: const Icon(Icons.edit_outlined,
                             color: Colors.white),
                       ),
@@ -153,7 +159,10 @@ class _SettingsPageState extends State<SettingsPage> {
                         title: 'Backup',
                         subtitle: 'Last: 3h ago',
                         gradient: [Colors.orange[400]!, Colors.amber[400]!],
-                        onTap: () {},
+                        onTap: () {
+                          NotificationService.showSuccess(
+                              'Action Backup Succesfull');
+                        },
                       ),
                       _buildQuickActionCard(
                         icon: Icons.storage_outlined,
@@ -293,7 +302,21 @@ class _SettingsPageState extends State<SettingsPage> {
         title: 'Appearance',
         subtitle: 'Customize your app theme',
         iconGradient: [Colors.blue[400]!, Colors.cyan[400]!],
-        onTap: () {},
+        onTap: () async {
+          final pref = await SharedPreferences.getInstance();
+          final settings = UserSettings(pref);
+          dialogs
+              .confirm(context,
+                  title: const Text("Change Theme"),
+                  content: const Text("Do you want to change the theme?"),
+                  textOK: const Text("Yes"),
+                  textCancel: const Text("No"))
+              .then((value) {
+            if (value) {
+              settings.updateAppSettings(AppSettings()..isDarkMode = true);
+            }
+          });
+        },
       ),
       _SettingsItem(
         icon: Icons.language_outlined,
@@ -314,10 +337,12 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
       _SettingsItem(
         icon: Icons.info_outline,
-        title: 'About',
-        subtitle: 'Version 1.0.0',
+        title: 'App Licences',
+        subtitle: 'View open-source licences',
         iconGradient: [Colors.indigo[400]!, Colors.blue[400]!],
-        onTap: () {},
+        onTap: () {
+          showLicensePage(context: context);
+        },
       ),
     ];
 

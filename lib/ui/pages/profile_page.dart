@@ -381,9 +381,7 @@ class ProfilePage extends StatelessWidget {
           ),
           TextButton(
             onPressed: () async {
-              Navigator.push(context, MaterialPageRoute(builder: (context) {
-                return EditProfilePage(profileId: profileId);
-              }));
+              context.pushNamed(RouteNames.editprofile);
             },
             child: const Text(
               "Edit",
