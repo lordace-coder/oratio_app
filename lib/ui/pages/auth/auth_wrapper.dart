@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 class AuthListener extends StatefulWidget {
   const AuthListener({super.key, required this.child});
@@ -38,6 +39,8 @@ class _AuthListenerState extends State<AuthListener> {
           context.pushNamed(RouteNames.login);
         } else {
           if (GoRouter.of(context).state?.fullPath?.contains('auth') ?? false) {
+    OneSignal.login(pb.authStore.model.id);
+
             context.pushNamed(RouteNames.homePage);
           }
         }

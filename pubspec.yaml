@@ -49,7 +49,6 @@ dependencies:
   animate_do: ^3.3.4
   glass: ^2.0.0+2
   video_player: ^2.8.1
- 
 
 dev_dependencies:
   flutter_test:
@@ -74,28 +73,27 @@ flutter:
 
 flutter_native_splash:
   color: "#ffffff"
-
   image: assets/images/app_logo.png
+  android_12:
+    color: "#ffffff"
+    image: assets/images/app_logo.png
+  fullscreen: true
 
   # From Android 12 onwards, the splash screen is handled differently than in previous versions.
   # Please visit https://developer.android.com/guide/topics/ui/splash-screen
   # Following are specific parameters for Android 12+.
 
-  android_12:
-    color: "#ffffff"
+  # App icon background color.
+  #icon_background_color: "#111111"
+  # The branding property allows you to specify an image used as branding in the splash screen.
+  #branding: assets/dart.png
 
-    # App icon background color.
-    #icon_background_color: "#111111"
-    image: assets/images/app_logo.png
-    # The branding property allows you to specify an image used as branding in the splash screen.
-    #branding: assets/dart.png
-
-    # The image_dark, color_dark, icon_background_color_dark, and branding_dark set values that
-    # apply when the device is in dark mode. If they are not specified, the app will use the
-    # parameters from above.
-    #image_dark: assets/android12splash-invert.png
-    #color_dark: "#042a49"
-    #icon_background_color_dark: "#eeeeee"
+  # The image_dark, color_dark, icon_background_color_dark, and branding_dark set values that
+  # apply when the device is in dark mode. If they are not specified, the app will use the
+  # parameters from above.
+  #image_dark: assets/android12splash-invert.png
+  #color_dark: "#042a49"
+  #icon_background_color_dark: "#eeeeee"
 
   # The android, ios and web parameters can be used to disable generating a splash screen on a given
   # platform.
@@ -161,7 +159,6 @@ flutter_native_splash:
   #       To show the notification bar, add the following code to your Flutter app:
   #       WidgetsFlutterBinding.ensureInitialized();
   #       SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [SystemUiOverlay.bottom, SystemUiOverlay.top], );
-  fullscreen: true
 
   # If you have changed the name(s) of your info.plist file(s), you can specify the filename(s)
   # with the info_plist_files parameter.  Remove only the # characters in the three lines below,

@@ -90,7 +90,6 @@ class _FeedsListScreenState extends State<FeedsListScreen>
         _tabController.index == 0) {
       // Load more when we're 200 pixels from the bottom
       final postCubit = context.read<PostCubit>();
-      print('fetching mre');
       if (postCubit.state is PostLoaded) {
         postCubit.loadMorePosts();
       }

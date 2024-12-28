@@ -208,4 +208,9 @@ class ChatCubit extends Cubit<ChatState> {
     _pb.collection('messages').unsubscribe('*');
     return super.close();
   }
+
+  Future<void> logout()async{
+     _pb.collection('messages').unsubscribe('*');
+     emit(ChatInitial());
+  }
 }
