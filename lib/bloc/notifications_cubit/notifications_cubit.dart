@@ -74,4 +74,8 @@ class NotificationCubit extends Cubit<NotificationState> {
     _pocketBase.collection('notifications').unsubscribe('*');
     return super.close();
   }
+
+  Future<void> logout() async {
+    await _pocketBase.collection('notifications').unsubscribe('*');
+  }
 }

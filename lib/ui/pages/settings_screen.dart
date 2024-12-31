@@ -43,23 +43,34 @@ class _SettingsPageState extends State<SettingsPage> {
   @override
   Widget build(BuildContext context) {
     final user = pocketBase.authStore.model as RecordModel;
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xff202ADA),
-              Color.fromARGB(255, 16, 21, 105),
-            ],
-          ),
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xff202ADA),
+            Color.fromARGB(255, 16, 21, 105),
+          ],
         ),
-        child: SafeArea(
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: SafeArea(
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Back Button
+                IconButton(
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: () {
+                    context.pop();
+                  },
+                ),
                 // Profile Section
                 Container(
                   margin: const EdgeInsets.all(24),
@@ -113,67 +124,64 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ),
 
-                // Quick Actions
-                Container(
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  child: const Text(
-                    'QUICK ACTIONS',
-                    style: TextStyle(
-                      color: Colors.white54,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                ),
-
-                // Quick Actions Grid
-                SizedBox(
-                  height: 380,
-                  child: GridView.count(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    physics: const NeverScrollableScrollPhysics(),
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
-                    children: [
-                      _buildQuickActionCard(
-                        icon: Icons.notifications_outlined,
-                        title: 'Notifications',
-                        subtitle: '3 unread',
-                        gradient: [Colors.purple[400]!, Colors.pink[400]!],
-                        onTap: () {
-                          context.pushNamed(RouteNames.notifications);
-                        },
-                      ),
-                      _buildQuickActionCard(
-                        icon: Icons.security_outlined,
-                        title: 'Security',
-                        subtitle: 'Fingerprint',
-                        gradient: [Colors.blue[400]!, Colors.cyan[400]!],
-                        onTap: () {},
-                      ),
-                      _buildQuickActionCard(
-                        icon: Icons.backup_outlined,
-                        title: 'Backup',
-                        subtitle: 'Last: 3h ago',
-                        gradient: [Colors.orange[400]!, Colors.amber[400]!],
-                        onTap: () {
-                          NotificationService.showSuccess(
-                              'Action Backup Succesfull');
-                        },
-                      ),
-                      _buildQuickActionCard(
-                        icon: Icons.storage_outlined,
-                        title: 'Storage',
-                        subtitle: '45% used',
-                        gradient: [Colors.teal[400]!, Colors.green[400]!],
-                        onTap: () {},
-                      ),
-                    ],
-                  ),
-                ),
+                // Quick Actions (Hidden for now)
+                // Container(
+                //   margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                //   child: const Text(
+                //     'QUICK ACTIONS',
+                //     style: TextStyle(
+                //       color: Colors.white54,
+                //       fontSize: 13,
+                //       fontWeight: FontWeight.w600,
+                //       letterSpacing: 1.5,
+                //     ),
+                //   ),
+                // ),
+                // SizedBox(
+                //   height: 380,
+                //   child: GridView.count(
+                //     padding: const EdgeInsets.symmetric(horizontal: 24),
+                //     physics: const NeverScrollableScrollPhysics(),
+                //     crossAxisCount: 2,
+                //     mainAxisSpacing: 16,
+                //     crossAxisSpacing: 16,
+                //     children: [
+                //       _buildQuickActionCard(
+                //         icon: Icons.notifications_outlined,
+                //         title: 'Notifications',
+                //         subtitle: '3 unread',
+                //         gradient: [Colors.purple[400]!, Colors.pink[400]!],
+                //         onTap: () {
+                //           context.pushNamed(RouteNames.notifications);
+                //         },
+                //       ),
+                //       _buildQuickActionCard(
+                //         icon: Icons.security_outlined,
+                //         title: 'Security',
+                //         subtitle: 'Fingerprint',
+                //         gradient: [Colors.blue[400]!, Colors.cyan[400]!],
+                //         onTap: () {},
+                //       ),
+                //       _buildQuickActionCard(
+                //         icon: Icons.backup_outlined,
+                //         title: 'Backup',
+                //         subtitle: 'Last: 3h ago',
+                //         gradient: [Colors.orange[400]!, Colors.amber[400]!],
+                //         onTap: () {
+                //           NotificationService.showSuccess(
+                //               'Action Backup Succesfull');
+                //         },
+                //       ),
+                //       _buildQuickActionCard(
+                //         icon: Icons.storage_outlined,
+                //         title: 'Storage',
+                //         subtitle: '45% used',
+                //         gradient: [Colors.teal[400]!, Colors.green[400]!],
+                //         onTap: () {},
+                //       ),
+                //     ],
+                //   ),
+                // ),
 
                 // Settings List
                 Container(
@@ -192,6 +200,20 @@ class _SettingsPageState extends State<SettingsPage> {
                 ..._buildSettingsItems(),
 
                 const SizedBox(height: 24), // Bottom padding
+
+                // Footer
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: Text(
+                      'Powered by LordAce 2024',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.5),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -295,35 +317,40 @@ class _SettingsPageState extends State<SettingsPage> {
         title: 'Account Settings',
         subtitle: 'Update your profile details',
         iconGradient: [Colors.purple[400]!, Colors.pink[400]!],
-        onTap: () {},
-      ),
-      _SettingsItem(
-        icon: Icons.palette_outlined,
-        title: 'Appearance',
-        subtitle: 'Customize your app theme',
-        iconGradient: [Colors.blue[400]!, Colors.cyan[400]!],
-        onTap: () async {
-          final pref = await SharedPreferences.getInstance();
-          final settings = UserSettings(pref);
-          dialogs
-              .confirm(context,
-                  title: const Text("Change Theme"),
-                  content: const Text("Do you want to change the theme?"),
-                  textOK: const Text("Yes"),
-                  textCancel: const Text("No"))
-              .then((value) {
-            if (value) {
-              settings.updateAppSettings(AppSettings()..isDarkMode = true);
-            }
-          });
+        onTap: () {
+          context.pushNamed(RouteNames.editprofile);
         },
       ),
+      // _SettingsItem(
+      //   icon: Icons.palette_outlined,
+      //   title: 'Appearance',
+      //   subtitle: 'Customize your app theme',
+      //   iconGradient: [Colors.blue[400]!, Colors.cyan[400]!],
+      //   onTap: () async {
+      //     final pref = await SharedPreferences.getInstance();
+      //     final settings = UserSettings(pref);
+      //     dialogs
+      //         .confirm(context,
+      //             title: const Text("Change Theme"),
+      //             content: const Text("Do you want to change the theme?"),
+      //             textOK: const Text("Yes"),
+      //             textCancel: const Text("No"))
+      //         .then((value) {
+      //       if (value) {
+      //         settings.updateAppSettings(AppSettings()..isDarkMode = true);
+      //       }
+      //     });
+      //   },
+      // ),
+
       _SettingsItem(
         icon: Icons.language_outlined,
         title: 'Language',
         subtitle: 'Change app language',
         iconGradient: [Colors.orange[400]!, Colors.amber[400]!],
-        onTap: () {},
+        onTap: () {
+          NotificationService.showInfo('Coming soon');
+        },
       ),
       _SettingsItem(
         icon: Icons.help_outline,
@@ -343,6 +370,20 @@ class _SettingsPageState extends State<SettingsPage> {
         onTap: () {
           showLicensePage(context: context);
         },
+      ),
+      _SettingsItem(
+        icon: Icons.description_outlined,
+        title: 'Terms and Conditions',
+        subtitle: 'Read our terms and conditions',
+        iconGradient: [Colors.red[400]!, Colors.orange[400]!],
+        onTap: openTermsAndConditions,
+      ),
+      _SettingsItem(
+        icon: Icons.privacy_tip_outlined,
+        title: 'App Privacy Policy',
+        subtitle: 'Read our privacy policy',
+        iconGradient: [Colors.green[400]!, Colors.teal[400]!],
+        onTap: openPrivacyPolicy,
       ),
     ];
 

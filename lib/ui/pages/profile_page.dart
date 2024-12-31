@@ -5,7 +5,6 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
-
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/helpers/user.dart';
@@ -231,12 +230,14 @@ class ProfilePage extends StatelessWidget {
                                 const Color(0xFFFF6B6B),
                                 const Color(0xFFFF3131),
                                 () {
+
                                   context
                                       .read<PocketBaseServiceCubit>()
                                       .state
                                       .pb
                                       .authStore
                                       .clear();
+                                      //context.read<CentralCubit>().logout();
                                 },
                               ),
                             ],
