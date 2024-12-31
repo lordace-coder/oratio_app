@@ -71,8 +71,7 @@ class NotificationPage extends StatelessWidget {
               } else {
                 // there are notifications
                 return ListView.builder(
-                  padding:
-                      const EdgeInsets.only(left: 10.0, right: 10, top: 10),
+                  padding: const EdgeInsets.only(left: 5.0, right: 5, top: 5),
                   itemCount: state.notifications.length,
                   itemBuilder: (BuildContext context, int index) {
                     return NotificationItem(data: state.notifications[index]);
@@ -102,7 +101,7 @@ class NotificationItem extends StatelessWidget {
   Widget build(BuildContext context) {
     DateFormat format = DateFormat("yyyy-MM-dd HH:mm:ss.SSS'Z'");
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 5),
       child: Slidable(
         startActionPane: ActionPane(motion: const ScrollMotion(), children: [
           SlidableAction(
@@ -132,7 +131,7 @@ class NotificationItem extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(
             horizontal: 10,
-            vertical: 10,
+            vertical: 5,
           ),
           decoration: BoxDecoration(
             color: Colors.white,

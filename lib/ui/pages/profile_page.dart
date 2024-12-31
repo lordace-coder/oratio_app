@@ -9,7 +9,6 @@ import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/helpers/user.dart';
 import 'package:oratio_app/networkProvider/users.dart';
-import 'package:oratio_app/ui/pages/edit_profile_page.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -230,14 +229,13 @@ class ProfilePage extends StatelessWidget {
                                 const Color(0xFFFF6B6B),
                                 const Color(0xFFFF3131),
                                 () {
-
                                   context
                                       .read<PocketBaseServiceCubit>()
                                       .state
                                       .pb
                                       .authStore
                                       .clear();
-                                      //context.read<CentralCubit>().logout();
+                                  //context.read<CentralCubit>().logout();
                                 },
                               ),
                             ],

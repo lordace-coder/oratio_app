@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
+import 'package:oratio_app/ui/pages/chat_page.dart';
+import 'package:oratio_app/ui/pages/pages.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart'; // Add this import
@@ -34,7 +37,7 @@ class _SearchPageState extends State<SearchPage> {
     if (_isSearching) {
       final currentUser = pb.authStore.model as RecordModel;
       final result = await pb.collection('users').getList(
-            filter: 'name ~ "$query" || username ~ "$query"',
+          // filter: 'name ~ "$query" || username ~ "$query"',
           );
 
       setState(() {
@@ -42,16 +45,17 @@ class _SearchPageState extends State<SearchPage> {
             .where((item) =>
                 item.getListValue('followers').contains(currentUser.id) &&
                 currentUser.getListValue('followers').contains(item.id))
-            .map((item) => {
-                  'id': item.id,
-                  'name': item.data['first_name'],
-                  'username': item.data['username'],
-                  'followers': (item.data as RecordModel)
-                      .getListValue('followers')
-                      .length
-                      .toString(),
-                })
-            .toList();
+            .map((item) {
+          return {
+            'id': item.id,
+            'name':
+                '${item.getStringValue('first_name')} ${item.getStringValue('last_name')}',
+            'username': item.getStringValue('username'),
+            'followers': (item).getListValue('followers').length.toString(),
+            'profile_picture': getAvatarUrl(context,
+                record: item, fileName: item.getStringValue('avatar'))
+          };
+        }).toList();
       });
     } else {
       setState(() {
@@ -133,6 +137,7 @@ class _SearchPageState extends State<SearchPage> {
                           name: user['name'],
                           username: user['username'],
                           followers: user['followers'],
+                          profilePicture: user['profile_picture'],
                           onFollowTap: () {
                             // Implement follow functionality
                             print('Following ${user['name']}');
@@ -192,18 +197,31 @@ class ChatCard extends StatefulWidget {
 }
 
 class _ChatCardState extends State<ChatCard> {
-  bool? following;
+  void chatUser() async {
+    final pb = getPocketBaseFromContext(context);
+    final userRecord = await pb.collection('users').getOne(widget.id);
 
-  void followUser() {
-    setState(() {
-      following = true;
-    });
+    final profile = Profile(
+      user: userRecord,
+      userId: userRecord.id,
+      parish: [], // Fetch actual data
+      contact: userRecord.getStringValue('phone_number'),
+      community: [], // Fetch actual data
+    );
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ChatPage(
+          profile: profile,
+        ),
+      ),
+    );
+
     widget.onFollowTap.call();
   }
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
   }
 
@@ -232,7 +250,8 @@ class _ChatCardState extends State<ChatCard> {
           leading: CircleAvatar(
               radius: 28,
               backgroundColor: Colors.grey[200],
-              backgroundImage: widget.profilePicture != null
+              backgroundImage: widget.profilePicture != null &&
+                      widget.profilePicture!.isNotEmpty
                   ? NetworkImage(widget.profilePicture!)
                   : null,
               child: widget.profilePicture == null
@@ -265,12 +284,10 @@ class _ChatCardState extends State<ChatCard> {
             ],
           ),
           trailing: ElevatedButton(
-            onPressed: followUser,
+            onPressed: chatUser,
             style: ElevatedButton.styleFrom(
-              backgroundColor: following!
-                  ? Colors.grey[200]
-                  : Theme.of(context).primaryColor,
-              foregroundColor: following! ? Colors.black87 : Colors.white,
+              backgroundColor: Theme.of(context).primaryColor,
+              foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),

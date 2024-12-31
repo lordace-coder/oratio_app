@@ -77,6 +77,9 @@ class _ParishLandingPageState extends State<ParishLandingPage> {
                                     ],
                                   ),
                                   image: DecorationImage(
+                                      colorFilter: ColorFilter.mode(
+                                          Colors.black.withOpacity(.5),
+                                          BlendMode.darken),
                                       image: NetworkImage(pb
                                           .getFileUrl(data,
                                               data.getStringValue('image'))
