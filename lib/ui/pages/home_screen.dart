@@ -4,11 +4,14 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/bloc/blocs.dart';
+import 'package:oratio_app/bloc/transactions_cubit/state.dart';
+import 'package:oratio_app/bloc/transactions_cubit/transaction_cubit.dart';
 import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/networkProvider/requests.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/church_widgets.dart';
+import 'package:oratio_app/ui/widgets/home.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -33,7 +36,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final user = context.read<PocketBaseServiceCubit>().state.pb.authStore.model
         as RecordModel;
     bool isPriest = user.getBoolValue('priest');
-    print('is priest $isPriest');
 
     return Scaffold(
       body: Container(
@@ -52,6 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
             color: Theme.of(context).primaryColor,
             onRefresh: () async {
               setState(() {});
+              await context.read<TransactionCubit>().fetchTransactions();
             },
             child: CustomScrollView(
               slivers: [
@@ -299,22 +302,63 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                         const Gap(8),
-                        Card(
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                            side: BorderSide(
-                              color: Colors.grey.shade200,
-                            ),
-                          ),
-                          child: const Column(
-                            children: [
-                              TransactionItem(),
-                              TransactionItem(),
-                              TransactionItem(),
-                            ],
-                          ),
-                        ),
+                        BlocConsumer<TransactionCubit, TransactionState>(
+                          listener: (context, state) {},
+                          builder: (context, state) {
+                            if (state.status == TransactionStatus.initial) {
+                              context
+                                  .read<TransactionCubit>()
+                                  .fetchTransactions();
+                            }
+                            if (state.status == TransactionStatus.loading) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            } else if (state.status ==
+                                TransactionStatus.success) {
+                              return Card(
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  side: BorderSide(
+                                    color: Colors.grey.shade200,
+                                  ),
+                                ),
+                                child: Column(
+                                  children: state.transactions
+                                      .map((transaction) => TransactionItem(
+                                          transaction: transaction))
+                                      .take(3)
+                                      .toList(),
+                                ),
+                              );
+                            } else {
+                              return const Center(
+                                child: Text('No transactions yet'),
+                              );
+                            }
+                          },
+                        )
+                        // FutureBuilder(
+                        //   builder: (context) {
+                        //     return Card(
+                        //       elevation: 0,
+                        //       shape: RoundedRectangleBorder(
+                        //         borderRadius: BorderRadius.circular(16),
+                        //         side: BorderSide(
+                        //           color: Colors.grey.shade200,
+                        //         ),
+                        //       ),
+                        //       child: const Column(
+                        //         children: [
+                        //           TransactionItem(),
+                        //           TransactionItem(),
+                        //           TransactionItem(),
+                        //         ],
+                        //       ),
+                        //     );
+                        //   }
+                        // ),
                       ],
                     ),
                   ),
@@ -426,75 +470,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class TransactionItem extends StatelessWidget {
-  const TransactionItem({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        context.pushNamed(RouteNames.transactionDetails);
-      },
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.red.withOpacity(.3),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                FontAwesomeIcons.arrowUp,
-                color: Colors.red,
-                size: 20,
-              ),
-            ),
-            const Gap(16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Sunday Offering',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  Text(
-                    'St. Patrick\'s Cathedral',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey.shade600,
-                        ),
-                  ),
-                ],
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '- ₦1,000.00',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                Text(
-                  '2 hours ago',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey.shade600,
-                      ),
-                ),
-              ],
-            ),
-          ],
         ),
       ),
     );

@@ -42,7 +42,6 @@ class MessageCubit extends Cubit<MessageState> {
     _initMessageSubscription();
   }
 
-  UnsubscribeFunc? _unsubscribe;
 
   void _initMessageSubscription() async {
     final currentUserId = pb.authStore.model.id;
@@ -59,6 +58,10 @@ class MessageCubit extends Cubit<MessageState> {
       },
       filter: 'sender.id = "$currentUserId" || reciever.id = "$currentUserId"',
     );
+  }
+
+  void _unsubscribe() {
+    pb.collection('messages').unsubscribe();
   }
 
   Future<void> loadMessages(String otherUserId) async {
@@ -173,5 +176,10 @@ class MessageCubit extends Cubit<MessageState> {
       final updatedMessages = [message, ...state.messages];
       emit(state.copyWith(messages: updatedMessages));
     }
+  }
+
+  void logout() {
+    _unsubscribe();
+    emit(MessageState());
   }
 }

@@ -1,18 +1,15 @@
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
-import 'package:animate_do/animate_do.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
+import 'package:oratio_app/bloc/transactions_cubit/transaction_cubit.dart';
 import 'package:oratio_app/networkProvider/paystack_payment.dart';
-import 'package:oratio_app/ui/bright/pages/create_community.dart';
-import 'package:oratio_app/ui/bright/pages/create_event.dart';
-import 'package:oratio_app/ui/bright/pages/mass_booking_page.dart';
 import 'package:oratio_app/ui/bright/pages/withdrawal_modal.dart';
-import 'package:oratio_app/ui/pages/home_screen.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -79,6 +76,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   color: AppColors.primary,
                   onRefresh: () async {
                     await loadChurchForPriest();
+                   
                   },
                   child: ListView(
                     padding: const EdgeInsets.all(16),
@@ -455,10 +453,11 @@ class _DashboardPageState extends State<DashboardPage> {
               ],
             ),
             const Gap(16),
-            const TransactionItem(),
-            const TransactionItem(),
-            const TransactionItem(),
-            const TransactionItem(),
+            // TODO fix this
+            // const TransactionItem(),
+            // const TransactionItem(),
+            // const TransactionItem(),
+            // const TransactionItem(),
           ],
         ),
       ),

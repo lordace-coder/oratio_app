@@ -10,6 +10,7 @@ import 'package:hive/hive.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/bible_readings/bible_reading_service.dart';
 import 'package:oratio_app/bloc/chat_cubit/message_cubit.dart';
+import 'package:oratio_app/bloc/transactions_cubit/transaction_cubit.dart';
 import 'package:oratio_app/services/bible_reading.dart';
 import 'package:oratio_app/services/chat/db/chat_hive.dart';
 import 'package:path_provider/path_provider.dart';
@@ -26,6 +27,7 @@ import 'package:oratio_app/ui/routes/routes.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:oratio_app/bloc/central_cubit/central_cubit.dart';
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -56,7 +58,6 @@ class ConnectivityCubit extends Cubit<bool> {
   }
 
   bool _checkInternetConnection() {
-    // TODO
     return true;
   }
 
@@ -126,6 +127,11 @@ void main() async {
           create: (context) => pbCubit,
         ),
         BlocProvider(
+          create: (context) => TransactionCubit(
+            pocketBase: pbCubit.state.pb,
+          ),
+        ),
+        BlocProvider(
           create: (context) {
             final chat = ChatCubit(chatService, pbCubit.state.pb);
             try {
@@ -155,26 +161,60 @@ void main() async {
             return postCubit;
           },
         ),
+        BlocProvider(
+          create: (context) => CentralCubit(
+            profileDataCubit: context.read<ProfileDataCubit>(),
+            prayerRequestCubit: context.read<PrayerRequestCubit>(),
+            postCubit: context.read<PostCubit>(),
+            notificationCubit: context.read<NotificationCubit>(),
+            messageCubit: context.read<MessageCubit>(),
+            chatCubit: context.read<ChatCubit>(),
+            pb: pb!,
+          ),
+        ),
       ],
-      child: MainApp(
-        appRouter: appRouter,
-      ),
+      child: MainApp(appRouter: appRouter),
     ),
   );
 }
 
-
-class MainApp extends StatelessWidget {
+class MainApp extends StatefulWidget {
   const MainApp({super.key, required this.appRouter});
   final AppRouter appRouter;
 
   @override
+  _MainAppState createState() => _MainAppState();
+}
+
+class _MainAppState extends State<MainApp> {
+  bool _isInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    await context.read<CentralCubit>().initialize(context);
+    if (mounted) {
+      setState(() {
+        _isInitialized = true;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (!_isInitialized) {
+      return const SplashScreen();
+    }
+
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'Book Mass',
       builder: (context, child) => AppLock(
-        enabled: appRouter.opened(),
+        enabled: widget.appRouter.opened(),
         builder: (context, arg) => ScaffoldMessenger(
           child: BlocListener<ConnectivityCubit, bool>(
             listener: (context, hasConnection) {
@@ -228,8 +268,24 @@ class MainApp extends StatelessWidget {
         backgroundLockLatency: const Duration(seconds: 9),
       ),
       color: AppColors.primary,
-      routerConfig: appRouter.appRouter(),
+      routerConfig: widget.appRouter.appRouter(),
       theme: ThemeData(fontFamily: 'Itim', primaryColor: AppColors.primary),
+    );
+  }
+}
+
+class SplashScreen extends StatelessWidget {
+  const SplashScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      home: Scaffold(
+        body: Center(
+          child: Image.asset("assets/images/logo.png",
+              width: 200, height: 200, fit: BoxFit.cover),
+        ),
+      ),
     );
   }
 }
