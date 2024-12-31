@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
+import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/networkProvider/users.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
@@ -340,6 +341,10 @@ class _ConnectPageState extends State<ConnectPage>
                           );
                         },
                         child: UserCard(
+                          profilePicture: getAvatarUrl(
+                              fileName: user.getStringValue('avatar'),
+                              record: user,
+                              context),
                           id: user.id,
                           name: getFullName(user),
                           username: user.getStringValue('username'),
@@ -367,6 +372,21 @@ class _ConnectPageState extends State<ConnectPage>
       ),
     );
   }
+}
+
+String? getAvatarUrl(BuildContext context,
+    {required RecordModel record, required String fileName}) {
+  final pb = getPocketBaseFromContext(context);
+
+  try {
+    final url = pb.getFileUrl(record, fileName).toString();
+    if (url.isNotEmpty) {
+      return url;
+    }
+  } catch (e) {
+    print('error fetching avatar $e');
+  }
+  return null;
 }
 
 // Custom delegate for search bar
@@ -436,8 +456,11 @@ class UserCard extends StatefulWidget {
   final bool isFollowing;
   final VoidCallback onFollowTap;
   final String id;
+  final String? profilePicture;
+
   const UserCard({
     super.key,
+    this.profilePicture,
     required this.name,
     required this.username,
     required this.followers,
@@ -475,7 +498,7 @@ class _UserCardState extends State<UserCard> {
             pathParameters: {'id': widget.id});
       },
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -490,16 +513,20 @@ class _UserCardState extends State<UserCard> {
         child: ListTile(
           contentPadding: const EdgeInsets.all(16),
           leading: CircleAvatar(
-            radius: 28,
-            backgroundColor: Colors.grey[200],
-            child: Text(
-              widget.name[0],
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+              radius: 28,
+              backgroundColor: Colors.grey[200],
+              backgroundImage: widget.profilePicture != null
+                  ? NetworkImage(widget.profilePicture!)
+                  : null,
+              child: widget.profilePicture == null
+                  ? Text(
+                      widget.name[0],
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : null),
           title: Text(
             widget.name,
             style: const TextStyle(
