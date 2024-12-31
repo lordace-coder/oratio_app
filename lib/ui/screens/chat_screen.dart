@@ -488,24 +488,3 @@ class _ChatItemState extends State<ChatItem>
     );
   }
 }
-
-class SearchPage extends StatelessWidget {
-  const SearchPage({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: PreferredSize(
-          preferredSize: const Size.fromHeight(100),
-          child: Container(
-            child: const Center(
-              child: Hero(
-                  tag: 'search',
-                  child: Text(
-                    'Search Friends',
-                    style: TextStyle(fontSize: 18),
-                  )),
-            ),
-          )),
-    );
-  }
-}
