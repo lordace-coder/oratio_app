@@ -83,6 +83,9 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                                       ? null
                                       : DecorationImage(
                                           image: NetworkImage(data.image!),
+                                          colorFilter: ColorFilter.mode(
+                                              Colors.black.withOpacity(0.5),
+                                              BlendMode.darken),
                                           fit: BoxFit.cover),
                                   gradient: LinearGradient(
                                     begin: Alignment.topCenter,
@@ -320,7 +323,6 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                             ],
                             onSelected: (value) {
                               if (value == 'edit') {
-                                
                                 Navigator.push(
                                     context,
                                     MaterialPageRoute(

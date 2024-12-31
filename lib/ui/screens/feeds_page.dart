@@ -4,9 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lottie/lottie.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/bloc/notifications_cubit/notifications_cubit.dart';
-import 'package:oratio_app/bloc/posts/post_cubit.dart';
+import 'package:oratio_app/bloc/central_cubit/central_cubit.dart';
 import 'package:oratio_app/bloc/posts/post_state.dart';
-import 'package:oratio_app/bloc/prayer_requests/requests_cubit.dart';
 import 'package:oratio_app/bloc/prayer_requests/requests_state.dart';
 import 'package:oratio_app/helpers/user.dart';
 import 'package:oratio_app/ui/routes/routes.dart';
@@ -27,80 +26,59 @@ class FeedsListScreen extends StatefulWidget {
   _FeedsListScreenState createState() => _FeedsListScreenState();
 }
 
-class _FeedsListScreenState extends State<FeedsListScreen>
-    with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+class _FeedsListScreenState extends State<FeedsListScreen> {
   final ScrollController _scrollController = ScrollController();
   late PocketBase pb;
-  void getPosts() {
-    try {
-      final postState = context.read<PostCubit>().state;
-      if (postState is PostLoaded) {
-        if (postState.posts.isEmpty) {
-          context.read<PostCubit>().fetchPosts();
-        }
-        return;
-      }
-      if (postState is! PostLoaded && postState is! PostError) {
-        context.read<PostCubit>().fetchPosts();
-      }
-      context.read<PostCubit>().fetchPosts();
-      return;
-    } catch (e) {}
-  }
-
-  void getPrayerRequests() {
-    try {
-      final prayerRequestsState = context.read<PrayerRequestCubit>().state;
-      // if (postState is PostLoaded) {
-      //   if (postState.posts.isEmpty) {
-      //     context.read<PostCubit>().fetchPosts();
-      //   }
-      //   return;
-      // }
-      // if (postState is! PostLoaded && postState is! PostError) {
-      //   context.read<PostCubit>().fetchPosts();
-      // }
-      context.read<PrayerRequestCubit>().fetchPrayerRequests();
-      return;
-    } catch (e) {}
-  }
+  bool _isLoadingMore = false;
+  bool _hasMoreFeeds = true;
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
     pb = context.read<PocketBaseServiceCubit>().state.pb;
-    _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      getPosts();
+      final feeds = context.read<CentralCubit>().state;
+      if (feeds.isEmpty) {
+        context.read<CentralCubit>().getFeeds();
+      }
       context
           .read<PocketBaseServiceCubit>()
           .state
           .pb
           .collection('users')
           .authRefresh();
-      getPrayerRequests();
     });
   }
 
   void _onScroll() {
-    if ((_scrollController.position.pixels >=
-            _scrollController.position.maxScrollExtent - 100) &&
-        _tabController.index == 0) {
-      // Load more when we're 200 pixels from the bottom
-      final postCubit = context.read<PostCubit>();
-      if (postCubit.state is PostLoaded) {
-        postCubit.loadMorePosts();
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 100) {
+      // Load more when we're 100 pixels from the bottom
+      if (!_isLoadingMore && _hasMoreFeeds) {
+        _loadMoreFeeds();
       }
     }
   }
 
+  Future<void> _loadMoreFeeds() async {
+    setState(() {
+      _isLoadingMore = true;
+    });
+    final newFeeds = await context.read<CentralCubit>().getMoreFeeds();
+    if (newFeeds.isEmpty) {
+      setState(() {
+        _hasMoreFeeds = false;
+      });
+    }
+    setState(() {
+      _isLoadingMore = false;
+    });
+  }
+
   @override
   void dispose() {
-    _tabController.dispose();
     _scrollController.dispose();
-
     super.dispose();
   }
 
@@ -115,401 +93,221 @@ class _FeedsListScreenState extends State<FeedsListScreen>
     final unreadNotificationCount =
         context.read<NotificationCubit>().unreadNotificationCount();
     return Scaffold(
-      backgroundColor: Colors.grey[350],
-      body: NestedScrollView(
-        controller: _scrollController,
-        physics: const AlwaysScrollableScrollPhysics(),
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          return [
-            SliverAppBar(
-              expandedHeight: 100,
-              floating: true,
-              pinned: true,
-              automaticallyImplyLeading: false,
-              backgroundColor: AppColors.primary,
-              elevation: 0,
-              flexibleSpace: FlexibleSpaceBar(
-                background: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topRight,
-                      end: Alignment.bottomLeft,
-                      colors: [
-                        Theme.of(context).primaryColor.withOpacity(0.8),
-                        Theme.of(context).primaryColor,
-                      ],
-                    ),
-                  ),
-                  child: SafeArea(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+      appBar: AppBar(
+        backgroundColor: AppColors.primary,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+              colors: [
+                Theme.of(context).primaryColor.withOpacity(0.8),
+                Theme.of(context).primaryColor,
+              ],
+            ),
+          ),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.all(10.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  GestureDetector(
-                                    onTap: () =>
-                                        context.pushNamed(RouteNames.profile),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Theme.of(context).primaryColor,
-                                          width: 2,
-                                        ),
-                                      ),
-                                      child: Hero(
-                                        tag: "my-profile",
-                                        child: CircleAvatar(
-                                          backgroundColor: Colors.white,
-                                          backgroundImage: getProfilePic(
-                                                      context,
-                                                      user: pb.authStore.model
-                                                          as RecordModel) ==
-                                                  null
-                                              ? null
-                                              : NetworkImage(getProfilePic(
-                                                  context,
-                                                  user: pb.authStore.model
-                                                      as RecordModel)!),
-                                          radius: 20,
-                                          child: getProfilePic(context,
-                                                      user: pb.authStore.model
-                                                          as RecordModel) ==
-                                                  null
-                                              ? const Icon(
-                                                  FontAwesomeIcons.user)
-                                              : null,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const Gap(12),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Welcome back,',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall!
-                                            .copyWith(
-                                              color: Colors.white,
-                                            ),
-                                      ),
-                                      GestureDetector(
-                                        onTap: () {
-                                          context.pushNamed(RouteNames.profile);
-                                        },
-                                        child: Text(
-                                          pb.authStore.model.data['username'],
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .titleMedium
-                                              ?.copyWith(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                        GestureDetector(
+                          onTap: () => context.pushNamed(RouteNames.profile),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Theme.of(context).primaryColor,
+                                width: 2,
                               ),
-                              Row(
-                                children: [
-                                  GestureDetector(
-                                    onTap: () {
-                                      context.pushNamed(
-                                          RouteNames.createPrayerRequest);
-                                    },
-                                    child: const Icon(
-                                      FontAwesomeIcons.circlePlus,
-                                      color: Colors.white70,
-                                      size: 20,
-                                    ),
-                                  ),
-                                  const Gap(12),
-
-                                  GestureDetector(
-                                    onTap: () {
-                                      context.pushNamed(RouteNames.connect);
-                                    },
-                                    child: const Icon(
-                                      FontAwesomeIcons.magnifyingGlass,
-                                      color: Colors.white70,
-                                      size: 20,
-                                    ),
-                                  ),
-                                  const Gap(12),
-                                  GestureDetector(
-                                    onTap: () => context
-                                        .pushNamed(RouteNames.notifications),
-                                    child: Badge(
-                                      isLabelVisible:
-                                          unreadNotificationCount != 0,
-                                      label: Text(
-                                          unreadNotificationCount.toString()),
-                                      child: const Icon(
-                                        FontAwesomeIcons.bell,
-                                        color: Colors.white70,
-                                        size: 20,
-                                      ),
-                                    ),
-                                  ),
-                                  // buildIconButton(
-                                  //   icon: FontAwesomeIcons.bell,
-
-                                  //   hasNotification: true,
-                                  // ),
-                                ],
+                            ),
+                            child: Hero(
+                              tag: "my-profile",
+                              child: CircleAvatar(
+                                backgroundColor: Colors.white,
+                                backgroundImage: getProfilePic(context,
+                                            user: pb.authStore.model
+                                                as RecordModel) ==
+                                        null
+                                    ? null
+                                    : NetworkImage(getProfilePic(context,
+                                        user: pb.authStore.model
+                                            as RecordModel)!),
+                                radius: 20,
+                                child: getProfilePic(context,
+                                            user: pb.authStore.model
+                                                as RecordModel) ==
+                                        null
+                                    ? const Icon(FontAwesomeIcons.user)
+                                    : null,
                               ),
-                            ],
+                            ),
+                          ),
+                        ),
+                        const Gap(12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Welcome back,',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall!
+                                  .copyWith(
+                                    color: Colors.white,
+                                  ),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                context.pushNamed(RouteNames.profile);
+                              },
+                              child: Text(
+                                pb.authStore.model.data['username'],
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleMedium
+                                    ?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            context.pushNamed(RouteNames.createPrayerRequest);
+                          },
+                          child: const Icon(
+                            FontAwesomeIcons.circlePlus,
+                            color: Colors.white70,
+                            size: 20,
+                          ),
+                        ),
+                        const Gap(12),
+                        GestureDetector(
+                          onTap: () {
+                            context.pushNamed(RouteNames.connect);
+                          },
+                          child: const Icon(
+                            FontAwesomeIcons.magnifyingGlass,
+                            color: Colors.white70,
+                            size: 20,
+                          ),
+                        ),
+                        const Gap(12),
+                        GestureDetector(
+                          onTap: () =>
+                              context.pushNamed(RouteNames.notifications),
+                          child: Badge(
+                            isLabelVisible: unreadNotificationCount != 0,
+                            label: Text(unreadNotificationCount.toString()),
+                            child: const Icon(
+                              FontAwesomeIcons.bell,
+                              color: Colors.white70,
+                              size: 20,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  ),
+                  ],
                 ),
               ),
-              bottom: TabBar(
-                controller: _tabController,
-                indicatorColor: Colors.white,
-                indicatorWeight: 3,
-                tabs: const [
-                  Tab(text: 'Community Posts'),
-                  Tab(text: 'Prayer Requests'),
-                ],
-                labelColor: Colors.white,
-                unselectedLabelColor: Colors.white70,
-              ),
             ),
-          ];
-        },
-        body: TabBarView(
-          controller: _tabController,
-          children: [
-            // Community Posts Tab
-            RefreshIndicator.adaptive(
-              onRefresh: () async {
-                await context.read<PostCubit>().fetchPosts();
-              },
-              child:
-                  ListView(padding: const EdgeInsets.only(top: 8), children: [
-                // TODO build story section (updates)
-                // Padding(
-                //   padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                //   child: buildStorySection(context),
-                // ),
-                BlocConsumer<PostCubit, PostState>(
-                  listener: (context, state) {},
-                  builder: (context, state) {
-                    if (state is PostError) {
-                      return Container(
-                        height: 300,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.blue.shade50,
-                                Colors.blue.shade100,
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.blue.shade200.withOpacity(0.3),
-                                blurRadius: 10,
-                                offset: const Offset(0, 5),
-                              )
-                            ]),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.error_outline,
-                              color: Colors.blue.shade400,
-                              size: 80,
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              'Couldn\'t Load Content',
-                              style: TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.blue.shade700,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Having trouble fetching the latest posts',
-                              style: TextStyle(
-                                color: Colors.blue.shade600,
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 24),
-                            ElevatedButton(
-                              onPressed: () {
-                                context.read<PostCubit>().fetchPosts();
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.blue.shade500,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 24, vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                                elevation: 5,
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.refresh, size: 20),
-                                  SizedBox(width: 8),
-                                  Text(
-                                    'Try Again',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
-                          ],
-                        ),
-                      );
-                    }
-                    if (state is PostLoaded) {
-                      if (state.posts.isEmpty) {
-                        return SizedBox(
-                          height: 400,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Lottie.network(
-                                  height: 100,
-                                  'https://lottie.host/fece67a7-2389-4c66-b33c-6eb5bb658347/dK1IxI9mjB.json'),
-                              const Row(),
-                              const Gap(20),
-                              const Text(
-                                'Join A Community to start seeing feeds',
-                                textAlign: TextAlign.center,
-                              ),
-                              const Gap(20),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 20),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                        child: BookingButton(
-                                            label: 'Join Community',
-                                            isEnabled: true,
-                                            onPressed: () {
-                                              context.pushNamed(
-                                                  RouteNames.communitypage);
-                                            })),
-                                  ],
-                                ),
-                              )
-                            ],
-                          ),
-                        );
-                      } else {
-                        return Column(
-                          children: [
-                            ...state.posts.map((post) => CommunityPostCard(
-                                  post: post,
-                                ))
-                          ],
-                        );
-                      }
-                    }
-                    return const SizedBox(
-                      height: 300,
-                      child: Center(child: CupertinoActivityIndicator()),
-                    );
-                  },
-                ),
-                // card for a post item
-              ]),
-            ),
-
-            // Prayer Requests Tab
-            BlocConsumer<PrayerRequestCubit, PrayerRequestState>(
-              listener: (context, state) {},
-              builder: (context, state) {
-                if (state is PrayerRequestLoaded) {
-                  return RefreshIndicator.adaptive(
-                    onRefresh: () async {
-                      await context
-                          .read<PrayerRequestCubit>()
-                          .fetchPrayerRequests();
-                    },
-                    child: ListView.builder(
-                      itemCount: state.prayerRequests.length,
-                      padding: const EdgeInsets.only(top: 8),
-                      itemBuilder: (context, index) => PrayerRequestCard(
-                        data: state.prayerRequests[index],
-                      ),
-                    ),
-                  );
-                }
-                return SizedBox(
-                  height: 400,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Lottie.network(
-                          height: 100,
-                          'https://lottie.host/fece67a7-2389-4c66-b33c-6eb5bb658347/dK1IxI9mjB.json'),
-                      const Row(),
-                      const Gap(20),
-                      const Text(
-                        'Find friends and family to be up to date on thier prayer requests',
-                        textAlign: TextAlign.center,
-                      ),
-                      const Gap(20),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: Row(
-                          children: [
-                            Expanded(
-                                child: BookingButton(
-                                    label: 'Find Friends',
-                                    isEnabled: true,
-                                    onPressed: () {
-                                      context
-                                          .pushNamed(RouteNames.communitypage);
-                                    })),
-                          ],
-                        ),
-                      )
-                    ],
-                  ),
-                );
-              },
-            )
-          ],
+          ),
         ),
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () {
-      //     context.pushNamed(RouteNames.createPrayerRequest);
-      //   },
-      //   backgroundColor: Theme.of(context).primaryColor,
-      //   foregroundColor: Colors.white,
-      //   child: const Icon(Icons.add),
-      // ),
+      backgroundColor: Colors.grey[350],
+      body: RefreshIndicator.adaptive(
+        onRefresh: () async {
+          await context.read<CentralCubit>().getFeeds();
+          setState(() {
+            _hasMoreFeeds = true;
+          });
+        },
+        child: BlocBuilder<CentralCubit, List>(
+          builder: (context, feeds) {
+            if (feeds.isEmpty) {
+              return SizedBox(
+                height: 400,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Lottie.network(
+                        height: 100,
+                        'https://lottie.host/fece67a7-2389-4c66-b33c-6eb5bb658347/dK1IxI9mjB.json'),
+                    const Row(),
+                    const Gap(20),
+                    const Text(
+                      'Join A Community to start seeing feeds',
+                      textAlign: TextAlign.center,
+                    ),
+                    const Gap(20),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Row(
+                        children: [
+                          Expanded(
+                              child: BookingButton(
+                                  label: 'Join Community',
+                                  isEnabled: true,
+                                  onPressed: () {
+                                    context.pushNamed(RouteNames.communitypage);
+                                  })),
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              );
+            } else {
+              return ListView.builder(
+                controller: _scrollController,
+                padding: const EdgeInsets.only(top: 8),
+                itemCount: feeds.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == feeds.length) {
+                    return _isLoadingMore
+                        ? const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          )
+                        : !_hasMoreFeeds
+                            ? const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 16),
+                                child: Center(
+                                  child: Text('You are all caught up!'),
+                                ),
+                              )
+                            : const SizedBox.shrink();
+                  }
+                  final feed = feeds[index];
+                  if (feed is Post) {
+                    return CommunityPostCard(post: feed);
+                  } else if (feed is PrayerRequest) {
+                    return PrayerRequestCard(data: feed);
+                  } else {
+                    // Handle other feed types if any
+                    return const SizedBox.shrink();
+                  }
+                },
+              );
+            }
+          },
+        ),
+      ),
     );
   }
 }

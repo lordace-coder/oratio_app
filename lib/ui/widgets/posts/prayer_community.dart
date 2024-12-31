@@ -70,7 +70,7 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
   Widget build(BuildContext context) {
     final user = context.read<PocketBaseServiceCubit>().state.pb.authStore.model
         as RecordModel;
-
+    final data = widget.post;
     hasLiked ??= widget.post.likes.contains(user.id);
     return Container(
       color: Colors.white,
@@ -195,18 +195,17 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
                   icon: !hasLiked! ? Icons.favorite_border : Icons.favorite,
                   label: widget.post.likes.length.toString(),
                   onTap: () async {
+                    final pb = context.read<PocketBaseServiceCubit>().state.pb;
+                    final postHelper = PostHelper(pb);
                     if (hasLiked!) {
                       // unlike the post
-                      context.read<PostCubit>().dislikePost(
-                            widget.post.id,
-                          );
-                      widget.post.likes.remove(user.id);
+                      await postHelper.dislikePost(data.id);
+                      (data.likes).remove(data.id);
                     } else {
-                      context.read<PostCubit>().likePost(
-                            widget.post.id,
-                          );
-                      widget.post.likes.add(user.id);
+                      await postHelper.likePost(data.id);
+                      (data.likes).add(data.id);
                     }
+
                     setState(() {
                       hasLiked = !hasLiked!;
                     });

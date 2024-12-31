@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' as intl;
-// import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
@@ -63,7 +62,9 @@ class _PostDetailPageState extends State<PostDetailPage> {
       _loading = true;
     });
     try {
-      final res = await getPost(context, postId: widget.postId);
+      final pb = context.read<PocketBaseServiceCubit>().state.pb;
+      final postHelper = PostHelper(pb);
+      final res = await postHelper.getPost(widget.postId);
       setState(() {
         data = res;
         _loading = false;
@@ -71,7 +72,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
       _calculateTextHeight(); // Recalculate text height when data is fetched
       return;
     } catch (e) {
-      NotificationService.showError('Error occured getting post');
+      NotificationService.showError('Error occurred getting post');
       setState(() {
         error = true;
       });
@@ -141,7 +142,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
       }
     } catch (e) {
       // display error on ui
-      NotificationService.showError('An error occured uploading comment');
+      NotificationService.showError('An error occurred uploading comment');
     }
   }
 
@@ -164,7 +165,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
       });
     } catch (e) {
       // display error on ui
-      print('error occured in getComments $e');
+      print('error occurred in getComments $e');
       error = true;
     }
 
@@ -437,17 +438,18 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                   : Icons.favorite,
                               label: '${(data!.getListValue('likes')).length}',
                               onTap: () async {
+                                final pb = context
+                                    .read<PocketBaseServiceCubit>()
+                                    .state
+                                    .pb;
+                                final postHelper = PostHelper(pb);
                                 if (hasLiked!) {
                                   // unlike the post
-                                  context.read<PostCubit>().dislikePost(
-                                        data!.id,
-                                      );
+                                  await postHelper.dislikePost(data!.id);
                                   (data!.getListValue('likes'))
                                       .remove(data!.id);
                                 } else {
-                                  context.read<PostCubit>().likePost(
-                                        data!.id,
-                                      );
+                                  await postHelper.likePost(data!.id);
                                   (data!.getListValue('likes')).add(data!.id);
                                 }
                                 setState(() {
@@ -500,12 +502,6 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
           // Comment Input Section - Fixed at bottom
           Container(
-            // padding: EdgeInsets.only(
-            //   bottom: MediaQuery.of(context).viewInsets.bottom,
-            //   left: 16,
-            //   right: 16,
-            //   top: 8,
-            // ),
             decoration: BoxDecoration(
               color: Theme.of(context).scaffoldBackgroundColor,
               border: Border(

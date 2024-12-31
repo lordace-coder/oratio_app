@@ -3,88 +3,57 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oratio_app/bloc/prayer_requests/requests_state.dart';
 import 'package:pocketbase/pocketbase.dart';
 
-class PrayerRequestCubit extends Cubit<PrayerRequestState> {
+class PrayerRequestHelper {
   final PocketBase pb;
 
-  PrayerRequestCubit(this.pb) : super(PrayerRequestInitial());
+  PrayerRequestHelper(this.pb);
 
-  Future<void> fetchPrayerRequests() async {
-    try {
-      emit(PrayerRequestLoading());
-
-      final records = await pb
-          .collection('prayer_requests')
-          .getFullList(sort: '-created', expand: 'user');
-      final prayerRequests = records.map((record) {
-        return PrayerRequest(
-            comment: record.getListValue('comment'),
-            id: record.id,
-            praying: record.getListValue('praying'),
-            request: record.getStringValue('request'),
-            urgent: record.getBoolValue('urgent'),
-            user: record.expand['user']!.first,
-            created: record.created);
-      }).toList();
-
-      emit(PrayerRequestLoaded(prayerRequests));
-    } catch (e) {
-      print(e);
-      emit(PrayerRequestError(e.toString()));
-    }
+  Future<List<PrayerRequest>> fetchPrayerRequests() async {
+    final records = await pb
+        .collection('prayer_requests')
+        .getFullList(sort: '-created', expand: 'user');
+    final prayerRequests = records.map((record) {
+      return PrayerRequest(
+          comment: record.getListValue('comment'),
+          id: record.id,
+          praying: record.getListValue('praying'),
+          request: record.getStringValue('request'),
+          urgent: record.getBoolValue('urgent'),
+          user: record.expand['user']!.first,
+          created: record.created);
+    }).toList();
+    return prayerRequests;
   }
 
   Future<void> createPrayerRequest({
     required String request,
     required bool urgent,
   }) async {
-    try {
-      emit(PrayerRequestLoading());
-
-      final body = {
-        "request": request,
-        "urgent": urgent,
-      };
-
-      await pb.collection('prayer_requests').create(body: body);
-
-      await fetchPrayerRequests();
-    } catch (e) {
-      emit(PrayerRequestError(e.toString()));
-    }
+    final body = {
+      "request": request,
+      "urgent": urgent,
+    };
+    await pb.collection('prayer_requests').create(body: body);
   }
 
   Future<void> togglePraying(
       String requestId, List<String> currentPraying) async {
-    try {
-      final userId = pb.authStore.model.id;
-      List<String> updatedPraying = List.from(currentPraying);
+    final userId = pb.authStore.model.id;
+    List<String> updatedPraying = List.from(currentPraying);
 
-      if (currentPraying.contains(userId)) {
-        updatedPraying.remove(userId);
-      } else {
-        updatedPraying.add(userId);
-      }
-
-      await pb.collection('prayer_requests').update(
-        requestId,
-        body: {'praying': updatedPraying},
-      );
-
-      await fetchPrayerRequests();
-    } catch (e) {
-      emit(PrayerRequestError(e.toString()));
+    if (currentPraying.contains(userId)) {
+      updatedPraying.remove(userId);
+    } else {
+      updatedPraying.add(userId);
     }
+
+    await pb.collection('prayer_requests').update(
+      requestId,
+      body: {'praying': updatedPraying},
+    );
   }
 
   Future<void> deletePrayerRequest(String id) async {
-    try {
-      emit(PrayerRequestLoading());
-
-      await pb.collection('prayer_requests').delete(id);
-
-      await fetchPrayerRequests();
-    } catch (e) {
-      emit(PrayerRequestError(e.toString()));
-    }
+    await pb.collection('prayer_requests').delete(id);
   }
 }

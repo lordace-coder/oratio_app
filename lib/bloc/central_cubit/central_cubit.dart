@@ -10,10 +10,10 @@ import 'package:oratio_app/bloc/chat_cubit/message_cubit.dart';
 import 'package:oratio_app/bloc/chat_cubit/chat_cubit.dart';
 import 'package:pocketbase/pocketbase.dart';
 
-class CentralCubit extends Cubit<void> {
+class CentralCubit extends Cubit<List> {
   final ProfileDataCubit profileDataCubit;
-  final PrayerRequestCubit prayerRequestCubit;
-  final PostCubit postCubit;
+  final PrayerRequestHelper prayerRequestHelper;
+  final PostHelper postHelper;
   final NotificationCubit notificationCubit;
   final MessageCubit messageCubit;
   final ChatCubit chatCubit;
@@ -21,18 +21,18 @@ class CentralCubit extends Cubit<void> {
 
   CentralCubit({
     required this.profileDataCubit,
-    required this.prayerRequestCubit,
-    required this.postCubit,
+    required this.prayerRequestHelper,
+    required this.postHelper,
     required this.notificationCubit,
     required this.messageCubit,
     required this.chatCubit,
     required this.pb,
-  }) : super(null);
+  }) : super([]);
 
   Future<void> initialize(BuildContext context) async {
     await profileDataCubit.getMyProfile();
-    await prayerRequestCubit.fetchPrayerRequests();
-    await postCubit.fetchPosts();
+    await prayerRequestHelper.fetchPrayerRequests();
+    await postHelper.fetchPosts();
     await notificationCubit.fetchNotifications();
     await messageCubit.loadMessages(pb.authStore.model.id);
     chatCubit.subscribeToMessages(context);
@@ -41,12 +41,30 @@ class CentralCubit extends Cubit<void> {
 
   Future<void> logout() async {
     profileDataCubit.emit(ProfileDataInitial());
-    prayerRequestCubit.emit(PrayerRequestInitial());
-    postCubit.emit(PostInitial());
     notificationCubit.emit(NotificationInitial());
     await notificationCubit.logout();
     messageCubit.logout();
     chatCubit.logout();
     pb.authStore.clear();
+  }
+
+  Future<void> getFeeds() async {
+    final posts = await postHelper.fetchPosts();
+    final prayerRequests = await prayerRequestHelper.fetchPrayerRequests();
+    final ads = await fetchAds();
+    emit([...posts, ...prayerRequests, ...ads]..shuffle());
+  }
+
+  Future<List> getMoreFeeds() async {
+    final posts = await postHelper.fetchPosts(loadMore: true);
+    final prayerRequests = await prayerRequestHelper.fetchPrayerRequests();
+    final ads = await fetchAds();
+    final newFeeds = [...posts, ...prayerRequests, ...ads];
+    emit([...state, ...newFeeds]..shuffle());
+    return newFeeds;
+  }
+
+  Future<List> fetchAds() async {
+    return [];
   }
 }
