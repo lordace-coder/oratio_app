@@ -84,6 +84,9 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                                       ? null
                                       : DecorationImage(
                                           image: NetworkImage(data.image!),
+                                          colorFilter: ColorFilter.mode(
+                                              Colors.black.withOpacity(0.5),
+                                              BlendMode.darken),
                                           fit: BoxFit.cover),
                                   gradient: LinearGradient(
                                     begin: Alignment.topCenter,
@@ -334,6 +337,35 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                                   },
                                 )
                               : const SizedBox.shrink()
+                          PopupMenuButton(
+                            icon: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                FontAwesomeIcons.ellipsisVertical,
+                                color: Colors.white,
+                                size: 16,
+                              ),
+                            ),
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(
+                                  value: 'edit', child: Text('Edit Community'))
+                            ],
+                            onSelected: (value) {
+                              if (value == 'edit') {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            PrayerCommunityCreationPage(
+                                              community: data,
+                                            )));
+                              }
+                            },
+                          )
                         ],
                       ),
                     ),

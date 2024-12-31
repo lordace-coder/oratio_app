@@ -111,6 +111,9 @@ void main() async {
 
   ChatService chatService = ChatService(pbCubit.state.pb);
 
+  final prayerRequestHelper = PrayerRequestHelper(pb);
+  final postHelper = PostHelper(pb);
+
   runApp(
     MultiBlocProvider(
       providers: [
@@ -149,23 +152,10 @@ void main() async {
           create: (context) => ProfileDataCubit(pbCubit.state.pb),
         ),
         BlocProvider(
-          create: (context) => PrayerRequestCubit(pbCubit.state.pb),
-        ),
-        BlocProvider(
-          lazy: false,
-          create: (context) {
-            final postCubit = PostCubit(pbCubit.state.pb);
-            try {
-              postCubit.fetchPosts();
-            } catch (e) {}
-            return postCubit;
-          },
-        ),
-        BlocProvider(
           create: (context) => CentralCubit(
             profileDataCubit: context.read<ProfileDataCubit>(),
-            prayerRequestCubit: context.read<PrayerRequestCubit>(),
-            postCubit: context.read<PostCubit>(),
+            prayerRequestHelper: prayerRequestHelper,
+            postHelper: postHelper,
             notificationCubit: context.read<NotificationCubit>(),
             messageCubit: context.read<MessageCubit>(),
             chatCubit: context.read<ChatCubit>(),
@@ -197,6 +187,7 @@ class _MainAppState extends State<MainApp> {
 
   Future<void> _initializeApp() async {
     await context.read<CentralCubit>().initialize(context);
+    await context.read<CentralCubit>().getFeeds();
     if (mounted) {
       setState(() {
         _isInitialized = true;
@@ -223,7 +214,6 @@ class _MainAppState extends State<MainApp> {
                   context.read<ChatCubit>().loadRecentChats();
                   context.read<NotificationCubit>().fetchNotifications();
                   context.read<NotificationCubit>().realtimeConnection();
-                  context.read<PostCubit>().fetchPosts();
                 } catch (e) {}
               } else {
                 NotificationService.showError('No internet connection');

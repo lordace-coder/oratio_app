@@ -176,25 +176,20 @@ class _CreatePrayerRequestPageState extends State<CreatePrayerRequestPage> {
                         child: ElevatedButton(
                           onPressed: () async {
                             if (_formKey.currentState!.validate()) {
-                              // TODO: Implement prayer request submission
-                              // This is where you'd connect to your backend
                               final pb = context
                                   .read<PocketBaseServiceCubit>()
                                   .state
                                   .pb;
+                              final prayerRequestHelper = PrayerRequestHelper(pb);
                               try {
-                                await createPrayerRequest(pb, {
-                                  'request': _requestController.text.trim(),
-                                  'urgent': _isUrgent,
-                                  'user': pb.authStore.model.id
-                                });
+                                await prayerRequestHelper.createPrayerRequest(
+                                  request: _requestController.text.trim(),
+                                  urgent: _isUrgent,
+                                );
                                 context.pop();
                                 showSuccess(context,
                                     message:
-                                        'Prayer request submitted succesfully');
-                                context
-                                    .read<PrayerRequestCubit>()
-                                    .fetchPrayerRequests();
+                                        'Prayer request submitted successfully');
                               } catch (e) {
                                 print([e.runtimeType, e]);
                                 showError(context,
