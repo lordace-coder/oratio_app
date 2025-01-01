@@ -355,7 +355,7 @@ class _ChatItemState extends State<ChatItem>
           child: child,
         ),
         child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 8),
+          margin: const EdgeInsets.symmetric(vertical: 2),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
