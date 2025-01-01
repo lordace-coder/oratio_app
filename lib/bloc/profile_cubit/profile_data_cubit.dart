@@ -66,6 +66,8 @@ class ProfileDataCubit extends Cubit<ProfileDataState> {
     }
   }
 
+
+
   Future visitProfile(String id) async {
     emit(ProfileDataLoading());
     try {

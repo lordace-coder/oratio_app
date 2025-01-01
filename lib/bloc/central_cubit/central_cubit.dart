@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:oratio_app/bloc/ads_bloc/ads_cubit.dart';
 import 'package:oratio_app/bloc/posts/post_state.dart';
 import 'package:oratio_app/bloc/prayer_requests/requests_state.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
@@ -18,8 +19,10 @@ class CentralCubit extends Cubit<List> {
   final MessageCubit messageCubit;
   final ChatCubit chatCubit;
   final PocketBase pb;
+  final AdsRepo adsRepo;
 
   CentralCubit({
+    required this.adsRepo,
     required this.profileDataCubit,
     required this.prayerRequestHelper,
     required this.postHelper,
@@ -35,6 +38,7 @@ class CentralCubit extends Cubit<List> {
     await postHelper.fetchPosts();
     await notificationCubit.fetchNotifications();
     await messageCubit.loadMessages(pb.authStore.model.id);
+    await adsRepo.getAds();
     chatCubit.subscribeToMessages(context);
     notificationCubit.realtimeConnection();
   }
@@ -51,20 +55,22 @@ class CentralCubit extends Cubit<List> {
   Future<void> getFeeds() async {
     final posts = await postHelper.fetchPosts();
     final prayerRequests = await prayerRequestHelper.fetchPrayerRequests();
-    final ads = await fetchAds();
+    final ads = await adsRepo.getAds();
     emit([...posts, ...prayerRequests, ...ads]..shuffle());
+  }
+
+  void deleteAd(String id) {
+    adsRepo.deleteAd(id);
+    final newFeeds = state.where((feed) => feed.id != id).toList();
+    emit(newFeeds);
   }
 
   Future<List> getMoreFeeds() async {
     final posts = await postHelper.fetchPosts(loadMore: true);
     final prayerRequests = await prayerRequestHelper.fetchPrayerRequests();
-    final ads = await fetchAds();
+    final ads = await adsRepo.getAds();
     final newFeeds = [...posts, ...prayerRequests, ...ads];
     emit([...state, ...newFeeds]..shuffle());
     return newFeeds;
-  }
-
-  Future<List> fetchAds() async {
-    return [];
   }
 }

@@ -12,7 +12,6 @@ import 'package:oratio_app/bloc/posts/post_cubit.dart';
 import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/helpers/user.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
-import 'package:oratio_app/networkProvider/requests.dart';
 import 'package:oratio_app/services/file_downloader.dart';
 import 'package:oratio_app/ui/widgets/image_viewer.dart';
 import 'package:oratio_app/ui/widgets/posts/bottom_scaffold.dart';
@@ -190,7 +189,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading || data == null) {
+    if (_loading && data == null) {
       return Scaffold(
         body: Container(
           child: Lottie.asset('assets/lottie/anim1.json'),

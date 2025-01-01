@@ -34,113 +34,123 @@ class _ChatScreenState extends State<ChatScreen> {
         .authStore
         .model as RecordModel;
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            CustomScrollView(
-              controller: _scrollController,
-              slivers: [
-                SliverAppBar(
-                  floating: true,
-                  snap: true,
-                  elevation: 0,
-                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                  expandedHeight:
-                      170, // Increased height to accommodate tab bar
-                  flexibleSpace: FlexibleSpaceBar(
-                    background: Column(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                          child: Row(
-                            children: [
-                              Text(
-                                'Chats',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineMedium
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                              ),
-                              const Spacer(),
-                              _buildProfileButton(),
-                            ],
+      // backgroundColor: Theme.of(context).colorScheme.surface,
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            colorFilter: ColorFilter.mode(
+                Colors.white.withOpacity(0.8), BlendMode.overlay),
+            image: const AssetImage('assets/images/wallet_bg.jpeg'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: SafeArea(
+          child: Stack(
+            children: [
+              CustomScrollView(
+                controller: _scrollController,
+                slivers: [
+                  SliverAppBar(
+                    floating: true,
+                    snap: true,
+                    elevation: 0,
+                    backgroundColor: Colors.transparent,
+                    expandedHeight:
+                        170, // Increased height to accommodate tab bar
+                    flexibleSpace: FlexibleSpaceBar(
+                      background: Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                            child: Row(
+                              children: [
+                                Text(
+                                  'Chats',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                ),
+                                const Spacer(),
+                                _buildProfileButton(),
+                              ],
+                            ),
                           ),
-                        ),
-                        GestureDetector(
-                            onTap: () async {
-                              await context.pushNamed(RouteNames.searchPage);
-                            },
-                            child: _buildSearchBar()),
-                        _buildCustomTabBar(),
-                      ],
+                          GestureDetector(
+                              onTap: () async {
+                                await context.pushNamed(RouteNames.searchPage);
+                              },
+                              child: _buildSearchBar()),
+                          _buildCustomTabBar(),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  sliver: BlocBuilder<ChatCubit, ChatState>(
-                    builder: (context, state) {
-                      if (state is ChatLoading) {
-                        return const SliverToBoxAdapter(
-                          child: Center(
-                            child: CircularProgressIndicator(),
-                          ),
-                        );
-                      } else if (state is ChatsLoaded) {
-                        // !Filter chats based on selected tab
-                        final filteredChats = _selectedTabIndex == 0
-                            ? context.watch<ChatCubit>().getRecentChats()
-                            : context.watch<ChatCubit>().getMessageRequests();
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    sliver: BlocBuilder<ChatCubit, ChatState>(
+                      builder: (context, state) {
+                        if (state is ChatLoading) {
+                          return const SliverToBoxAdapter(
+                            child: Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        } else if (state is ChatsLoaded) {
+                          // !Filter chats based on selected tab
+                          final filteredChats = _selectedTabIndex == 0
+                              ? context.watch<ChatCubit>().getRecentChats()
+                              : context.watch<ChatCubit>().getMessageRequests();
 
-                        return AnimationLimiter(
-                          child: SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) =>
-                                  AnimationConfiguration.staggeredList(
-                                position: index,
-                                duration: const Duration(milliseconds: 375),
-                                child: SlideAnimation(
-                                  verticalOffset: 50.0,
-                                  child: FadeInAnimation(
-                                    child: ChatItem(
-                                      index: index,
-                                      chatPreview: filteredChats[index],
+                          return AnimationLimiter(
+                            child: SliverList(
+                              delegate: SliverChildBuilderDelegate(
+                                (context, index) =>
+                                    AnimationConfiguration.staggeredList(
+                                  position: index,
+                                  duration: const Duration(milliseconds: 375),
+                                  child: SlideAnimation(
+                                    verticalOffset: 50.0,
+                                    child: FadeInAnimation(
+                                      child: ChatItem(
+                                        index: index,
+                                        chatPreview: filteredChats[index],
+                                      ),
                                     ),
                                   ),
                                 ),
+                                childCount: filteredChats.length,
                               ),
-                              childCount: filteredChats.length,
                             ),
-                          ),
-                        );
-                      } else if (state is ChatError) {
-                        return SliverToBoxAdapter(child: Text(state.message));
-                      }
-                      return const SliverToBoxAdapter();
+                          );
+                        } else if (state is ChatError) {
+                          return SliverToBoxAdapter(child: Text(state.message));
+                        }
+                        return const SliverToBoxAdapter();
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              if (_showFloatingButton) // ... existing floating button code ...
+                Positioned(
+                  right: 16,
+                  bottom: 16,
+                  child: FloatingActionButton(
+                    onPressed: () {
+                      _scrollController.animateTo(
+                        0,
+                        duration: const Duration(milliseconds: 500),
+                        curve: Curves.easeOutCubic,
+                      );
                     },
+                    child: const Icon(Icons.arrow_upward),
                   ),
                 ),
-              ],
-            ),
-            if (_showFloatingButton) // ... existing floating button code ...
-              Positioned(
-                right: 16,
-                bottom: 16,
-                child: FloatingActionButton(
-                  onPressed: () {
-                    _scrollController.animateTo(
-                      0,
-                      duration: const Duration(milliseconds: 500),
-                      curve: Curves.easeOutCubic,
-                    );
-                  },
-                  child: const Icon(Icons.arrow_upward),
-                ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

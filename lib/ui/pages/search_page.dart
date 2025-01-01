@@ -36,9 +36,7 @@ class _SearchPageState extends State<SearchPage> {
 
     if (_isSearching) {
       final currentUser = pb.authStore.model as RecordModel;
-      final result = await pb.collection('users').getList(
-          // filter: 'name ~ "$query" || username ~ "$query"',
-          );
+      final result = await pb.collection('users').getList();
 
       setState(() {
         _searchResults = result.items

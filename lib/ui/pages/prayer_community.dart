@@ -336,7 +336,7 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                                     }
                                   },
                                 )
-                              : const SizedBox.shrink()
+                              : const SizedBox.shrink(),
                           PopupMenuButton(
                             icon: Container(
                               padding: const EdgeInsets.all(8),
