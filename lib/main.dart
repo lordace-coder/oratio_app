@@ -7,6 +7,9 @@ import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:hive/hive.dart';
+import 'package:oratio_app/networkProvider/priest_requests.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/status.dart' as status;
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/ads_bloc/ads_cubit.dart';
 import 'package:oratio_app/bloc/bible_readings/bible_reading_service.dart';
@@ -182,11 +185,35 @@ class MainApp extends StatefulWidget {
 
 class _MainAppState extends State<MainApp> {
   bool _isInitialized = false;
-
+ WebSocketChannel? channel;
   @override
   void initState() {
     super.initState();
     _initializeApp();
+  }
+
+
+   void connectWebSocket() {
+  final pb = getPocketBaseFromContext(context);
+  if(!pb.authStore.isValid){
+return;
+  }
+    channel = WebSocketChannel.connect(
+      Uri.parse('ws://bookmass.fly.dev/ws?uid=${pb.authStore.model.id}'),
+    );
+
+    channel!.stream.listen(
+      (message) {
+        print('Received: $message');
+      },
+      onDone: () {
+        print('WebSocket closed');
+      },
+      onError: (error) {
+        print('WebSocket error: $error');
+      },
+    );
+
   }
 
   Future<void> _initializeApp() async {
@@ -197,6 +224,12 @@ class _MainAppState extends State<MainApp> {
         _isInitialized = true;
       });
     }
+  }
+
+  @override
+  void dispose() {
+    channel?.sink.close(status.goingAway);
+    super.dispose();
   }
 
   @override
