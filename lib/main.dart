@@ -185,19 +185,19 @@ class MainApp extends StatefulWidget {
 
 class _MainAppState extends State<MainApp> {
   bool _isInitialized = false;
- WebSocketChannel? channel;
+  WebSocketChannel? channel;
   @override
   void initState() {
     super.initState();
     _initializeApp();
+    connectWebSocket();
   }
 
-
-   void connectWebSocket() {
-  final pb = getPocketBaseFromContext(context);
-  if(!pb.authStore.isValid){
-return;
-  }
+  void connectWebSocket() {
+    final pb = getPocketBaseFromContext(context);
+    if (!pb.authStore.isValid) {
+      return;
+    }
     channel = WebSocketChannel.connect(
       Uri.parse('ws://bookmass.fly.dev/ws?uid=${pb.authStore.model.id}'),
     );
@@ -213,13 +213,12 @@ return;
         print('WebSocket error: $error');
       },
     );
-
   }
 
   Future<void> _initializeApp() async {
     await context.read<CentralCubit>().initialize(context);
-    // await context.read<CentralCubit>().getFeeds();
-  
+    await context.read<CentralCubit>().getFeeds();
+
     if (mounted) {
       setState(() {
         _isInitialized = true;
@@ -252,9 +251,7 @@ return;
                   context.read<ChatCubit>().loadRecentChats();
                   context.read<NotificationCubit>().fetchNotifications();
                   context.read<NotificationCubit>().realtimeConnection();
-                } catch (e) {
-
-                }
+                } catch (e) {}
               } else {
                 NotificationService.showError('No internet connection');
               }
