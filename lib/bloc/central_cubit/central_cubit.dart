@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/ads_bloc/ads_cubit.dart';
 import 'package:oratio_app/bloc/posts/post_state.dart';
 import 'package:oratio_app/bloc/prayer_requests/requests_state.dart';
@@ -33,14 +34,19 @@ class CentralCubit extends Cubit<List> {
   }) : super([]);
 
   Future<void> initialize(BuildContext context) async {
-    await profileDataCubit.getMyProfile();
-    await prayerRequestHelper.fetchPrayerRequests();
-    await postHelper.fetchPosts();
-    await notificationCubit.fetchNotifications();
-    await messageCubit.loadMessages(pb.authStore.model.id);
-    await adsRepo.getAds();
-    chatCubit.subscribeToMessages(context);
-    notificationCubit.realtimeConnection();
+    try {
+      await profileDataCubit.getMyProfile();
+      await prayerRequestHelper.fetchPrayerRequests();
+      await postHelper.fetchPosts();
+      await notificationCubit.fetchNotifications();
+      await messageCubit.loadMessages(pb.authStore.model.id);
+      await adsRepo.getAds();
+      chatCubit.subscribeToMessages(context);
+      notificationCubit.realtimeConnection();
+    } catch (e) {
+      print('initialization error $e');
+    }
+    // NotificationService.initialize(context);
   }
 
   Future<void> logout() async {

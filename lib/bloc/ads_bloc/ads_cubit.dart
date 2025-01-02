@@ -87,6 +87,7 @@ class AdsRepo {
     final records = await pb.collection('ads').getList(
           page: 1,
           // perPage: 50,
+          perPage: 3,
         );
 
     return records.items.map((record) {
@@ -131,6 +132,7 @@ class AdsRepo {
       'views': currentViews + 1,
     });
   }
+
   Future<void> deleteAd(String adId) async {
     await pb.collection('ads').delete(adId);
   }

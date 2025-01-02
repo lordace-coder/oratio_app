@@ -5,6 +5,7 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
+import 'package:oratio_app/bloc/central_cubit/central_cubit.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/helpers/user.dart';
@@ -32,9 +33,11 @@ class _ProfilePageState extends State<ProfilePage> {
     final searchResults = result.items
         .where((e) => e.getListValue('followers').contains(currentUser.id))
         .toList();
-    setState(() {
-      searchResult = searchResults;
-    });
+    if (mounted) {
+      setState(() {
+        searchResult = searchResults;
+      });
+    }
   }
 
   @override
@@ -43,6 +46,13 @@ class _ProfilePageState extends State<ProfilePage> {
       getfollowing(context);
     });
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    searchResult = null;
+    super.dispose();
   }
 
   @override
@@ -164,7 +174,9 @@ class _ProfilePageState extends State<ProfilePage> {
                                 //   ),
                                 // ),
                                 Text(
-                                  '${(pb.authStore.model as RecordModel).getListValue('followers').length} followers · ${searchResult?.length} following',
+                                  searchResult != null
+                                      ? '${(pb.authStore.model as RecordModel).getListValue('followers').length} followers · ${searchResult?.length} following'
+                                      : '0 followers · 0 following',
                                   style: const TextStyle(
                                     fontSize: 14,
                                     color: Colors.white,
@@ -179,8 +191,28 @@ class _ProfilePageState extends State<ProfilePage> {
                                   children: [
                                     _buildActionButton(
                                         'Edit Profile', Icons.edit, () {
-                                      editProfile(context, data.userId);
+                                      context.pushNamed(RouteNames.editprofile);
                                     }),
+                                    if ((pb.authStore.model as RecordModel)
+                                            .getBoolValue('verified') ==
+                                        false)
+                                      _buildActionButton(
+                                          'Verify Email', Icons.verified, () {
+                                        try {
+                                          pb
+                                              .collection('users')
+                                              .requestVerification((pb.authStore
+                                                      .model as RecordModel)
+                                                  .getStringValue('email'));
+                                          NotificationService.showSuccess(
+                                              'Verification Link Sent. Check your email or spam section',
+                                              duration:
+                                                  const Duration(seconds: 6));
+                                        } catch (error) {
+                                          NotificationService.showError(
+                                              'Verification failed. Ensure you have a correct email');
+                                        }
+                                      }),
                                   ],
                                 )
                               ],
@@ -258,14 +290,13 @@ class _ProfilePageState extends State<ProfilePage> {
                                 FontAwesomeIcons.rightFromBracket,
                                 const Color(0xFFFF6B6B),
                                 const Color(0xFFFF3131),
-                                () {
+                                () async {
                                   context
                                       .read<PocketBaseServiceCubit>()
                                       .state
                                       .pb
                                       .authStore
                                       .clear();
-                                  //context.read<CentralCubit>().logout();
                                 },
                               ),
                             ],
@@ -296,7 +327,7 @@ class _ProfilePageState extends State<ProfilePage> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.2),
             borderRadius: BorderRadius.circular(12),

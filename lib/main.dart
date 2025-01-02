@@ -115,6 +115,7 @@ void main() async {
   final prayerRequestHelper = PrayerRequestHelper(pb);
   final postHelper = PostHelper(pb);
   final adsRepo = AdsRepo(pb);
+ 
   runApp(
     MultiBlocProvider(
       providers: [
@@ -154,7 +155,8 @@ void main() async {
           create: (context) => ProfileDataCubit(pbCubit.state.pb),
         ),
         BlocProvider(
-          create: (context) => CentralCubit(adsRepo: adsRepo,
+          create: (context) => CentralCubit(
+            adsRepo: adsRepo,
             profileDataCubit: context.read<ProfileDataCubit>(),
             prayerRequestHelper: prayerRequestHelper,
             postHelper: postHelper,
@@ -272,6 +274,7 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+       debugShowCheckedModeBanner: false,
       home: Scaffold(
         body: Center(
           child: Image.asset("assets/images/app_logo.png",

@@ -28,9 +28,11 @@ class ProfileDataCubit extends Cubit<ProfileDataState> {
           myParish = data.first;
         } else {
           print('no parish for priest = "${pb.authStore.model.id}" ');
-          NotificationService.showWarning(
-              'This account is not connected to any parish, This may cause some errors',
-              duration: const Duration(seconds: 7));
+          try {
+            NotificationService.showWarning(
+                'This account is not connected to any parish, This may cause some errors',
+                duration: const Duration(seconds: 7));
+          } catch (e) {}
         }
       }
 
@@ -66,8 +68,6 @@ class ProfileDataCubit extends Cubit<ProfileDataState> {
     }
   }
 
-
-
   Future visitProfile(String id) async {
     emit(ProfileDataLoading());
     try {
@@ -90,10 +90,9 @@ class ProfileDataCubit extends Cubit<ProfileDataState> {
       Profile? myProfile;
       if (state is ProfileDataLoaded) {
         myProfile = (state as ProfileDataLoaded).profile;
-      }else{
+      } else {
         await getMyProfile();
         myProfile = (state as ProfileDataLoaded).profile;
-
       }
 
       emit(ProfileDataLoaded(

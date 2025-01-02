@@ -87,11 +87,6 @@ class AppRouter {
         redirectLimit: 2,
         initialLocation: initialLocation,
         redirect: (context, state) {
-          final pb = context.read<PocketBaseServiceCubit>().state.pb;
-
-          if (!pb.authStore.isValid && !state.fullPath!.contains('auth')) {
-            return '/auth/login';
-          }
           return null;
         },
         routes: [

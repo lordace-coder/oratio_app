@@ -45,6 +45,7 @@ class MessageCubit extends Cubit<MessageState> {
 
   void _initMessageSubscription() async {
     final currentUserId = pb.authStore.model.id;
+    print('${currentUserId}---userid');
     await pb.collection('messages').subscribe(
       '*',
       (e) {

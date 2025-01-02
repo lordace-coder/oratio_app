@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
+import 'package:oratio_app/bloc/central_cubit/central_cubit.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 
@@ -37,9 +38,11 @@ class _AuthListenerState extends State<AuthListener> {
 
         if (!pb.authStore.isValid) {
           context.pushNamed(RouteNames.login);
+          context.read<CentralCubit>().logout();
         } else {
           if (GoRouter.of(context).state?.fullPath?.contains('auth') ?? false) {
-    OneSignal.login(pb.authStore.model.id);
+            OneSignal.login(pb.authStore.model.id);
+            context.read<CentralCubit>().initialize(context);
 
             context.pushNamed(RouteNames.homePage);
           }
