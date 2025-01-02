@@ -115,7 +115,7 @@ void main() async {
   final prayerRequestHelper = PrayerRequestHelper(pb);
   final postHelper = PostHelper(pb);
   final adsRepo = AdsRepo(pb);
- 
+
   runApp(
     MultiBlocProvider(
       providers: [
@@ -190,8 +190,9 @@ class _MainAppState extends State<MainApp> {
   }
 
   Future<void> _initializeApp() async {
-    await context.read<CentralCubit>().initialize(context);
-    await context.read<CentralCubit>().getFeeds();
+    // await context.read<CentralCubit>().initialize(context);
+    // await context.read<CentralCubit>().getFeeds();
+  
     if (mounted) {
       setState(() {
         _isInitialized = true;
@@ -218,7 +219,9 @@ class _MainAppState extends State<MainApp> {
                   context.read<ChatCubit>().loadRecentChats();
                   context.read<NotificationCubit>().fetchNotifications();
                   context.read<NotificationCubit>().realtimeConnection();
-                } catch (e) {}
+                } catch (e) {
+
+                }
               } else {
                 NotificationService.showError('No internet connection');
               }
@@ -274,7 +277,7 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-       debugShowCheckedModeBanner: false,
+      debugShowCheckedModeBanner: false,
       home: Scaffold(
         body: Center(
           child: Image.asset("assets/images/app_logo.png",

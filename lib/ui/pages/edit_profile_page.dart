@@ -109,6 +109,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final pb = getPocketBaseFromContext(context);
     return FutureBuilder(
         future: refreshProfileData(),
         builder: (context, snapshot) {
@@ -222,7 +223,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           label: 'Last Name',
                           hint: 'Enter your last name',
                         ),
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 20),
                         Text(
                           'Contact Information',
                           style: TextStyle(
@@ -231,7 +232,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                             color: AppColors.primary,
                           ),
                         ),
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 20),
                         _buildInputField(
                           controller: _emailController,
                           label: 'Email',
@@ -245,6 +246,65 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           keyboardType: TextInputType.phone,
                         ),
                         const SizedBox(height: 20),
+                        Text(
+                          'Authentication',
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        InkWell(
+                          onTap: () async {
+                            try {
+                              await pb.collection('users').requestPasswordReset(
+                                  (pb.authStore.model as RecordModel)
+                                      .getStringValue('email'));
+                              NotificationService.showSuccess(
+                                  'A password reset link was sent to your email',
+                                  duration: const Duration(seconds: 6));
+                            } catch (error) {
+                              NotificationService.showError(
+                                  'Password reset failed');
+                            }
+                          },
+                          child: const Text(
+                            'Click to change your password',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        if ((pb.authStore.model as RecordModel)
+                                .getBoolValue('verified') ==
+                            false)
+                          InkWell(
+                            onTap: () {
+                              try {
+                                pb.collection('users').requestVerification(
+                                    (pb.authStore.model as RecordModel)
+                                        .getStringValue('email'));
+                                NotificationService.showSuccess(
+                                    'Verification Link Sent. Check your email or spam section',
+                                    duration: const Duration(seconds: 6));
+                              } catch (error) {
+                                NotificationService.showError(
+                                    'Verification failed. Ensure you have a correct email');
+                              }
+                            },
+                            child: const Text(
+                              'Click to verify your email',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),

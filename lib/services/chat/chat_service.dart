@@ -47,6 +47,33 @@ class ChatService {
         // Format message preview with "You:" prefix if current user is sender
         String messagePreview = isSender ? 'You: $msg' : msg;
 
+        bool active = false;
+        String? lastSeen;
+        if (isSender) {
+          active =
+              message.expand['reciever']?.first.getBoolValue('active') == null
+                  ? false
+                  : message.expand['reciever']!.first.getBoolValue('active');
+          lastSeen =
+              message.expand['reciever']?.first.getStringValue('last_seen');
+          if (lastSeen != null) {
+            if (lastSeen.isEmpty) {
+              lastSeen = null;
+            }
+          }
+        } else {
+          active =
+              message.expand['sender']?.first.getBoolValue('active') == null
+                  ? false
+                  : message.expand['sender']!.first.getBoolValue('active');
+          lastSeen =
+              message.expand['sender']?.first.getStringValue('last_seen');
+          if (lastSeen != null) {
+            if (lastSeen.isEmpty) {
+              lastSeen = null;
+            }
+          }
+        }
         // Create or update chat preview
         if (!chatMap.containsKey(otherParticipantId)) {
           chatMap[otherParticipantId] = ChatPreview(
@@ -57,6 +84,7 @@ class ChatService {
             profile: profile,
             read: isSender ? message.getBoolValue('read') : false,
             isSender: isSender,
+            active: active,
           );
         }
 
@@ -100,7 +128,8 @@ class ChatPreview {
   final Profile profile;
   bool? read;
   bool? isSender;
-
+  bool active = false;
+  String? lastSeen;
   ChatPreview({
     required this.participant,
     required this.unreadCount,
@@ -108,12 +137,15 @@ class ChatPreview {
     required this.lastMessageAt,
     required this.profile,
     this.read,
+    this.lastSeen,
+    required this.active,
     required this.isSender,
   });
 
   ChatPreview copyWith(
       {String? participant,
       int? unreadCount,
+      bool active = false,
       String? preview,
       DateTime? lastMessageAt,
       Profile? profile,
@@ -127,6 +159,7 @@ class ChatPreview {
       profile: profile ?? this.profile,
       read: read ?? this.read,
       isSender: isSender,
+      active: this.active,
     );
   }
 

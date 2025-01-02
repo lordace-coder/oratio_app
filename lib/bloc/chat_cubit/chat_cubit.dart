@@ -130,25 +130,25 @@ class ChatCubit extends Cubit<ChatState> {
           if (msg == "{{file}}") {
             msg = 'sent you a file';
           }
-          PopupNotification.show(
-            onTap: () async {
-              await context
-                  .read<ProfileDataCubit>()
-                  .visitProfile(e.record!.getStringValue('sender'));
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => ChatPage(
-                      profile: (context.read<ProfileDataCubit>().state
-                              as ProfileDataLoaded)
-                          .guestProfile!),
-                ),
-              );
-            },
-            title:
-                '${message.expand['sender']?.first.getStringValue('username')} :',
-            message: msg,
-            icon: FontAwesomeIcons.message,
-          );
+          // PopupNotification.show(
+          //   onTap: () async {
+          //     await context
+          //         .read<ProfileDataCubit>()
+          //         .visitProfile(e.record!.getStringValue('sender'));
+          //     Navigator.of(context).push(
+          //       MaterialPageRoute(
+          //         builder: (_) => ChatPage(
+          //             profile: (context.read<ProfileDataCubit>().state
+          //                     as ProfileDataLoaded)
+          //                 .guestProfile!),
+          //       ),
+          //     );
+          //   },
+          //   title:
+          //       '${message.expand['sender']?.first.getStringValue('username')} :',
+          //   message: msg,
+          //   icon: FontAwesomeIcons.message,
+          // );
         }
         if (message.data['sender'] == currentUserId ||
             message.data['receiver'].toString().contains(currentUserId)) {
@@ -193,8 +193,6 @@ class ChatCubit extends Cubit<ChatState> {
     return [];
   }
 
-
-
   List<ChatPreview> getMessageRequests() {
     if (state is ChatsLoaded) {
       return (state as ChatsLoaded)
@@ -211,8 +209,8 @@ class ChatCubit extends Cubit<ChatState> {
     return super.close();
   }
 
-  Future<void> logout()async{
-     _pb.collection('messages').unsubscribe('*');
-     emit(ChatInitial());
+  Future<void> logout() async {
+    _pb.collection('messages').unsubscribe('*');
+    emit(ChatInitial());
   }
 }

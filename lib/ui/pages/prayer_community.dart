@@ -261,23 +261,26 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                         const Gap(32),
 
                         // Join Button
-                        Container(
-                          margin: const EdgeInsets.all(24),
-                          child: buildGradientButton(
-                            isMember ? "Welcome Back" : 'Join Community',
-                            FontAwesomeIcons.userPlus,
-                            () async {
-                              if (isMember) {
-                                NotificationService.showWarning(
-                                    'You are already a Member of this Community');
-                                return;
-                              }
-                              await joinCommunity(context,
-                                  communityId: widget.communityId);
-                              setState(() {});
-                            },
+                        if (isMember)
+                          Container(
+                            margin: const EdgeInsets.all(24),
+                            child: buildGradientButton(
+                              'Join Community',
+                              FontAwesomeIcons.userPlus,
+                              () async {
+                                if (isMember) {
+                                  NotificationService.showWarning(
+                                      'You are already a Member of this Community');
+                                  return;
+                                }
+                                await joinCommunity(context,
+                                    communityId: widget.communityId);
+                                setState(() {});
+                              },
+                            ),
                           ),
-                        ),
+
+                          
                       ],
                     ),
                   ),
@@ -337,35 +340,6 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                                   },
                                 )
                               : const SizedBox.shrink(),
-                          PopupMenuButton(
-                            icon: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(
-                                FontAwesomeIcons.ellipsisVertical,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                            ),
-                            itemBuilder: (context) => [
-                              const PopupMenuItem(
-                                  value: 'edit', child: Text('Edit Community'))
-                            ],
-                            onSelected: (value) {
-                              if (value == 'edit') {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            PrayerCommunityCreationPage(
-                                              community: data,
-                                            )));
-                              }
-                            },
-                          )
                         ],
                       ),
                     ),

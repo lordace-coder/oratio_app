@@ -388,7 +388,7 @@ class _ChatItemState extends State<ChatItem>
                             )
                           : null,
                     ),
-                    if (widget.index % 3 == 0)
+                    if (widget.chatPreview.active)
                       Positioned(
                         right: 0,
                         bottom: 0,

@@ -5,6 +5,7 @@ import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart' as intl;
 import 'package:intl/intl.dart';
 import 'package:mime/mime.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
@@ -61,6 +62,7 @@ class _ChatPageState extends State<ChatPage> {
     });
   }
 
+  intl.DateFormat format = intl.DateFormat("yyyy-MM-dd HH:mm:ss.SSS'Z'");
   void subscribeToMessages() {
     pb.collection('messages').subscribe(
       '*',
@@ -76,7 +78,6 @@ class _ChatPageState extends State<ChatPage> {
           final newMsg = types.TextMessage(
               author: _otherUser,
               id: message.id,
-              
               text: message.getStringValue('message'));
           if (mounted) {
             _addMessage(newMsg);
@@ -276,22 +277,44 @@ class _ChatPageState extends State<ChatPage> {
               pathParameters: {'id': widget.profile.userId}),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundImage: getAvatarUrl() != null
-                    ? NetworkImage(getAvatarUrl()!)
-                    : null,
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                child: getAvatarUrl() != null
-                    ? null
-                    : Text(
-                        widget.profile.user
-                            .getStringValue('username')[0]
-                            .toUpperCase(),
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onPrimary,
+              Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundImage: getAvatarUrl() != null
+                        ? NetworkImage(getAvatarUrl()!)
+                        : null,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    child: getAvatarUrl() != null
+                        ? null
+                        : Text(
+                            widget.profile.user
+                                .getStringValue('username')[0]
+                                .toUpperCase(),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onPrimary,
+                            ),
+                          ),
+                  ),
+                  if (widget.profile.user.getBoolValue('active'))
+                    Positioned(
+                      right: 0,
+                      bottom: -2,
+                      // left: 3,
+                      child: Container(
+                        width: 16,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Theme.of(context).scaffoldBackgroundColor,
+                            width: 2,
+                          ),
                         ),
                       ),
+                    ),
+                ],
               ),
               const SizedBox(width: 12),
               Column(
@@ -304,13 +327,15 @@ class _ChatPageState extends State<ChatPage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const Text(
-                    'Online',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.green,
+                  if (!widget.profile.user.getBoolValue('active') &&
+                      widget.profile.user.getStringValue('last_seen') != '')
+                    Text(
+                      'last seen ${formatDateTimeToHoursAgo(format.parse(widget.profile.user.getStringValue('last_seen')))}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Colors.black54,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ],
