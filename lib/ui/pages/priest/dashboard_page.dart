@@ -76,7 +76,6 @@ class _DashboardPageState extends State<DashboardPage> {
                   color: AppColors.primary,
                   onRefresh: () async {
                     await loadChurchForPriest();
-                   
                   },
                   child: ListView(
                     padding: const EdgeInsets.all(16),

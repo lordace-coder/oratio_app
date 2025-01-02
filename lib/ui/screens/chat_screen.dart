@@ -27,12 +27,6 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final currentUser = context
-        .read<PocketBaseServiceCubit>()
-        .state
-        .pb
-        .authStore
-        .model as RecordModel;
     return Scaffold(
       // backgroundColor: Theme.of(context).colorScheme.surface,
       body: Container(
@@ -168,17 +162,39 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Row(
           children: [
             Expanded(
-              child: _buildTabItem(
-                title: 'Recent Chats',
-                isSelected: _selectedTabIndex == 0,
-                onTap: () => _onTabSelected(0),
+              child: Badge(
+                isLabelVisible:
+                    context.watch<ChatCubit>().unreadCount(true) > 0,
+                label: Text(
+                  context.watch<ChatCubit>().unreadCount(true).toString(),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                    fontSize: 12,
+                  ),
+                ),
+                child: _buildTabItem(
+                  title: 'Recent Chats',
+                  isSelected: _selectedTabIndex == 0,
+                  onTap: () => _onTabSelected(0),
+                ),
               ),
             ),
             Expanded(
-              child: _buildTabItem(
-                title: 'Message Requests',
-                isSelected: _selectedTabIndex == 1,
-                onTap: () => _onTabSelected(1),
+              child: Badge(
+                isLabelVisible:
+                    context.watch<ChatCubit>().unreadCount(false) > 0,
+                label: Text(
+                  context.watch<ChatCubit>().unreadCount(false).toString(),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                    fontSize: 12,
+                  ),
+                ),
+                child: _buildTabItem(
+                  title: 'Message Requests',
+                  isSelected: _selectedTabIndex == 1,
+                  onTap: () => _onTabSelected(1),
+                ),
               ),
             ),
           ],
