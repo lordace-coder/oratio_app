@@ -11,7 +11,7 @@ class NotificationCubit extends Cubit<NotificationState> {
   Future<void> fetchNotifications() async {
     try {
       emit(NotificationLoading());
-      final records = await _pocketBase.collection('notifications').getList();
+      final records = await _pocketBase.collection('notifications').getList(sort: 'created');
       emit(NotificationLoaded(records.items));
     } catch (e) {
       emit(NotificationError(e.toString()));
@@ -49,10 +49,10 @@ class NotificationCubit extends Cubit<NotificationState> {
     _pocketBase.collection('notifications').subscribe('*', (e) {
       if (e.action == 'create') {
         if (e.record == null) return;
-        PopupNotification.show(
-          title: e.record!.getStringValue('title'),
-          message: e.record!.getStringValue('notification'),
-        );
+        // PopupNotification.show(
+        //   title: e.record!.getStringValue('title'),
+        //   message: e.record!.getStringValue('notification'),
+        // );
         _unreadCount = 0;
         unreadNotificationCount();
       }
