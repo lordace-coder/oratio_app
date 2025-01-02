@@ -35,12 +35,14 @@ class CentralCubit extends Cubit<List> {
 
   Future<void> initialize(BuildContext context) async {
     try {
- 
+      // pb.authStore.clear();
       await profileDataCubit.getMyProfile();
       await prayerRequestHelper.fetchPrayerRequests();
       await postHelper.fetchPosts();
       await notificationCubit.fetchNotifications();
-      await messageCubit.loadMessages(pb.authStore.model.id);
+      if (pb.authStore.isValid) {
+        await messageCubit.loadMessages(pb.authStore.model.id);
+      }
       await adsRepo.getAds();
       chatCubit.subscribeToMessages(context);
       notificationCubit.realtimeConnection();

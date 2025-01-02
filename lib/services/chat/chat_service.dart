@@ -11,6 +11,7 @@ class ChatService {
 
   Future<List<ChatPreview>> getRecentChats() async {
     try {
+      if (!pb.authStore.isValid) return [];
       final currentUserId = (pb.authStore.model as RecordModel).id;
       final messages = await pb.collection('messages').getList(
             page: 1,

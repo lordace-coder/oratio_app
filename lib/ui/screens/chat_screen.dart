@@ -27,6 +27,14 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final pb = context.read<PocketBaseServiceCubit>().state.pb;
+    if (!pb.authStore.isValid) {
+      pb.authStore.clear();
+
+      return const Center(
+        child: Text('Bad Error, Please Log Out and Login Again'),
+      );
+    }
     final currentUser = context
         .read<PocketBaseServiceCubit>()
         .state

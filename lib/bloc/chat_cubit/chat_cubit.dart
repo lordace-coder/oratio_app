@@ -61,15 +61,10 @@ class ChatCubit extends Cubit<ChatState> {
     required String receiverId,
     required String message,
   }) async {
+    if (!_pb.authStore.isValid) return;
     final currentUserId = _pb.authStore.model.id;
 
     try {
-      //   final currentUserId = _pb.authStore.model.id;
-      //   'sender': currentUserId,
-      //   'receiver': receiverId,
-      //   'message': message,
-      //   'read': false,
-      // });
       // example create body
       final body = <String, dynamic>{
         "sender": currentUserId,
@@ -90,9 +85,10 @@ class ChatCubit extends Cubit<ChatState> {
 
   // Mark messages as read
   Future<void> markMessagesAsRead(String otherParticipantId) async {
-    try {
-      final currentUserId = _pb.authStore.model.id;
+    if (!_pb.authStore.isValid) return;
+    final currentUserId = _pb.authStore.model.id;
 
+    try {
       // Get unread messages
       final result = await _pb.collection('messages').getList(
             filter:
@@ -116,6 +112,7 @@ class ChatCubit extends Cubit<ChatState> {
 
   // Stream real-time updates for new messages
   void subscribeToMessages(BuildContext context) {
+    if (!_pb.authStore.isValid) return;
     final currentUserId = (_pb.authStore.model as RecordModel).id;
     _pb.collection('messages').subscribe('*', (e) {
       if (e.action == 'create') {
