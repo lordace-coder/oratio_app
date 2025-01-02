@@ -217,7 +217,7 @@ return;
   }
 
   Future<void> _initializeApp() async {
-    // await context.read<CentralCubit>().initialize(context);
+    await context.read<CentralCubit>().initialize(context);
     // await context.read<CentralCubit>().getFeeds();
   
     if (mounted) {

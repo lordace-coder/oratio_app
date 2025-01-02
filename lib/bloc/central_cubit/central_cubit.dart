@@ -35,6 +35,7 @@ class CentralCubit extends Cubit<List> {
 
   Future<void> initialize(BuildContext context) async {
     try {
+ 
       await profileDataCubit.getMyProfile();
       await prayerRequestHelper.fetchPrayerRequests();
       await postHelper.fetchPosts();
