@@ -272,7 +272,7 @@ class SplashScreen extends StatelessWidget {
     return MaterialApp(
       home: Scaffold(
         body: Center(
-          child: Image.asset("assets/images/logo.png",
+          child: Image.asset("assets/images/app_logo.png",
               width: 200, height: 200, fit: BoxFit.cover),
         ),
       ),
