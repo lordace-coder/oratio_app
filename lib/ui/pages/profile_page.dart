@@ -5,19 +5,55 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
+import 'package:oratio_app/bloc/central_cubit/central_cubit.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/helpers/user.dart';
 import 'package:oratio_app/networkProvider/users.dart';
-import 'package:oratio_app/ui/pages/edit_profile_page.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({
     super.key,
   });
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  List? searchResult;
+
+  void getfollowing(BuildContext context) async {
+    final pb = context.read<PocketBaseServiceCubit>().state.pb;
+    final currentUser = pb.authStore.model as RecordModel;
+    final result = await pb.collection('users').getList();
+    final searchResults = result.items
+        .where((e) => e.getListValue('followers').contains(currentUser.id))
+        .toList();
+    if (mounted) {
+      setState(() {
+        searchResult = searchResults;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      getfollowing(context);
+    });
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    searchResult = null;
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,6 +66,7 @@ class ProfilePage extends StatelessWidget {
         child: BlocConsumer<ProfileDataCubit, ProfileDataState>(
           listener: (context, state) {},
           builder: (context, state) {
+            getfollowing(context);
             if (state is ProfileDataLoaded) {
               final data = state.profile;
               final pb = context.read<PocketBaseServiceCubit>().state.pb;
@@ -57,6 +94,8 @@ class ProfilePage extends StatelessWidget {
                             top: 16,
                             left: 16,
                             child: Container(
+                              width: 35,
+                              height: 35,
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(12),
@@ -135,7 +174,9 @@ class ProfilePage extends StatelessWidget {
                                 //   ),
                                 // ),
                                 Text(
-                                  '${(pb.authStore.model as RecordModel).getListValue('followers').length} followers · 4 following',
+                                  searchResult != null
+                                      ? '${(pb.authStore.model as RecordModel).getListValue('followers').length} followers · ${searchResult?.length} following'
+                                      : '0 followers · 0 following',
                                   style: const TextStyle(
                                     fontSize: 14,
                                     color: Colors.white,
@@ -150,8 +191,28 @@ class ProfilePage extends StatelessWidget {
                                   children: [
                                     _buildActionButton(
                                         'Edit Profile', Icons.edit, () {
-                                      editProfile(context, data.userId);
+                                      context.pushNamed(RouteNames.editprofile);
                                     }),
+                                    if ((pb.authStore.model as RecordModel)
+                                            .getBoolValue('verified') ==
+                                        false)
+                                      _buildActionButton(
+                                          'Verify Email', Icons.verified, () {
+                                        try {
+                                          pb
+                                              .collection('users')
+                                              .requestVerification((pb.authStore
+                                                      .model as RecordModel)
+                                                  .getStringValue('email'));
+                                          NotificationService.showSuccess(
+                                              'Verification Link Sent. Check your email or spam section',
+                                              duration:
+                                                  const Duration(seconds: 6));
+                                        } catch (error) {
+                                          NotificationService.showError(
+                                              'Verification failed. Ensure you have a correct email');
+                                        }
+                                      }),
                                   ],
                                 )
                               ],
@@ -229,15 +290,13 @@ class ProfilePage extends StatelessWidget {
                                 FontAwesomeIcons.rightFromBracket,
                                 const Color(0xFFFF6B6B),
                                 const Color(0xFFFF3131),
-                                () {
-
+                                () async {
                                   context
                                       .read<PocketBaseServiceCubit>()
                                       .state
                                       .pb
                                       .authStore
                                       .clear();
-                                      //context.read<CentralCubit>().logout();
                                 },
                               ),
                             ],
@@ -268,7 +327,7 @@ class ProfilePage extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.2),
             borderRadius: BorderRadius.circular(12),
@@ -296,11 +355,11 @@ class ProfilePage extends StatelessWidget {
 
   Widget _buildSection(String title, IconData icon, List<Widget> items) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 16),
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.fromLTRB(10, 1, 10, 5),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),

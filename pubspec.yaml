@@ -66,6 +66,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/wallet_bg.jpeg
+    - assets/images/app_logo.png
     - assets/lottie/
     - assets/banks.json
     - assets/images/onboarding/

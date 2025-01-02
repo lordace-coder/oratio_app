@@ -8,6 +8,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:hive/hive.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:oratio_app/bloc/ads_bloc/ads_cubit.dart';
 import 'package:oratio_app/bloc/bible_readings/bible_reading_service.dart';
 import 'package:oratio_app/bloc/chat_cubit/message_cubit.dart';
 import 'package:oratio_app/bloc/transactions_cubit/transaction_cubit.dart';
@@ -113,7 +114,8 @@ void main() async {
 
   final prayerRequestHelper = PrayerRequestHelper(pb);
   final postHelper = PostHelper(pb);
-
+  final adsRepo = AdsRepo(pb);
+ 
   runApp(
     MultiBlocProvider(
       providers: [
@@ -145,6 +147,7 @@ void main() async {
           },
           lazy: false,
         ),
+        BlocProvider(create: (context) => AdsCubit(adsRepo)),
         BlocProvider(
           create: (context) => notificationCubit,
         ),
@@ -153,6 +156,7 @@ void main() async {
         ),
         BlocProvider(
           create: (context) => CentralCubit(
+            adsRepo: adsRepo,
             profileDataCubit: context.read<ProfileDataCubit>(),
             prayerRequestHelper: prayerRequestHelper,
             postHelper: postHelper,
@@ -270,6 +274,7 @@ class SplashScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+       debugShowCheckedModeBanner: false,
       home: Scaffold(
         body: Center(
           child: Image.asset("assets/images/app_logo.png",

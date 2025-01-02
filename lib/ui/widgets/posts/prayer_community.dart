@@ -357,12 +357,10 @@ class _PrayerRequestCardState extends State<PrayerRequestCard> {
               backgroundImage:
                   getProfilePic(context, user: _prayerRequest!.user) == null
                       ? null
-                      : NetworkImage(getProfilePic(context,
-                          user: pb.authStore.model as RecordModel)!),
+                      : NetworkImage(
+                          getProfilePic(context, user: _prayerRequest!.user)!),
               backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-              child: getProfilePic(context,
-                          user: pb.authStore.model as RecordModel) ==
-                      null
+              child: getProfilePic(context, user: _prayerRequest!.user) == null
                   ? Text(
                       '${_prayerRequest!.user.getStringValue('first_name')[0]}${_prayerRequest!.user.getStringValue('last_name')[0]}'
                           .toUpperCase(),
