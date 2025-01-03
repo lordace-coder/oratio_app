@@ -38,6 +38,17 @@ class PostHelper {
     return _currentPosts;
   }
 
+  Future<List<Post>> getCommunityPosts(String communityId) async {
+    final records = await _pocketBase.collection('posts').getList(
+          expand: 'community',
+          sort: '-created',
+          filter: "community = '$communityId'",
+          perPage: 20,
+        );
+
+    return records.items.map((i) => Post.fromRecord(i, _pocketBase)).toList();
+  }
+
   Future<void> createPost(Map<String, dynamic> data) async {
     await _pocketBase.collection('posts').create(body: data);
     _currentPage = 1;
@@ -64,6 +75,7 @@ class PostHelper {
       'likes-': [_pocketBase.authStore.model.id]
     });
   }
+
   Future<RecordModel> getPost(String id) async {
     return await _pocketBase.collection('posts').getOne(id);
   }

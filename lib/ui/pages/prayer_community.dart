@@ -1,17 +1,21 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:oratio_app/bloc/ads_bloc/ads_cubit.dart';
+import 'package:oratio_app/bloc/posts/post_cubit.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/networkProvider/requests.dart';
 import 'package:oratio_app/services/servces.dart';
 import 'package:oratio_app/ui/bright/pages/create_community.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/buttons.dart';
+import 'package:oratio_app/ui/widgets/posts/prayer_community.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class PrayerCommunityDetail extends StatefulWidget {
@@ -226,42 +230,43 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                         ),
 
                         // Description Section
-                        Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 24),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'About Community',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const Gap(16),
-                              Container(
-                                padding: const EdgeInsets.all(20),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey[50],
-                                  borderRadius: BorderRadius.circular(24),
-                                ),
-                                child: Text(
-                                  data.description,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.black87,
-                                    height: 1.6,
+                        if (data.description.isNotEmpty)
+                          Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 24),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'About Community',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                              ),
-                            ],
+                                const Gap(16),
+                                Container(
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[50],
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  child: Text(
+                                    data.description,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.black87,
+                                      height: 1.6,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
 
                         const Gap(32),
 
                         // Join Button
-                        if (isMember)
+                        if (!isMember)
                           Container(
                             margin: const EdgeInsets.all(24),
                             child: buildGradientButton(
@@ -280,7 +285,47 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                             ),
                           ),
 
-                          
+                        if (isMember)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 24),
+                            child: Text(
+                              'Posts',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        if (isMember)
+                          FutureBuilder(
+                              future:
+                                  PostHelper(getPocketBaseFromContext(context))
+                                      .getCommunityPosts(data.id),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return Center(
+                                    child: CircularProgressIndicator(
+                                      color: AppColors.primary,
+                                    ),
+                                  );
+                                }
+                                if (!snapshot.hasData ||
+                                    snapshot.data!.isEmpty) {
+                                  return const Center(
+                                    child: Text('No Recent Posts'),
+                                  );
+                                }
+                                return SizedBox(
+                                  height: 400,
+                                  child: ListView.builder(
+                                      itemCount: snapshot.data!.length,
+                                      itemBuilder: (context, index) {
+                                        return CommunityPostCard(
+                                            post: snapshot.data![index]);
+                                      }),
+                                );
+                              })
                       ],
                     ),
                   ),

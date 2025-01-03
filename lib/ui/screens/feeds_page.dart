@@ -276,7 +276,7 @@ class _FeedsListScreenState extends State<FeedsListScreen> {
               return ListView.builder(
                 controller: _scrollController,
                 padding: const EdgeInsets.only(top: 8),
-                itemCount: feeds.length + 1,
+                itemCount: feeds.length +1,
                 itemBuilder: (context, index) {
                   if (index == feeds.length) {
                     return _isLoadingMore

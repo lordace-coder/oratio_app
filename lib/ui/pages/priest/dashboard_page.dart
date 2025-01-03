@@ -24,6 +24,7 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   bool showBalance = false;
   List _availableBanks = [];
+  RecordModel? myParish;
 
   void showComingSoon() {
     NotificationService.showInfo("Coming soon", duration: Durations.extralong4);
@@ -31,6 +32,17 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<void> loadChurchForPriest() async {
     final pb = context.read<PocketBaseServiceCubit>().state.pb;
+    final userId = pb.authStore.model.id;
+    try {
+      final record = await pb.collection('parish').getFirstListItem(
+            'priest = "$userId"',
+          );
+      setState(() {
+        myParish = record;
+      });
+    } catch (e) {
+      print('Error fetching parish: $e');
+    }
     final profile = context.read<ProfileDataCubit>();
     await profile.getMyProfile();
   }
@@ -64,13 +76,14 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     handleGetBankList();
+
     return Scaffold(
       body: Container(
         color: const Color.fromARGB(255, 243, 243, 243),
         child: SafeArea(
           child: Column(
             children: [
-              _buildHeader(context),
+              _buildHeader(context, myParish?.getStringValue('name') ?? ''),
               Expanded(
                 child: RefreshIndicator.adaptive(
                   color: AppColors.primary,
@@ -98,7 +111,7 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(BuildContext context, String parishName) {
     return Container(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -109,9 +122,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 context.pop();
               },
               icon: const Icon(FontAwesomeIcons.arrowLeft)),
-          const Text(
-            'Parish Dashboard',
-            style: TextStyle(
+          Text(
+            '$parishName\'s Dashboard',
+            style: const TextStyle(
               fontSize: 24,
               // color: Colors.white,
               fontWeight: FontWeight.bold,

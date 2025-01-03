@@ -11,7 +11,7 @@ class ProfileDataCubit extends Cubit<ProfileDataState> {
   ProfileDataCubit(this.pb) : super(ProfileDataInitial());
 
   Future getMyProfile() async {
-    if (state is ProfileDataLoaded) {
+    if (state is! ProfileDataLoaded) {
       emit(ProfileDataLoading());
     }
 
