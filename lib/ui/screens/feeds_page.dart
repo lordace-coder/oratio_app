@@ -179,9 +179,7 @@ class _FeedsListScreenState extends State<FeedsListScreen> {
       body: RefreshIndicator.adaptive(
         onRefresh: () async {
           await context.read<CentralCubit>().getFeeds();
-          setState(() {
-            _hasMoreFeeds = true;
-          });
+    
         },
         child: BlocBuilder<CentralCubit, List>(
           builder: (context, feeds) {
