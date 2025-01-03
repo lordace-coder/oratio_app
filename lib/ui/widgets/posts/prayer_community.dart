@@ -205,7 +205,6 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
                       await postHelper.likePost(data.id);
                       (data.likes).add(data.id);
                     }
-
                     setState(() {
                       hasLiked = !hasLiked!;
                     });

@@ -394,7 +394,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 _buildServiceButton(
                   icon: FontAwesomeIcons.readme,
-                  label: 'Go Mass',
+                  label: 'Go Live',
                   onTap: showComingSoon,
                   color: Colors.red,
                 ),

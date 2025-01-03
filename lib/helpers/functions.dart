@@ -405,8 +405,8 @@ class PaymentModal extends StatelessWidget {
 }
 
 String formatDateTimeToHoursAgo(DateTime dateTime) {
-  final now = DateTime.now().toUtc();
-  final difference = now.difference(dateTime);
+  final now = DateTime.now().toLocal();
+  final difference = now.difference(dateTime.toLocal());
 
   if (difference.inMinutes < 60) {
     return '${difference.inMinutes} minutes ago';

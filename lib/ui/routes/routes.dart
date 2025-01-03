@@ -89,7 +89,8 @@ class AppRouter {
         initialLocation: initialLocation,
         redirect: (context, state) async {
           final pb = getPocketBaseFromContext(context);
-          print('router says ${!pb.authStore.isValid}');
+          print(
+              'router says ${!pb.authStore.isValid && !state.fullPath!.contains('/auth')}');
           // final prefs = await SharedPreferences.getInstance();
 
           // print('token is ${prefs.getString('pb_auth')}');

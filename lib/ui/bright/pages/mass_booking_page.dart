@@ -217,6 +217,7 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
         title: Text(
           'Mass Bookings',
           style: GoogleFonts.nunito(
+            color: Colors.white.withOpacity(0.5),
             fontWeight: FontWeight.bold,
             fontSize: 22,
           ),

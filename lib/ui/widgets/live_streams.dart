@@ -6,9 +6,9 @@ Widget buildStorySection(BuildContext context) {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 9),
         child: Text(
-          'Live Masses',
+          'Prayers',
           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -64,7 +64,7 @@ class _StoryAvatar extends StatelessWidget {
         ),
         const Gap(4),
         Text(
-          index == 0 ? 'Add Story' : 'User $index',
+          index == 0 ? 'Say Prayer' : 'User $index',
           style: Theme.of(context).textTheme.labelSmall,
         ),
       ],
