@@ -19,6 +19,7 @@ import 'package:go_router/go_router.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/widgets/live_streams.dart';
 import 'package:oratio_app/ui/widgets/posts/prayer_community.dart';
+import 'package:oratio_app/ui/widgets/prayer_requests.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -132,15 +133,15 @@ class _FeedsListScreenState extends State<FeedsListScreen> {
                       children: [
                         GestureDetector(
                           onTap: () {
-                            context.pushNamed(RouteNames.createPrayerRequest);
+                            context.pushNamed(RouteNames.profile);
                           },
                           child: Icon(
-                            FontAwesomeIcons.circlePlus,
+                            FontAwesomeIcons.userTie,
                             color: Colors.black.withOpacity(0.6),
                             size: 21,
                           ),
                         ),
-                        const Gap(12),
+                        const Gap(15),
                         GestureDetector(
                           onTap: () {
                             context.pushNamed(RouteNames.connect);
@@ -151,7 +152,7 @@ class _FeedsListScreenState extends State<FeedsListScreen> {
                             size: 21,
                           ),
                         ),
-                        const Gap(12),
+                        const Gap(15),
                         GestureDetector(
                           onTap: () =>
                               context.pushNamed(RouteNames.notifications),
@@ -223,9 +224,14 @@ class _FeedsListScreenState extends State<FeedsListScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 child: Column(
                   children: [
-                    ColoredBox(
+                    const ColoredBox(
                       color: Colors.white,
-                      child: buildStorySection(context),
+                      child: PrayerRequestGroupsList(),
+                    ),
+                    LiveWidget(
+                      currentAttendees: 'Bright and others',
+                      onJoinPressed: () {},
+                      parishName: 'Udi Deanary',
                     ),
                     ListView.builder(
                       shrinkWrap: true,
@@ -528,6 +534,191 @@ class CustomButton extends StatelessWidget {
             fontSize: 18,
             fontWeight: FontWeight.bold,
             letterSpacing: 1,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class LiveWidget extends StatefulWidget {
+  final String parishName;
+  final String currentAttendees;
+  final VoidCallback onJoinPressed;
+
+  const LiveWidget({
+    super.key,
+    required this.parishName,
+    required this.currentAttendees,
+    required this.onJoinPressed,
+  });
+
+  @override
+  _LiveWidgetState createState() => _LiveWidgetState();
+}
+
+class _LiveWidgetState extends State<LiveWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      // margin: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: Colors.red.shade400,
+          width: 2.0,
+        ),
+        // borderRadius: BorderRadius.circular(16.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.red.withOpacity(0.2),
+            blurRadius: 8.0,
+            spreadRadius: 2.0,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        // borderRadius: BorderRadius.circular(14.0),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white,
+                Colors.red.shade50,
+              ],
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    AnimatedBuilder(
+                      animation: _pulseAnimation,
+                      builder: (context, child) {
+                        return Transform.scale(
+                          scale: _pulseAnimation.value,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8.0,
+                              vertical: 4.0,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.radio_button_checked,
+                                  color: Colors.white,
+                                  size: 12.0,
+                                ),
+                                SizedBox(width: 4.0),
+                                Text(
+                                  'LIVE',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12.0,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 12.0),
+                    Expanded(
+                      child: Text(
+                        widget.parishName,
+                        style: const TextStyle(
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12.0),
+                // Row(
+                //   children: [
+                //     Icon(
+                //       Icons.people_outline,
+                //       size: 16.0,
+                //       color: Colors.grey[600],
+                //     ),
+                //     const SizedBox(width: 4.0),
+                //     Text(
+                //       '${widget.currentAttendees} listening',
+                //       style: TextStyle(
+                //         color: Colors.grey[600],
+                //         fontSize: 14.0,
+                //       ),
+                //     ),
+                //   ],
+                // ),
+                const SizedBox(height: 16.0),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: widget.onJoinPressed,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red.shade400,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      elevation: 2.0,
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.headphones),
+                        SizedBox(width: 8.0),
+                        Text(
+                          'Join Live Mass',
+                          style: TextStyle(
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

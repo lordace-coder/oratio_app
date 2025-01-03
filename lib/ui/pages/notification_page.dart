@@ -70,17 +70,36 @@ class NotificationPage extends StatelessWidget {
                 );
               } else {
                 // there are notifications
-                return ListView.builder(
-                  padding: const EdgeInsets.only(left: 5.0, right: 5, top: 5),
-                  itemCount: state.notifications.length,
-                  itemBuilder: (BuildContext context, int index) {
-                    return NotificationItem(data: state.notifications[index]);
+                final data = state.notifications.reversed.toList();
+                return RefreshIndicator.adaptive(
+                  onRefresh: () async {
+                    await context
+                        .read<NotificationCubit>()
+                        .fetchNotifications();
+                    context.read<NotificationCubit>().realtimeConnection();
                   },
+                  child: ListView.builder(
+                    itemCount: state.notifications.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return NotificationItem(data: data[index]);
+                    },
+                  ),
                 );
               }
             } else if (state is NotificationLoading) {
               return Container(
-                child: const Text('loading'),
+                color: Colors.white,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Row(),
+                    Lottie.asset(
+                        height: 200,
+                        'assets/lottie/anim1.json',
+                        options:
+                            LottieOptions(enableApplyingOpacityToLayers: true)),
+                  ],
+                ),
               );
             }
             return Container(
@@ -101,7 +120,7 @@ class NotificationItem extends StatelessWidget {
   Widget build(BuildContext context) {
     DateFormat format = DateFormat("yyyy-MM-dd HH:mm:ss.SSS'Z'");
     return Container(
-      margin: const EdgeInsets.only(bottom: 5),
+      // margin: const EdgeInsets.only(bottom: 5),
       child: Slidable(
         startActionPane: ActionPane(motion: const ScrollMotion(), children: [
           SlidableAction(
@@ -134,8 +153,7 @@ class NotificationItem extends StatelessWidget {
             vertical: 5,
           ),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
+            color: data.getBoolValue('read') ? Colors.white : Colors.blue[100],
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -150,6 +168,7 @@ class NotificationItem extends StatelessWidget {
                     Align(
                       alignment: Alignment.bottomLeft,
                       child: Text(
+                        style: const TextStyle(fontSize: 17),
                         data.getStringValue('title'),
                       ),
                     ),
