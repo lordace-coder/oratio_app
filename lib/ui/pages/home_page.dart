@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:oratio_app/bloc/blocs.dart';
+import 'package:oratio_app/bloc/chat_cubit/chat_cubit.dart';
 import 'package:oratio_app/popup_notification/popup_notification.dart';
 import 'package:oratio_app/ui/screens/chat_screen.dart';
 import 'package:oratio_app/ui/screens/feeds_page.dart';
@@ -30,9 +31,6 @@ class _HomePageState extends State<HomePage> {
     PopupNotification.initialize(context);
   }
 
-
-
-  
   @override
   void dispose() {
     super.dispose();
@@ -53,13 +51,23 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: _selectedIndex == 2 ? Colors.white : AppColors.gray,
         body: _pages[_selectedIndex],
         bottomNavigationBar: BottomNavigationBar(
-          items: const [
-            BottomNavigationBarItem(
+          items: [
+            const BottomNavigationBarItem(
                 icon: Icon(FontAwesomeIcons.rss), label: 'Feeds'),
-            BottomNavigationBarItem(
+            const BottomNavigationBarItem(
                 icon: Icon(FontAwesomeIcons.wallet), label: 'Wallet'),
             BottomNavigationBarItem(
-                icon: Icon(FontAwesomeIcons.solidMessage), label: 'Check Up'),
+                icon: Badge(
+                    isLabelVisible:
+                        context.read<ChatCubit>().unreadCount(true) > 0,
+                    label: context.read<ChatCubit>().unreadCount(true) > 0
+                        ? Text(context
+                            .watch<ChatCubit>()
+                            .unreadCount(true)
+                            .toString())
+                        : null,
+                    child: const Icon(FontAwesomeIcons.solidMessage)),
+                label: 'Check Up'),
           ],
           currentIndex: _selectedIndex,
           selectedItemColor:
