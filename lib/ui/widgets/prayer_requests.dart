@@ -175,7 +175,12 @@ class _PrayerRequestGroupsListState extends State<PrayerRequestGroupsList> {
         }
 
         if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(
+              child: Center(
+                  child: Padding(
+            padding: EdgeInsets.all(20),
+            child: Text('Loading Prayers...'),
+          )));
         }
 
         final groups = snapshot.data!;
@@ -199,12 +204,16 @@ class _PrayerRequestGroupsListState extends State<PrayerRequestGroupsList> {
                   itemCount: groups.length,
                   itemBuilder: (context, index) {
                     final group = groups[index];
-                    print(groups);
+                    if (index == 0) {
+                      _StoryAvatar(
+                        index: 1,
+                        user: getPocketBaseFromContext(context).authStore.model,
+                      );
+                    }
                     return Padding(
                       padding: const EdgeInsets.only(right: 12),
                       child: GestureDetector(
                           onTap: () {
-                            
                             Navigator.push(
                               context,
                               MaterialPageRoute(
