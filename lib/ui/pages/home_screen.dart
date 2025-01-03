@@ -27,6 +27,13 @@ class _HomeScreenState extends State<HomeScreen> {
   String bal = '₦0.00';
   @override
   Widget build(BuildContext context) {
+    final pb = context.read<PocketBaseServiceCubit>().state.pb;
+    if (!pb.authStore.isValid) {
+      pb.authStore.clear();
+      return const Center(
+        child: Text('Bad Error, Please Log Out and Login Again'),
+      );
+    }
     context
         .read<PocketBaseServiceCubit>()
         .state

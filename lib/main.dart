@@ -97,11 +97,20 @@ void main() async {
     pb = PocketBase(
       AppData.baseUrl,
       authStore: AsyncAuthStore(
-        save: (String data) async => pref.setString('pb_auth', data),
-        initial: pref.getString('pb_auth'),
-      ),
+          save: (String data) async => pref.setString('pb_auth', data),
+          initial: pref.getString('pb_auth'),
+          clear: () => pref.remove('pb_auth')),
     );
-  } catch (e) {}
+  } catch (e) {
+    print('Error creating PocketBase instance: $e');
+  }
+  print('auth valid == ${pb?.authStore.isValid}');
+  try {
+    pb?.collection('users').authRefresh();
+  } catch (e) {
+    pb?.authStore.clear();
+    print('Error refreshing PocketBase auth: $e');
+  }
   final repository = MessageRepository(
     pocketBase: pb!,
     messageBox: await Hive.openBox<MessageModel>('messages'),
@@ -110,7 +119,9 @@ void main() async {
   final notificationCubit = NotificationCubit(pbCubit.state.pb);
   try {
     await notificationCubit.fetchNotifications();
-  } catch (e) {}
+  } catch (e) {
+    print('Error fetching notifications: $e');
+  }
   final appRouter = AppRouter(pref: pref);
 
   ChatService chatService = ChatService(pbCubit.state.pb);
@@ -145,7 +156,10 @@ void main() async {
             try {
               chat.loadRecentChats();
               chat.subscribeToMessages(context);
-            } catch (e) {}
+            } catch (e) {
+              print(
+                  'Error loading recent chats or subscribing to messages: $e');
+            }
             return chat;
           },
           lazy: false,
@@ -195,11 +209,12 @@ class _MainAppState extends State<MainApp> {
 
   void connectWebSocket() {
     final pb = getPocketBaseFromContext(context);
-    if (!pb.authStore.isValid) {
+    if (!pb.authStore.isValid || pb.authStore.model == null) {
       return;
     }
+    final userId = pb.authStore.model.id;
     channel = WebSocketChannel.connect(
-      Uri.parse('ws://bookmass.fly.dev/ws?uid=${pb.authStore.model.id}'),
+      Uri.parse('ws://bookmass.fly.dev/ws?uid=$userId'),
     );
 
     channel!.stream.listen(
@@ -216,6 +231,13 @@ class _MainAppState extends State<MainApp> {
   }
 
   Future<void> _initializeApp() async {
+    final pb = getPocketBaseFromContext(context);
+    if (!pb.authStore.isValid) {
+      setState(() {
+        _isInitialized = true;
+      });
+      return;
+    }
     await context.read<CentralCubit>().initialize(context);
     await context.read<CentralCubit>().getFeeds();
 

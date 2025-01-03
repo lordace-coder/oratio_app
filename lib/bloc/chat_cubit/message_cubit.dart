@@ -42,8 +42,8 @@ class MessageCubit extends Cubit<MessageState> {
     _initMessageSubscription();
   }
 
-
   void _initMessageSubscription() async {
+    if (!pb.authStore.isValid) return;
     final currentUserId = pb.authStore.model.id;
     print('${currentUserId}---userid');
     await pb.collection('messages').subscribe(
@@ -69,6 +69,7 @@ class MessageCubit extends Cubit<MessageState> {
     try {
       emit(state.copyWith(isLoading: true));
 
+      if (!pb.authStore.isValid) return;
       final currentUserId = pb.authStore.model.id;
       final response = await pb.collection('messages').getFullList(
             sort: '-created',
@@ -122,6 +123,7 @@ class MessageCubit extends Cubit<MessageState> {
     required String receiverId,
   }) async {
     try {
+      if (!pb.authStore.isValid) return;
       final currentUserId = pb.authStore.model.id;
       final newMessage = MessageModel(
         id: const Uuid().v4(),
@@ -158,6 +160,7 @@ class MessageCubit extends Cubit<MessageState> {
 
   Future<void> markMessagesAsRead() async {
     try {
+      if (!pb.authStore.isValid) return;
       final currentUserId = pb.authStore.model.id;
 
       for (var msg in state.messages) {

@@ -18,7 +18,7 @@ class ProfileDataCubit extends Cubit<ProfileDataState> {
     try {
 // check if user is a priest
       RecordModel? myParish;
-      if ((pb.authStore.model as RecordModel).getBoolValue('priest')) {
+      if (pb.authStore.isValid && (pb.authStore.model as RecordModel).getBoolValue('priest')) {
         // get parish he is leading
         final data = (await pb
                 .collection('parish')
@@ -36,6 +36,7 @@ class ProfileDataCubit extends Cubit<ProfileDataState> {
         }
       }
 
+      if (!pb.authStore.isValid) return;
       final profile = Profile(
           user: pb.authStore.model,
           userId: pb.authStore.model.id,

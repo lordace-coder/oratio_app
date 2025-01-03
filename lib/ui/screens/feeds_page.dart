@@ -44,12 +44,16 @@ class _FeedsListScreenState extends State<FeedsListScreen> {
       if (feeds.isEmpty) {
         context.read<CentralCubit>().getFeeds();
       }
-      context
-          .read<PocketBaseServiceCubit>()
-          .state
-          .pb
-          .collection('users')
-          .authRefresh();
+      try {
+        context
+            .read<PocketBaseServiceCubit>()
+            .state
+            .pb
+            .collection('users')
+            .authRefresh();
+      } catch (e) {
+        print('auth refresh in feeds screen failed pls logout');
+      }
     });
   }
 
@@ -86,6 +90,13 @@ class _FeedsListScreenState extends State<FeedsListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (!pb.authStore.isValid) {
+      pb.authStore.clear();
+
+      return const Center(
+        child: Text('Bad Error, Please Log Out and Login Again'),
+      );
+    }
     // redirect user to home page if first time
     SharedPreferences.getInstance().then((pref) {
       if (!AppRouter(pref: pref).opened()) {

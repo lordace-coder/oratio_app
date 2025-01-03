@@ -44,6 +44,9 @@ class NotificationCubit extends Cubit<NotificationState> {
   }
 
   void realtimeConnection() async {
+    if (!_pocketBase.authStore.isValid){
+      return;
+    }
     final userId = _pocketBase.authStore.model.id;
 
     _pocketBase.collection('notifications').subscribe('*', (e) {
