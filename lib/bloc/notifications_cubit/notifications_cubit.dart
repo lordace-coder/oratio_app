@@ -11,7 +11,9 @@ class NotificationCubit extends Cubit<NotificationState> {
   Future<void> fetchNotifications() async {
     try {
       emit(NotificationLoading());
-      final records = await _pocketBase.collection('notifications').getList(sort: 'created');
+      final records = await _pocketBase
+          .collection('notifications')
+          .getList(sort: '-created');
       emit(NotificationLoaded(records.items));
     } catch (e) {
       emit(NotificationError(e.toString()));
@@ -44,7 +46,7 @@ class NotificationCubit extends Cubit<NotificationState> {
   }
 
   void realtimeConnection() async {
-    if (!_pocketBase.authStore.isValid){
+    if (!_pocketBase.authStore.isValid) {
       return;
     }
     final userId = _pocketBase.authStore.model.id;
