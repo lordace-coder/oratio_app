@@ -3,6 +3,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/ui/bright/pages/create_community.dart';
 import 'package:oratio_app/ui/bright/pages/create_event.dart';
 import 'package:oratio_app/ui/bright/pages/mass_booking_page.dart';
@@ -86,7 +87,18 @@ class AppRouter {
       goRouter = GoRouter(
         redirectLimit: 2,
         initialLocation: initialLocation,
-        redirect: (context, state) {
+        redirect: (context, state) async {
+          final pb = getPocketBaseFromContext(context);
+          print('router says ${!pb.authStore.isValid}');
+          // final prefs = await SharedPreferences.getInstance();
+
+          // print('token is ${prefs.getString('pb_auth')}');
+          if (state.fullPath != null) {
+            if (!pb.authStore.isValid && !state.fullPath!.contains('/auth')) {
+              return '/auth/login';
+            }
+          }
+
           return null;
         },
         routes: [

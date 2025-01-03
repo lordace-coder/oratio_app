@@ -84,6 +84,9 @@ class AdsRepo {
   AdsRepo(this.pb);
 
   Future<List<Ad>> getAds() async {
+    if (!pb.authStore.isValid) {
+      await pb.collection('users').authWithPassword('email', 'password');
+    }
     final records = await pb.collection('ads').getList(
           page: 1,
           // perPage: 50,

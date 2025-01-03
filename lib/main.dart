@@ -102,12 +102,14 @@ void main() async {
           clear: () => pref.remove('pb_auth')),
     );
   } catch (e) {
-    print('erro creating pocketbase instance $e');
+    print('Error creating PocketBase instance: $e');
   }
+  print('auth valid == ${pb?.authStore.isValid}');
   try {
     pb?.collection('users').authRefresh();
   } catch (e) {
     pb?.authStore.clear();
+    print('Error refreshing PocketBase auth: $e');
   }
   final repository = MessageRepository(
     pocketBase: pb!,
@@ -117,7 +119,9 @@ void main() async {
   final notificationCubit = NotificationCubit(pbCubit.state.pb);
   try {
     await notificationCubit.fetchNotifications();
-  } catch (e) {}
+  } catch (e) {
+    print('Error fetching notifications: $e');
+  }
   final appRouter = AppRouter(pref: pref);
 
   ChatService chatService = ChatService(pbCubit.state.pb);
@@ -152,7 +156,10 @@ void main() async {
             try {
               chat.loadRecentChats();
               chat.subscribeToMessages(context);
-            } catch (e) {}
+            } catch (e) {
+              print(
+                  'Error loading recent chats or subscribing to messages: $e');
+            }
             return chat;
           },
           lazy: false,
@@ -224,6 +231,13 @@ class _MainAppState extends State<MainApp> {
   }
 
   Future<void> _initializeApp() async {
+    final pb = getPocketBaseFromContext(context);
+    if (!pb.authStore.isValid) {
+      setState(() {
+        _isInitialized = true;
+      });
+      return;
+    }
     await context.read<CentralCubit>().initialize(context);
     await context.read<CentralCubit>().getFeeds();
 
