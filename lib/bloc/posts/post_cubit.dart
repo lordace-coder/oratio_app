@@ -45,7 +45,7 @@ class PostHelper {
           filter: "community = '$communityId'",
           perPage: 20,
         );
-
+    print([records.items, 'ss']);
     return records.items.map((i) => Post.fromRecord(i, _pocketBase)).toList();
   }
 
@@ -77,6 +77,8 @@ class PostHelper {
   }
 
   Future<RecordModel> getPost(String id) async {
-    return await _pocketBase.collection('posts').getOne(id);
+    return await _pocketBase
+        .collection('posts')
+        .getOne(id, expand: 'community');
   }
 }

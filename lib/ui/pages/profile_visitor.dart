@@ -195,35 +195,41 @@ class _ProfileVisitorPageState extends State<ProfileVisitorPage> {
                     child: isfollowing
                         ? Column(
                             children: [
-                              _buildSection('Parish', FontAwesomeIcons.church, [
-                                ...state.guestProfile!.parish.map((item) =>
-                                    _buildParishItem(
-                                        item.getStringValue('name'),
-                                        label: 'visit', onAction: () {
-                                      openParish(context, item.id);
-                                    }))
-                              ]),
-                              _buildSection(
-                                  'Community', FontAwesomeIcons.church, [
-                                ...state.guestProfile!.community.map((item) =>
-                                    _buildParishItem(
-                                        item.getStringValue('community'),
-                                        label: 'visit', onAction: () {
-                                      openCommunity(context, item.id);
-                                    }))
-                              ]),
-                              _buildSection('Contact Information',
-                                  FontAwesomeIcons.userTie, [
-                                _buildParishItem(
-                                    data.user.getStringValue('phone_number'),
-                                    label: 'copy', onAction: () {
-                                  copyToClipboard(
-                                      context: context,
-                                      successMessage: 'Copied succesfully',
-                                      text: data.user
-                                          .getStringValue('phone_number'));
-                                }),
-                              ]),
+                              if (state.guestProfile!.parish.isNotEmpty)
+                                _buildSection(
+                                    'Parish', FontAwesomeIcons.church, [
+                                  ...state.guestProfile!.parish.map((item) =>
+                                      _buildParishItem(
+                                          item.getStringValue('name'),
+                                          label: 'visit', onAction: () {
+                                        openParish(context, item.id);
+                                      }))
+                                ]),
+                              if (state.guestProfile!.community.isNotEmpty)
+                                _buildSection(
+                                    'Community', FontAwesomeIcons.church, [
+                                  ...state.guestProfile!.community.map((item) =>
+                                      _buildParishItem(
+                                          item.getStringValue('community'),
+                                          label: 'visit', onAction: () {
+                                        openCommunity(context, item.id);
+                                      }))
+                                ]),
+                              if (data.user
+                                  .getStringValue('phone_number')
+                                  .isNotEmpty)
+                                _buildSection('Contact Information',
+                                    FontAwesomeIcons.userTie, [
+                                  _buildParishItem(
+                                      data.user.getStringValue('phone_number'),
+                                      label: 'copy', onAction: () {
+                                    copyToClipboard(
+                                        context: context,
+                                        successMessage: 'Copied succesfully',
+                                        text: data.user
+                                            .getStringValue('phone_number'));
+                                  }),
+                                ]),
                             ],
                           )
                         : const Column(

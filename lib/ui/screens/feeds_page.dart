@@ -17,6 +17,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
+import 'package:oratio_app/ui/widgets/live_streams.dart';
 import 'package:oratio_app/ui/widgets/posts/prayer_community.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -107,19 +108,10 @@ class _FeedsListScreenState extends State<FeedsListScreen> {
         context.read<NotificationCubit>().unreadNotificationCount();
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: Colors.white,
         elevation: 0,
         flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topRight,
-              end: Alignment.bottomLeft,
-              colors: [
-                Theme.of(context).primaryColor.withOpacity(0.8),
-                Theme.of(context).primaryColor,
-              ],
-            ),
-          ),
+          decoration: const BoxDecoration(),
           child: SafeArea(
             child: SingleChildScrollView(
               child: Padding(
@@ -129,69 +121,11 @@ class _FeedsListScreenState extends State<FeedsListScreen> {
                   children: [
                     Row(
                       children: [
-                        GestureDetector(
-                          onTap: () => context.pushNamed(RouteNames.profile),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Theme.of(context).primaryColor,
-                                width: 2,
-                              ),
-                            ),
-                            child: Hero(
-                              tag: "my-profile",
-                              child: CircleAvatar(
-                                backgroundColor: Colors.white,
-                                backgroundImage: getProfilePic(context,
-                                            user: pb.authStore.model
-                                                as RecordModel) ==
-                                        null
-                                    ? null
-                                    : NetworkImage(getProfilePic(context,
-                                        user: pb.authStore.model
-                                            as RecordModel)!),
-                                radius: 20,
-                                child: getProfilePic(context,
-                                            user: pb.authStore.model
-                                                as RecordModel) ==
-                                        null
-                                    ? const Icon(FontAwesomeIcons.user)
-                                    : null,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const Gap(12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Welcome back,',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall!
-                                  .copyWith(
-                                    color: Colors.white,
-                                  ),
-                            ),
-                            GestureDetector(
-                              onTap: () {
-                                context.pushNamed(RouteNames.profile);
-                              },
-                              child: Text(
-                                pb.authStore.model.data['username'],
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium
-                                    ?.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                              ),
-                            ),
-                          ],
-                        ),
+                        Text('CathsApp',
+                            style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary))
                       ],
                     ),
                     Row(
@@ -200,10 +134,10 @@ class _FeedsListScreenState extends State<FeedsListScreen> {
                           onTap: () {
                             context.pushNamed(RouteNames.createPrayerRequest);
                           },
-                          child: const Icon(
+                          child: Icon(
                             FontAwesomeIcons.circlePlus,
-                            color: Colors.white70,
-                            size: 20,
+                            color: Colors.black.withOpacity(0.6),
+                            size: 21,
                           ),
                         ),
                         const Gap(12),
@@ -211,10 +145,10 @@ class _FeedsListScreenState extends State<FeedsListScreen> {
                           onTap: () {
                             context.pushNamed(RouteNames.connect);
                           },
-                          child: const Icon(
+                          child: Icon(
                             FontAwesomeIcons.magnifyingGlass,
-                            color: Colors.white70,
-                            size: 20,
+                            color: Colors.black.withOpacity(0.8),
+                            size: 21,
                           ),
                         ),
                         const Gap(12),
@@ -224,10 +158,10 @@ class _FeedsListScreenState extends State<FeedsListScreen> {
                           child: Badge(
                             isLabelVisible: unreadNotificationCount != 0,
                             label: Text(unreadNotificationCount.toString()),
-                            child: const Icon(
+                            child: Icon(
                               FontAwesomeIcons.bell,
-                              color: Colors.white70,
-                              size: 20,
+                              color: Colors.black.withOpacity(0.7),
+                              size: 21,
                             ),
                           ),
                         ),
@@ -284,53 +218,67 @@ class _FeedsListScreenState extends State<FeedsListScreen> {
                 ),
               );
             } else {
-              return ListView.builder(
+              return SingleChildScrollView(
                 controller: _scrollController,
-                padding: const EdgeInsets.only(top: 8),
-                itemCount: feeds.length +1,
-                itemBuilder: (context, index) {
-                  if (index == feeds.length) {
-                    return _isLoadingMore
-                        ? const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 16),
-                            child: Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                          )
-                        : !_hasMoreFeeds
-                            ? const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 16),
-                                child: Center(
-                                  child: Text('You are all caught up!'),
-                                ),
-                              )
-                            : const SizedBox.shrink();
-                  }
-                  final feed = feeds[index];
-                  if (feed is Post) {
-                    return CommunityPostCard(post: feed);
-                  } else if (feed is PrayerRequest) {
-                    return PrayerRequestCard(data: feed);
-                  } else if (feed is Ad) {
-                    context.read<AdsCubit>().incrementViews(feed.id);
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  children: [
+                    ColoredBox(
+                      color: Colors.white,
+                      child: buildStorySection(context),
+                    ),
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: const EdgeInsets.only(bottom: 8),
+                      itemCount: feeds.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index == feeds.length) {
+                          return _isLoadingMore
+                              ? const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 16),
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                )
+                              : !_hasMoreFeeds
+                                  ? const Padding(
+                                      padding:
+                                          EdgeInsets.symmetric(vertical: 16),
+                                      child: Center(
+                                        child: Text('You are all caught up!'),
+                                      ),
+                                    )
+                                  : const SizedBox.shrink();
+                        }
+                        final feed = feeds[index];
+                        if (feed is Post) {
+                          return CommunityPostCard(post: feed);
+                        } else if (feed is PrayerRequest) {
+                          return PrayerRequestCard(data: feed);
+                        } else if (feed is Ad) {
+                          context.read<AdsCubit>().incrementViews(feed.id);
 
-                    return AdCard(
-                      onCancel: () {
-                        context.read<CentralCubit>().deleteAd(feed.id);
+                          return AdCard(
+                            onCancel: () {
+                              context.read<CentralCubit>().deleteAd(feed.id);
+                            },
+                            title: feed.title,
+                            description: feed.description,
+                            imageUrl: feed.image!,
+                            onTap: () {
+                              context.read<AdsCubit>().incrementClicks(feed.id);
+                            },
+                            ctaText: feed.callToAction,
+                          );
+                          // Handle other feed types if any
+                        } else {
+                          return const SizedBox.shrink();
+                        }
                       },
-                      title: feed.title,
-                      description: feed.description,
-                      imageUrl: feed.image!,
-                      onTap: () {
-                        context.read<AdsCubit>().incrementClicks(feed.id);
-                      },
-                      ctaText: feed.callToAction,
-                    );
-                    // Handle other feed types if any
-                  } else {
-                    return const SizedBox.shrink();
-                  }
-                },
+                    ),
+                  ],
+                ),
               );
             }
           },

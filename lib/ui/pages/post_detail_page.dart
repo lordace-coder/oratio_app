@@ -63,7 +63,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
     try {
       final pb = context.read<PocketBaseServiceCubit>().state.pb;
       final postHelper = PostHelper(pb);
-      final res = await postHelper.getPost(widget.postId);
+      final res = await postHelper.getPost(widget.postId,);
       setState(() {
         data = res;
         _loading = false;
@@ -71,6 +71,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
       _calculateTextHeight(); // Recalculate text height when data is fetched
       return;
     } catch (e) {
+      print(e);
       NotificationService.showError('Error occurred getting post');
       setState(() {
         error = true;
@@ -141,6 +142,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
       }
     } catch (e) {
       // display error on ui
+      print(e);
+
       NotificationService.showError('An error occurred uploading comment');
     }
   }
@@ -164,6 +167,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
       });
     } catch (e) {
       // display error on ui
+      print(e);
+
       print('error occurred in getComments $e');
       error = true;
     }
@@ -189,6 +194,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    print(1);
     if (_loading && data == null) {
       return Scaffold(
         body: Container(
@@ -196,20 +202,32 @@ class _PostDetailPageState extends State<PostDetailPage> {
         ),
       );
     }
+    if (data == null) {
+      return const Scaffold(
+        body: Center(
+          child: Text('Error loading post'),
+        ),
+      );
+    }
     final userId =
         context.read<PocketBaseServiceCubit>().state.pb.authStore.model.id;
     hasLiked ??= (data!.getListValue('likes')).contains(userId);
 
-    final avatarUrl = getAvatarUrl(
-      context,
-      record: data!.expand['community']!.first,
-      fileName: data!.expand['community']!.first.getStringValue('image'),
-    );
+    final community = data!.expand['community']?.first;
+    final avatarUrl = community != null
+        ? getAvatarUrl(
+            context,
+            record: community,
+            fileName: community.getStringValue('image'),
+          )
+        : null;
+
     if (comments.isEmpty && !searched) {
       getComments(context);
       searched = true;
     }
     final pb = getPocketBaseFromContext(context);
+    print([community, 'ss']);
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: Column(
@@ -229,7 +247,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                     onPressed: () => Navigator.pop(context),
                   ),
                   title: Text(
-                    '${data!.expand['community']!.first.getStringValue('community')}\'s Post',
+                    '${community?.getStringValue('community') ?? ''}\'s Post',
                     style: const TextStyle(color: Colors.black, fontSize: 15),
                   ),
                   centerTitle: true,
@@ -254,9 +272,12 @@ class _PostDetailPageState extends State<PostDetailPage> {
                     GestureDetector(
                       onTap: () {
                         try {
-                          openCommunity(
-                              context, data!.expand['community']!.first.id);
+                          if (community != null) {
+                            openCommunity(context, community.id);
+                          }
                         } catch (e) {
+                          print(e);
+
                           NotificationService.showError('Something went wrong');
                         }
                       },
@@ -280,8 +301,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  data!.expand['community']!.first
-                                      .getStringValue('community'),
+                                  community?.getStringValue('community') ?? '',
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,

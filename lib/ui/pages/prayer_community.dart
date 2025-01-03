@@ -33,7 +33,6 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
 
     final image =
         pb.getFileUrl(record, record.getStringValue('avatar')).toString();
-    print(image);
     return image;
   }
 
@@ -300,7 +299,7 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                           FutureBuilder(
                               future:
                                   PostHelper(getPocketBaseFromContext(context))
-                                      .getCommunityPosts(data.id),
+                                      .getCommunityPosts(widget.communityId),
                               builder: (context, snapshot) {
                                 if (snapshot.connectionState ==
                                     ConnectionState.waiting) {
@@ -316,14 +315,13 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                                     child: Text('No Recent Posts'),
                                   );
                                 }
-                                return SizedBox(
-                                  height: 400,
-                                  child: ListView.builder(
-                                      itemCount: snapshot.data!.length,
-                                      itemBuilder: (context, index) {
-                                        return CommunityPostCard(
-                                            post: snapshot.data![index]);
-                                      }),
+                                return Column(
+                                  children: [
+                                    for (final post in snapshot.data!)
+                                      CommunityPostCard(
+                                        post: post,
+                                      ),
+                                  ],
                                 );
                               })
                       ],
@@ -355,6 +353,7 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                           ),
                           isLeader
                               ? PopupMenuButton(
+                                  position: PopupMenuPosition.under,
                                   icon: Container(
                                     padding: const EdgeInsets.all(8),
                                     decoration: BoxDecoration(

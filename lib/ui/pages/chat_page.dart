@@ -327,10 +327,9 @@ class _ChatPageState extends State<ChatPage> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  if (!widget.profile.user.getBoolValue('active') &&
-                      widget.profile.user.getStringValue('last_seen') != '')
+                  if (widget.profile.user.getBoolValue('active') == false)
                     Text(
-                      'last seen ${formatDateTimeToHoursAgo(format.parse(widget.profile.user.getStringValue('last_seen')))}',
+                      'last seen ${formatDateTimeToHoursAgo(DateTime.parse(widget.profile.user.updated))}',
                       style: const TextStyle(
                         fontSize: 12,
                         color: Colors.black54,
