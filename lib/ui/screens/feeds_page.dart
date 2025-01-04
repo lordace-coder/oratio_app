@@ -108,7 +108,8 @@ class _FeedsListScreenState extends State<FeedsListScreen> {
     final unreadNotificationCount =
         context.read<NotificationCubit>().unreadNotificationCount();
     return Scaffold(
-      appBar: AppBar(automaticallyImplyLeading: false,
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.white,
         elevation: 0,
         flexibleSpace: Container(
@@ -179,7 +180,6 @@ class _FeedsListScreenState extends State<FeedsListScreen> {
       body: RefreshIndicator.adaptive(
         onRefresh: () async {
           await context.read<CentralCubit>().getFeeds();
-    
         },
         child: BlocBuilder<CentralCubit, List>(
           builder: (context, feeds) {
@@ -226,11 +226,17 @@ class _FeedsListScreenState extends State<FeedsListScreen> {
                       color: Colors.white,
                       child: PrayerRequestGroupsList(),
                     ),
-                    LiveWidget(
-                      currentAttendees: 'Bright and others',
-                      onJoinPressed: () {},
-                      parishName: 'Udi Deanary',
-                    ),
+                    context.watch<CentralCubit>().liveParishes.isNotEmpty
+                        ? LiveWidget(
+                            currentAttendees: 'Bright and others',
+                            onJoinPressed: () {},
+                            parishName: context
+                                .read<CentralCubit>()
+                                .liveParishes
+                                .first
+                                .getStringValue('name'),
+                          )
+                        : const SizedBox.shrink(),
                     ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),

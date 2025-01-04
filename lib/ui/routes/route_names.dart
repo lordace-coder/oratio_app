@@ -32,6 +32,6 @@ class RouteNames {
   static String createEvent = 'createEventPage';
   static String massRequests = 'mass-requests-page';
   static String createCommunityPage = 'create-community-page';
-   static String createPost = 'create-post-page';
-
+  static String createPost = 'create-post-page';
+  static String liveMassPage = 'live-mass-page';
 }

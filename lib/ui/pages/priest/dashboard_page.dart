@@ -10,6 +10,7 @@ import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/bloc/transactions_cubit/transaction_cubit.dart';
 import 'package:oratio_app/networkProvider/paystack_payment.dart';
 import 'package:oratio_app/ui/bright/pages/withdrawal_modal.dart';
+import 'package:oratio_app/ui/pages/priest/live_page.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -395,7 +396,18 @@ class _DashboardPageState extends State<DashboardPage> {
                 _buildServiceButton(
                   icon: FontAwesomeIcons.readme,
                   label: 'Go Live',
-                  onTap: showComingSoon,
+                  onTap: () {
+                    if (myParish!.getBoolValue('canGoLive')) {
+                      // handle going live
+                      Navigator.of(context).push(LiveMassPage.route(
+                        parishId: myParish!.id,
+                        isPriest: true,
+                      ));
+                    } else {
+                      NotificationService.showWarning(
+                          'This Service is not available for your parish');
+                    }
+                  },
                   color: Colors.red,
                 ),
               ],
