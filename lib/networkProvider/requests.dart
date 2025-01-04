@@ -180,3 +180,13 @@ Future<Map> getRandomBibleReading() async {
   final response = await dio.get('https://bible-api.com/?random=verse');
   return response.data as Map;
 }
+
+
+Future<RecordModel?> getParishGoingLive(PocketBase pb)async{
+  try{
+final data = await pb.collection('parish').getList(filter: 'isLive = true');
+return data.items.first;
+  }catch(e){
+    return null;
+  }
+}

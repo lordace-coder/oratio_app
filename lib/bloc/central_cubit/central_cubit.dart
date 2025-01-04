@@ -10,6 +10,7 @@ import 'package:oratio_app/bloc/posts/post_cubit.dart';
 import 'package:oratio_app/bloc/notifications_cubit/notifications_cubit.dart';
 import 'package:oratio_app/bloc/chat_cubit/message_cubit.dart';
 import 'package:oratio_app/bloc/chat_cubit/chat_cubit.dart';
+import 'package:oratio_app/networkProvider/requests.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class CentralCubit extends Cubit<List> {
@@ -21,6 +22,7 @@ class CentralCubit extends Cubit<List> {
   final ChatCubit chatCubit;
   final PocketBase pb;
   final AdsRepo adsRepo;
+  List<RecordModel> liveParishes = [];
 
   CentralCubit({
     required this.adsRepo,
@@ -65,6 +67,7 @@ class CentralCubit extends Cubit<List> {
     final posts = await postHelper.fetchPosts();
     final prayerRequests = await prayerRequestHelper.fetchPrayerRequests();
     final ads = await adsRepo.getAds();
+    await checkLiveParishes();
     emit([...posts, ...prayerRequests, ...ads]..shuffle());
   }
 
@@ -81,5 +84,16 @@ class CentralCubit extends Cubit<List> {
     final newFeeds = [...posts, ...prayerRequests, ...ads];
     emit([...state, ...newFeeds]..shuffle());
     return newFeeds;
+  }
+
+  Future<void> checkLiveParishes() async {
+    final data = await getParishGoingLive(pb);
+    if (data == null) {
+      emit([...state]);
+      liveParishes = [];
+      return;
+    }
+    liveParishes = [data];
+    emit([...state]);
   }
 }

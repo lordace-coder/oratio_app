@@ -10,6 +10,7 @@ import 'package:oratio_app/ui/bright/pages/mass_booking_page.dart';
 import 'package:oratio_app/ui/pages/create_new_post.dart';
 import 'package:oratio_app/ui/pages/edit_profile_page.dart';
 import 'package:oratio_app/ui/pages/post_detail_page.dart';
+import 'package:oratio_app/ui/pages/priest/live_page.dart';
 import 'package:oratio_app/ui/pages/search_page.dart';
 import 'package:oratio_app/ui/screens/chat_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -198,6 +199,11 @@ class AppRouter {
                     postId: state.pathParameters['post'].toString(),
                   ),
                 ),
+                // GoRoute(
+                //   path: '/${RouteNames.liveMassPage}',
+                //   name: RouteNames.liveMassPage,
+                //   builder: (context, state) => const LiveMassPage(parishId: '',),
+                // ),
                 GoRoute(
                     path: '/editprofile',
                     name: RouteNames.editprofile,
