@@ -18,8 +18,9 @@ import 'package:oratio_app/ui/widgets/posts/bottom_scaffold.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class CommunityPostCard extends StatefulWidget {
-  const CommunityPostCard({super.key, required this.post});
+  const CommunityPostCard({super.key, required this.post, this.inPage = false});
   final Post post;
+  final bool inPage;
 
   @override
   State<CommunityPostCard> createState() => _CommunityPostCardState();
@@ -87,10 +88,12 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
           // Post Header
           ListTile(
             onTap: () {
-              try {
-                openCommunity(context, widget.post.communityId!);
-              } catch (e) {
-                NotificationService.showError('Something went wrong');
+              if (!widget.inPage) {
+                try {
+                  openCommunity(context, widget.post.communityId!);
+                } catch (e) {
+                  NotificationService.showError('Something went wrong');
+                }
               }
             },
             contentPadding: const EdgeInsets.all(10),
