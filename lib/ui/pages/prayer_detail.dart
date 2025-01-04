@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
@@ -9,6 +10,7 @@ import 'package:oratio_app/helpers/user.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/ui/widgets/posts/bottom_scaffold.dart';
 import 'package:pocketbase/pocketbase.dart';
+import 'dart:math';
 
 class PrayerRequestViewer extends StatefulWidget {
   final List<PrayerRequest> prayerRequests;
@@ -35,6 +37,16 @@ class _PrayerRequestViewerState extends State<PrayerRequestViewer>
   intl.DateFormat format = intl.DateFormat("yyyy-MM-dd HH:mm:ss.SSS'Z'");
   PrayerRequest? _prayerRequest;
   late PocketBase pb;
+
+  Color _randomBackgroundColor() {
+    final random = Random();
+    return Color.fromARGB(
+      255,
+      random.nextInt(128), // Limit to darker colors
+      random.nextInt(128),
+      random.nextInt(128),
+    );
+  }
 
   @override
   void initState() {
@@ -154,167 +166,161 @@ class _PrayerRequestViewerState extends State<PrayerRequestViewer>
 
     return Scaffold(
       backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              SafeArea(
-                child: Container(
-                  padding: const EdgeInsets.only(top: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
+      body: SafeArea(
+        child: Column(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.black,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
                   ),
-                  child: Column(
-                    children: [
-                      // Progress Bars
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        child: Row(
-                          children: List.generate(
-                            widget.prayerRequests.length,
-                            (index) => Expanded(
-                              child: Container(
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 2),
-                                height: 3,
-                                decoration: BoxDecoration(
-                                  color: index <= _currentIndex
-                                      ? Theme.of(context).primaryColor
-                                      : index == _currentIndex
-                                          ? Color.lerp(
-                                              Colors.grey[300],
-                                              Theme.of(context).primaryColor,
-                                              _progressAnimation.value,
-                                            )
-                                          : Colors.grey[300],
-                                  borderRadius: BorderRadius.circular(1.5),
-                                ),
-                              ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  // Progress Bars
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Row(
+                      children: List.generate(
+                        widget.prayerRequests.length,
+                        (index) => Expanded(
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 2),
+                            height: 3,
+                            decoration: BoxDecoration(
+                              color: index <= _currentIndex
+                                  ? Theme.of(context).primaryColor
+                                  : index == _currentIndex
+                                      ? Color.lerp(
+                                          Colors.grey[300],
+                                          Theme.of(context).primaryColor,
+                                          _progressAnimation.value,
+                                        )
+                                      : Colors.grey[300],
+                              borderRadius: BorderRadius.circular(1.5),
                             ),
                           ),
                         ),
                       ),
+                    ),
+                  ),
 
-                      // Header with user info
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          children: [
-                            GestureDetector(
-                              onTap: () {
-                                openProfile(context, request.user.id);
-                              },
-                              child: Row(
-                                children: [
-                                  CircleAvatar(
-                                    radius: 20,
-                                    backgroundColor: Theme.of(context)
-                                        .primaryColor
-                                        .withOpacity(0.1),
-                                    backgroundImage: getProfilePic(context,
-                                                user: request.user) !=
-                                            null
-                                        ? NetworkImage(getProfilePic(context,
-                                            user: request.user)!)
-                                        : null,
-                                    child: getProfilePic(context,
-                                                user: request.user) ==
-                                            null
-                                        ? Text(
-                                            '${request.user.getStringValue('first_name')[0]}${request.user.getStringValue('last_name')[0]}'
-                                                .toUpperCase(),
-                                            style: TextStyle(
-                                              color: Theme.of(context)
-                                                  .primaryColor,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          )
-                                        : null,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        request.user.getStringValue('username'),
+                  // Header with user info
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            openProfile(context, request.user.id);
+                          },
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 20,
+                                backgroundColor: Theme.of(context)
+                                    .primaryColor
+                                    .withOpacity(0.1),
+                                backgroundImage: getProfilePic(context,
+                                            user: request.user) !=
+                                        null
+                                    ? NetworkImage(getProfilePic(context,
+                                        user: request.user)!)
+                                    : null,
+                                child: getProfilePic(context,
+                                            user: request.user) ==
+                                        null
+                                    ? Text(
+                                        '${request.user.getStringValue('first_name')[0]}${request.user.getStringValue('last_name')[0]}'
+                                            .toUpperCase(),
                                         style: TextStyle(
-                                          color: Colors.white.withOpacity(0.8),
+                                          color: Theme.of(context).primaryColor,
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 16,
                                         ),
+                                      )
+                                    : null,
+                              ),
+                              const SizedBox(width: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    request.user.getStringValue('username'),
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.8),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.access_time,
+                                        size: 14,
+                                        color: Colors.grey[600],
                                       ),
-                                      const SizedBox(height: 2),
-                                      Row(
-                                        children: [
-                                          Icon(
-                                            Icons.access_time,
-                                            size: 14,
-                                            color: Colors.grey[600],
-                                          ),
-                                          const SizedBox(width: 4),
-                                          Text(
-                                            formatDateTimeToHoursAgo(
-                                              DateTime.parse(request.created),
-                                            ),
-                                            style: TextStyle(
-                                              color: Colors.grey[600],
-                                              fontSize: 13,
-                                            ),
-                                          ),
-                                        ],
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        formatDateTimeToHoursAgo(
+                                          DateTime.parse(request.created),
+                                        ),
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 13,
+                                        ),
                                       ),
                                     ],
                                   ),
                                 ],
                               ),
-                            ),
-                            const Spacer(),
-                            IconButton(
-                              icon: const Icon(Icons.close),
-                              onPressed: () => Navigator.of(context).pop(),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        margin: const EdgeInsets.only(bottom: 24),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: request.urgent
-                              ? Colors.orange.withOpacity(0.1)
-                              : Colors.green.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          request.urgent
-                              ? 'Urgent Prayer Request'
-                              : 'Just talking to God',
-                          style: TextStyle(
-                            color:
-                                request.urgent ? Colors.orange : Colors.green,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                            ],
                           ),
                         ),
-                      ),
-                    ],
+                        const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => context.pop(),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 24),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: request.urgent
+                          ? Colors.orange.withOpacity(0.1)
+                          : Colors.green.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      request.urgent
+                          ? 'Urgent Prayer Request'
+                          : 'Just talking to God',
+                      style: TextStyle(
+                        color: request.urgent ? Colors.orange : Colors.green,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
               ),
+            ),
 
-              // Prayer Request Content
-              Expanded(
+            // Prayer Request Content
+            Expanded(
+              child: ColoredBox(
+                color: _randomBackgroundColor(),
                 child: PageView.builder(
                   controller: _pageController,
                   onPageChanged: _onPageChanged,
@@ -343,72 +349,9 @@ class _PrayerRequestViewerState extends State<PrayerRequestViewer>
                   },
                 ),
               ),
-            ],
-          ),
-
-          // Navigation Buttons
-          Positioned.fill(
-            child: Row(
-              children: [
-                if (_currentIndex > 0)
-                  GestureDetector(
-                    onTap: () {
-                      _pageController.previousPage(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                      );
-                    },
-                    child: Container(
-                      width: 60,
-                      color: Colors.transparent,
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.arrow_back_ios_new,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                const Spacer(),
-                if (_currentIndex < widget.prayerRequests.length - 1)
-                  GestureDetector(
-                    onTap: () {
-                      _pageController.nextPage(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                      );
-                    },
-                    child: Container(
-                      width: 60,
-                      color: Colors.transparent,
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.arrow_forward_ios,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(16),
@@ -485,14 +428,15 @@ class _ActionButton extends StatelessWidget {
             Icon(
               icon,
               size: 24,
-              color: Colors.white,
+              color: Colors.white.withOpacity(0.8),
             ),
             const SizedBox(width: 8),
             Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
+                color: Colors.white.withOpacity(0.6),
               ),
             ),
           ],
