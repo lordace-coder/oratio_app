@@ -42,40 +42,51 @@ class _LiveMassPageState extends State<LiveMassPage> {
 
     channel!.stream.listen(
       (message) {
-        print('Received: $message');
+        if (mounted) {
+          print('Received: $message');
+        }
       },
       onDone: () {
-        print('WebSocket closed');
-        setParishLiveStatus(false);
+        if (mounted) {
+          print('WebSocket closed');
+          setParishLiveStatus(false);
+        }
       },
       onError: (error) {
-        print('WebSocket error: $error');
+        if (mounted) {
+          print('WebSocket error: $error');
+        }
       },
     );
 
-    setParishLiveStatus(true);
+    if (mounted) {
+      setParishLiveStatus(true);
+    }
   }
 
   void setParishLiveStatus(bool isLive) {
-    // Implement the logic to update the parish's live status in your app
-    print('Parish live status: $isLive');
+    if (mounted) {
+      // Implement the logic to update the parish's live status in your app
+      print('Parish live status: $isLive');
+    }
   }
 
   @override
   void dispose() {
     if (widget.isPriest) {
       channel?.sink.close(status.normalClosure);
-
       setParishLiveStatus(false);
     }
+    controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (!mounted)
+      return SizedBox.shrink();
     final user =
         getPocketBaseFromContext(context).authStore.model as RecordModel;
-
     return Scaffold(
       body: ZegoUIKitPrebuiltLiveAudioRoom(
         appID: 2015132394,
@@ -87,7 +98,7 @@ class _LiveMassPageState extends State<LiveMassPage> {
         config: widget.isPriest
             ? ZegoUIKitPrebuiltLiveAudioRoomConfig.host()
             : ZegoUIKitPrebuiltLiveAudioRoomConfig.audience()
-          ..turnOnMicrophoneWhenJoining = false
+          ..turnOnMicrophoneWhenJoining = true
           ..bottomMenuBar = widget.isPriest
               ? ZegoLiveAudioRoomBottomMenuBarConfig(
                   audienceButtons: [],
