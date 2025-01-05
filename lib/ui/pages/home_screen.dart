@@ -72,7 +72,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Spiritual Header
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(5, 15, 5, 10),
+                    padding: const EdgeInsets.fromLTRB(10, 15, 5, 10),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -282,8 +282,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
                           crossAxisCount: 2,
-                          mainAxisSpacing: 16,
-                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 10,
+                          crossAxisSpacing: 10,
                           childAspectRatio: 1.1,
                           children: [
                             _buildMinistryCard(

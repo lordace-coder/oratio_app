@@ -89,12 +89,13 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
       textSpans.add(TextSpan(
         text: url,
         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-          color: Theme.of(context).primaryColor,
-          decoration: TextDecoration.underline,
-        ),
+            color: Theme.of(context).primaryColor,
+            decoration: TextDecoration.underline,
+            decorationColor: AppColors.primary),
         recognizer: TapGestureRecognizer()
           ..onTap = () async {
-            final Uri uri = Uri.parse(url.startsWith('http') ? url : 'https://$url');
+            final Uri uri =
+                Uri.parse(url.startsWith('http') ? url : 'https://$url');
             if (await canLaunchUrl(uri)) {
               await launchUrl(uri);
             }
@@ -117,10 +118,11 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
 
   @override
   Widget build(BuildContext context) {
-    final user = context.read<PocketBaseServiceCubit>().state.pb.authStore.model as RecordModel;
+    final user = context.read<PocketBaseServiceCubit>().state.pb.authStore.model
+        as RecordModel;
     final data = widget.post;
     hasLiked ??= widget.post.likes.contains(user.id);
-    
+
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 5),
@@ -147,7 +149,8 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
               backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
               child: widget.post.getAvatar(context) != null
                   ? null
-                  : Icon(FontAwesomeIcons.church, color: Theme.of(context).primaryColor),
+                  : Icon(FontAwesomeIcons.church,
+                      color: Theme.of(context).primaryColor),
             ),
             title: Text(
               widget.post.community!,
@@ -155,19 +158,32 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
             ),
             subtitle: Text(widget.post.date),
             trailing: user.id == widget.post.author.getStringValue('leader')
-                ? GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CreatePostPage(postToEdit: widget.post),
-                        ),
-                      );
+                ? PopupMenuButton<String>(
+                    position: PopupMenuPosition.under,
+                    onSelected: (value) {
+                      if (value == 'edit') {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                CreatePostPage(postToEdit: widget.post),
+                          ),
+                        );
+                      }
                     },
-                    child: const Text(
-                      'Edit Post',
-                      style: TextStyle(color: Colors.black),
-                    ),
+                    itemBuilder: (BuildContext context) {
+                      return [
+                        const PopupMenuItem<String>(
+                          value: 'edit',
+                          child: Text('Edit Post'),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: 'share',
+                          child: Text('Share Post'),
+                        ),
+                      ];
+                    },
+                    icon: const Icon(Icons.more_vert),
                   )
                 : null,
           ),
@@ -179,7 +195,9 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
                 RichText(
                   text: _buildTextSpanWithLinks(widget.post.post),
                   maxLines: _isExpanded ? null : _maxLines,
-                  overflow: _isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                  overflow: _isExpanded
+                      ? TextOverflow.visible
+                      : TextOverflow.ellipsis,
                 ),
                 if (_shouldShowMoreButton)
                   GestureDetector(
@@ -205,7 +223,8 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
           if (widget.post.image!.isNotEmpty)
             GestureDetector(
               onTap: () {
-                openImageView(context, widget.post.image!, imageUrl: widget.post.image);
+                openImageView(context, widget.post.image!,
+                    imageUrl: widget.post.image);
               },
               onLongPress: () async {
                 var save = await confirm(
