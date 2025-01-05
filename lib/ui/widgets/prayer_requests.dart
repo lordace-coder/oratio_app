@@ -149,7 +149,7 @@ class PrayerRequestGroupService {
   }
 }
 
-// Example usage with a StatefulWidget
+
 class PrayerRequestGroupsList extends StatefulWidget {
   const PrayerRequestGroupsList({super.key});
 

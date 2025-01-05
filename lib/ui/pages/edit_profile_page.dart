@@ -338,9 +338,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
           controller: controller,
           keyboardType: keyboardType,
           cursorColor: Colors.black,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 17,
-            color: Colors.black,
+            color: Colors.black.withOpacity(0.7),
           ),
           decoration: InputDecoration(
             hintText: hint,
