@@ -372,7 +372,7 @@ class _BibleReadingPageState extends State<BibleReadingPage>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 16),
+          if (!isPrimary) Icon(icon, size: 16),
           const SizedBox(width: 8),
           Text(
             label,
@@ -380,6 +380,8 @@ class _BibleReadingPageState extends State<BibleReadingPage>
               fontWeight: FontWeight.w600,
             ),
           ),
+          const SizedBox(width: 8),
+          if (isPrimary) Icon(icon, size: 16),
         ],
       ),
     );

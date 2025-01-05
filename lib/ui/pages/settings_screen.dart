@@ -48,14 +48,14 @@ class _SettingsPageState extends State<SettingsPage> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
             // Color(0xff202ADA),
             // Color.fromARGB(255, 16, 21, 105),
-            AppColors.primary,
+            Color.fromARGB(255, 242, 242, 242),
             Colors.white
           ],
         ),
@@ -68,24 +68,28 @@ class _SettingsPageState extends State<SettingsPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Back Button
-                IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () {
-                    context.pop();
-                  },
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                      onPressed: () {
+                        context.pop();
+                      },
+                    ),
+                  ],
                 ),
                 // Profile Section
                 Container(
-                  margin: const EdgeInsets.all(24),
+                  margin: const EdgeInsets.all(10),
                   child: Row(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(3),
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            colors: [Colors.blue[400]!, Colors.purple[400]!],
-                          ),
+                          // gradient: LinearGradient(
+                          //   colors: [Colors.blue[400]!, Colors.white],
+                          // ),
                         ),
                         child: CircleAvatar(
                           radius: 32,
@@ -101,90 +105,31 @@ class _SettingsPageState extends State<SettingsPage> {
                           Text(
                             getFullName(user),
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: Colors.black87,
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                           Text(
                             user.getStringValue("email"),
-                            style: TextStyle(
-                              color: Colors.blue[400],
+                            style: const TextStyle(
+                              color: Colors.black45,
                               fontSize: 14,
                             ),
                           ),
                         ],
                       ),
                       const Spacer(),
-                      IconButton(
-                        onPressed: () {
-                          context.pushNamed(RouteNames.editprofile);
-                        },
-                        icon: const Icon(Icons.edit_outlined,
-                            color: Colors.white),
-                      ),
+                      // IconButton(
+                      //   onPressed: () {
+                      //     context.pushNamed(RouteNames.editprofile);
+                      //   },
+                      //   icon: const Icon(Icons.edit_outlined,
+                      //       color: Colors.white),
+                      // ),
                     ],
                   ),
                 ),
-
-                // Quick Actions (Hidden for now)
-                // Container(
-                //   margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                //   child: const Text(
-                //     'QUICK ACTIONS',
-                //     style: TextStyle(
-                //       color: Colors.white54,
-                //       fontSize: 13,
-                //       fontWeight: FontWeight.w600,
-                //       letterSpacing: 1.5,
-                //     ),
-                //   ),
-                // ),
-                // SizedBox(
-                //   height: 380,
-                //   child: GridView.count(
-                //     padding: const EdgeInsets.symmetric(horizontal: 24),
-                //     physics: const NeverScrollableScrollPhysics(),
-                //     crossAxisCount: 2,
-                //     mainAxisSpacing: 16,
-                //     crossAxisSpacing: 16,
-                //     children: [
-                //       _buildQuickActionCard(
-                //         icon: Icons.notifications_outlined,
-                //         title: 'Notifications',
-                //         subtitle: '3 unread',
-                //         gradient: [Colors.purple[400]!, Colors.pink[400]!],
-                //         onTap: () {
-                //           context.pushNamed(RouteNames.notifications);
-                //         },
-                //       ),
-                //       _buildQuickActionCard(
-                //         icon: Icons.security_outlined,
-                //         title: 'Security',
-                //         subtitle: 'Fingerprint',
-                //         gradient: [Colors.blue[400]!, Colors.cyan[400]!],
-                //         onTap: () {},
-                //       ),
-                //       _buildQuickActionCard(
-                //         icon: Icons.backup_outlined,
-                //         title: 'Backup',
-                //         subtitle: 'Last: 3h ago',
-                //         gradient: [Colors.orange[400]!, Colors.amber[400]!],
-                //         onTap: () {
-                //           NotificationService.showSuccess(
-                //               'Action Backup Succesfull');
-                //         },
-                //       ),
-                //       _buildQuickActionCard(
-                //         icon: Icons.storage_outlined,
-                //         title: 'Storage',
-                //         subtitle: '45% used',
-                //         gradient: [Colors.teal[400]!, Colors.green[400]!],
-                //         onTap: () {},
-                //       ),
-                //     ],
-                //   ),
-                // ),
 
                 // Settings List
                 Container(
@@ -192,7 +137,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   child: const Text(
                     'SETTINGS',
                     style: TextStyle(
-                      color: Colors.white54,
+                      color: Colors.black87,
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 1.5,
@@ -395,7 +340,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   Widget _buildSettingsItem(_SettingsItem item) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         color: Colors.grey[850]!.withOpacity(0.5),
