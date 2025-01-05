@@ -213,6 +213,11 @@ class _ProfilePageState extends State<ProfilePage> {
                                               'Verification failed. Ensure you have a correct email');
                                         }
                                       }),
+                                    _buildActionButton(
+                                        'Settings  ', Icons.settings, () {
+                                      context
+                                          .pushNamed(RouteNames.settingsPage);
+                                    }),
                                   ],
                                 )
                               ],

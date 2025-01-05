@@ -397,6 +397,43 @@ class _PrayerRequestCardState extends State<PrayerRequestCard> {
     }
     final pb = context.read<PocketBaseServiceCubit>().state.pb;
 
+    Future<void> deletePrayerRequest(
+        BuildContext context, PrayerRequest request) async {
+      final bool confirmDelete = await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Confirm Delete'),
+            content: const Text(
+                'Are you sure you want to delete this prayer request?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Delete'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (confirmDelete) {
+        try {
+          await pb.collection('prayer_requests').delete(request.id);
+          NotificationService.showSuccess(
+              'Prayer request deleted successfully');
+          Navigator.of(context).pop(); // Close the current screen
+          setState(() {});
+        } catch (e) {
+          NotificationService.showError(
+              'Error occurred while deleting prayer request');
+        }
+      }
+    }
+
     return Container(
       margin: const EdgeInsets.symmetric(
         vertical: 1,
@@ -446,12 +483,25 @@ class _PrayerRequestCardState extends State<PrayerRequestCard> {
                 Icon(Icons.public, size: 14, color: Colors.grey[600]),
               ],
             ),
-            // trailing: PopupMenuButton(
-            //   itemBuilder: (context) => [
-            //     const PopupMenuItem(child: Text('Report')),
-            //     const PopupMenuItem(child: Text('Share')),
-            //   ],
-            // ),
+            trailing: _prayerRequest!.user.id == pb.authStore.model.id
+                ? PopupMenuButton<String>(
+                    position: PopupMenuPosition.under,
+                    onSelected: (value) {
+                      if (value == 'delete') {
+                        deletePrayerRequest(context, _prayerRequest!);
+                      }
+                    },
+                    itemBuilder: (BuildContext context) {
+                      return [
+                        const PopupMenuItem<String>(
+                          value: 'delete',
+                          child: Text('Delete Prayer'),
+                        ),
+                      ];
+                    },
+                    icon: const Icon(Icons.more_vert),
+                  )
+                : null,
           ),
           // Prayer Request Content
           Container(

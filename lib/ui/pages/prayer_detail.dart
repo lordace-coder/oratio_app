@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' as intl;
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
@@ -139,6 +140,40 @@ class _PrayerRequestViewerState extends State<PrayerRequestViewer>
     } catch (e) {
       // display error on ui
       print('error occured in getComments $e');
+    }
+  }
+
+  Future<void> deletePrayerRequest(BuildContext context, PrayerRequest request) async {
+    final bool confirmDelete = await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Confirm Delete'),
+          content: const Text('Are you sure you want to delete this prayer request?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmDelete) {
+      try {
+        await pb.collection('prayer_requests').delete(request.id);
+        NotificationService.showSuccess('Prayer request deleted successfully');
+        Navigator.of(context).pop(); // Close the current screen
+        setState(() {
+        });
+      } catch (e) {
+        NotificationService.showError('Error occurred while deleting prayer request');
+      }
     }
   }
 
@@ -283,6 +318,10 @@ class _PrayerRequestViewerState extends State<PrayerRequestViewer>
                           ),
                         ),
                         const Spacer(),
+                        IconButton(
+                          icon: const Icon(Icons.delete),
+                          onPressed: () => deletePrayerRequest(context, request),
+                        ),
                         IconButton(
                           icon: const Icon(Icons.close),
                           onPressed: () => context.pop(),
