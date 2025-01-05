@@ -243,22 +243,6 @@ class _ParishListPageState extends State<ParishListPage>
             ],
           ),
         ),
-        PopupMenuButton(
-          padding: EdgeInsets.zero,
-          icon: const Icon(FontAwesomeIcons.ellipsisVertical, size: 16),
-          itemBuilder: (context) => [
-            _buildPopupMenuItem(
-              FontAwesomeIcons.solidBookmark,
-              'My Churches',
-              () {},
-            ),
-            _buildPopupMenuItem(
-              FontAwesomeIcons.church,
-              'All Churches',
-              () {},
-            ),
-          ],
-        ),
       ],
     );
   }

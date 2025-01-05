@@ -93,6 +93,7 @@ void main() async {
   final bibleService = BibleReadingService();
   bibleService.updateIfNeeded(fetchReadings);
   PocketBase? pb;
+  
   try {
     pb = PocketBase(
       AppData.baseUrl,
@@ -104,6 +105,7 @@ void main() async {
   } catch (e) {
     print('Error creating PocketBase instance: $e');
   }
+  
   print('auth valid == ${pb?.authStore.isValid}');
   try {
     pb?.collection('users').authRefresh();
