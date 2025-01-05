@@ -477,8 +477,8 @@ class CommentItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = context.read<PocketBaseServiceCubit>().state.pb.authStore.model
         as RecordModel;
-    final String? img =
-        getProfilePic(context, user: comment.expand['user']!.first);
+    final String? img = getProfilePic(context,
+        user: comment.expand['user']?.first ?? RecordModel());
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(

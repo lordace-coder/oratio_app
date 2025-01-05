@@ -123,11 +123,15 @@ class _FeedsListScreenState extends State<FeedsListScreen> {
                   children: [
                     Row(
                       children: [
-                        Text('CathsApp',
-                            style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primary))
+                        Text(
+                          'CathsApp',
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineMedium
+                              ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary),
+                        )
                       ],
                     ),
                     Row(

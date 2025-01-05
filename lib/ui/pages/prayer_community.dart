@@ -319,6 +319,7 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                                   children: [
                                     for (final post in snapshot.data!)
                                       CommunityPostCard(
+                                        inPage: true,
                                         post: post,
                                       ),
                                   ],

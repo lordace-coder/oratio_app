@@ -2,10 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
+import 'package:go_router/go_router.dart';
 import 'package:oratio_app/bloc/prayer_requests/requests_state.dart';
+import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/helpers/user.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/ui/pages/prayer_detail.dart';
+import 'package:oratio_app/ui/routes/route_names.dart';
+import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class UserPrayerRequestGroup {
@@ -171,7 +175,11 @@ class _PrayerRequestGroupsListState extends State<PrayerRequestGroupsList> {
       stream: groupsStream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
+          return const Center(
+              child: Padding(
+            padding: EdgeInsets.all(20.0),
+            child: Text('Error Loading Prayer Status'),
+          ));
         }
 
         if (!snapshot.hasData) {
@@ -184,6 +192,19 @@ class _PrayerRequestGroupsListState extends State<PrayerRequestGroupsList> {
         }
 
         final groups = snapshot.data!;
+        final currentUserId = service.pb.authStore.model.id;
+
+        // Separate the current user's group
+        UserPrayerRequestGroup? currentUserGroup;
+        final otherGroups = <UserPrayerRequestGroup>[];
+
+        for (var group in groups) {
+          if (group.user.id == currentUserId) {
+            currentUserGroup = group;
+          } else {
+            otherGroups.add(group);
+          }
+        }
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -201,15 +222,53 @@ class _PrayerRequestGroupsListState extends State<PrayerRequestGroupsList> {
               height: 100,
               child: ListView.builder(
                   scrollDirection: Axis.horizontal,
-                  itemCount: groups.length,
+                  itemCount: otherGroups.length +
+                      2, // Add two for "Say Prayer" and user's own item
                   itemBuilder: (context, index) {
-                    final group = groups[index];
                     if (index == 0) {
-                      _StoryAvatar(
-                        index: 1,
-                        user: getPocketBaseFromContext(context).authStore.model,
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: GestureDetector(
+                          onTap: () async {
+                            await context
+                                .pushNamed(RouteNames.createPrayerRequest);
+                          },
+                          child: _StoryAvatar(
+                            index: 0,
+                            user:
+                                RecordModel(), // Pass a dummy user or handle accordingly
+                          ),
+                        ),
                       );
                     }
+
+                    if (index == 1 && currentUserGroup != null) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 12),
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PrayerRequestViewer(
+                                  prayerRequests:
+                                      currentUserGroup!.prayerRequests,
+                                  initialIndex: 0,
+                                ),
+                              ),
+                            );
+                          },
+                          child: _StoryAvatar(
+                            index: 1,
+                            user: currentUserGroup.user,
+                          ),
+                        ),
+                      );
+                    }
+
+                    final group =
+                        otherGroups[index - 2]; // Adjust index for other groups
+
                     return Padding(
                       padding: const EdgeInsets.only(right: 12),
                       child: GestureDetector(
@@ -243,35 +302,36 @@ class _StoryAvatar extends StatelessWidget {
   final RecordModel user;
 
   const _StoryAvatar({required this.index, required this.user});
-
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
         Container(
           padding: const EdgeInsets.all(2),
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             shape: BoxShape.circle,
-            gradient: index == 0
-                ? null
-                : LinearGradient(
-                    colors: [
-                      Theme.of(context).colorScheme.primary,
-                      Theme.of(context).colorScheme.secondary,
-                    ],
-                  ),
+            // gradient: index == 0
+            //     ? null
+            //     : LinearGradient(
+            //         colors: [
+            //           AppColors.primary,
+            //           Colors.green,
+            //         ],
+            //       ),
           ),
           child: CircleAvatar(
             radius: 32,
             backgroundColor: Theme.of(context).colorScheme.surface,
-            backgroundImage: getProfilePic(context, user: user) == null
+            backgroundImage: index == 0
                 ? null
-                : NetworkImage(getProfilePic(context, user: user)!),
+                : getProfilePic(context, user: user) == null
+                    ? null
+                    : NetworkImage(getProfilePic(context, user: user)!),
             child: index == 0
                 ? const Icon(Icons.add)
                 : user.getStringValue('avatar').isEmpty
                     ? Text(
-                        String.fromCharCode(65 + index),
+                        '  ${user.getStringValue('first_name')[0]}  ${user.getStringValue('last_name')[0]}',
                         style: Theme.of(context).textTheme.titleLarge,
                       )
                     : null,
@@ -279,7 +339,11 @@ class _StoryAvatar extends StatelessWidget {
         ),
         const Gap(4),
         Text(
-          index == 0 ? 'Say Prayer' : user.getStringValue('username'),
+          index == 0
+              ? 'Say Prayer'
+              : index == 1
+                  ? 'You'
+                  : user.getStringValue('username'),
           style: Theme.of(context).textTheme.labelSmall,
         ),
       ],

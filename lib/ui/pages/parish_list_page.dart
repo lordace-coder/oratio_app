@@ -186,7 +186,11 @@ class _ParishListPageState extends State<ParishListPage>
                   )
                 else
                   const SliverToBoxAdapter(
-                    child: Text('No Parish avaliable'),
+                    child: SizedBox(
+                        height: 300,
+                        child: Center(
+                          child: Text('No Parish Available'),
+                        )),
                   )
               ],
             ),

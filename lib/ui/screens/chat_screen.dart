@@ -258,7 +258,10 @@ class _ChatScreenState extends State<ChatScreen> {
           radius: 20,
           backgroundColor: Theme.of(context).colorScheme.primaryContainer,
           child: IconButton(
-            icon: const Icon(FontAwesomeIcons.plus),
+            icon: const Icon(
+              FontAwesomeIcons.userPlus,
+              size: 18,
+            ),
             onPressed: () {
               // Handle profile tap
               context.pushNamed(RouteNames.connect);

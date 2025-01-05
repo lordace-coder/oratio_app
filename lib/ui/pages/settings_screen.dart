@@ -8,6 +8,7 @@ import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/networkProvider/users.dart';
 import 'package:oratio_app/services/user_settings_service.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
+import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:confirm_dialog/confirm_dialog.dart' as dialogs;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -47,13 +48,15 @@ class _SettingsPageState extends State<SettingsPage> {
     final screenHeight = MediaQuery.of(context).size.height;
 
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xff202ADA),
-            Color.fromARGB(255, 16, 21, 105),
+            // Color(0xff202ADA),
+            // Color.fromARGB(255, 16, 21, 105),
+            AppColors.primary,
+            Colors.white
           ],
         ),
       ),

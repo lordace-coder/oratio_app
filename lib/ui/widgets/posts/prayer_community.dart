@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart' as intl;
@@ -16,10 +17,12 @@ import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/image_viewer.dart';
 import 'package:oratio_app/ui/widgets/posts/bottom_scaffold.dart';
 import 'package:pocketbase/pocketbase.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class CommunityPostCard extends StatefulWidget {
-  const CommunityPostCard({super.key, required this.post});
+  const CommunityPostCard({super.key, required this.post, this.inPage = false});
   final Post post;
+  final bool inPage;
 
   @override
   State<CommunityPostCard> createState() => _CommunityPostCardState();
@@ -34,7 +37,6 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
   @override
   void initState() {
     super.initState();
-    // Schedule the calculation for after the first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _calculateTextHeight();
     });
@@ -43,10 +45,7 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
   void _calculateTextHeight() {
     if (!mounted) return;
 
-    final textSpan = TextSpan(
-      text: widget.post.post,
-      style: Theme.of(context).textTheme.bodyLarge,
-    );
+    final textSpan = _buildTextSpanWithLinks(widget.post.post);
 
     const TextDirection dir = TextDirection.ltr;
     final textPainter = TextPainter(
@@ -55,8 +54,7 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
       maxLines: _maxLines,
     );
 
-    final constraintWidth =
-        MediaQuery.of(context).size.width - 40; // Account for padding
+    final constraintWidth = MediaQuery.of(context).size.width - 40;
     textPainter.layout(maxWidth: constraintWidth);
 
     if (mounted) {
@@ -66,31 +64,78 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
     }
   }
 
+  TextSpan _buildTextSpanWithLinks(String text) {
+    // Regular expression for detecting URLs
+    final urlRegExp = RegExp(
+      r'(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})',
+      caseSensitive: false,
+    );
+
+    final List<TextSpan> textSpans = [];
+    final matches = urlRegExp.allMatches(text);
+    int currentIndex = 0;
+
+    for (final match in matches) {
+      // Add text before the link
+      if (match.start > currentIndex) {
+        textSpans.add(TextSpan(
+          text: text.substring(currentIndex, match.start),
+          style: Theme.of(context).textTheme.bodyLarge,
+        ));
+      }
+
+      // Add the link
+      final url = text.substring(match.start, match.end);
+      textSpans.add(TextSpan(
+        text: url,
+        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+          color: Theme.of(context).primaryColor,
+          decoration: TextDecoration.underline,
+        ),
+        recognizer: TapGestureRecognizer()
+          ..onTap = () async {
+            final Uri uri = Uri.parse(url.startsWith('http') ? url : 'https://$url');
+            if (await canLaunchUrl(uri)) {
+              await launchUrl(uri);
+            }
+          },
+      ));
+
+      currentIndex = match.end;
+    }
+
+    // Add remaining text after the last link
+    if (currentIndex < text.length) {
+      textSpans.add(TextSpan(
+        text: text.substring(currentIndex),
+        style: Theme.of(context).textTheme.bodyLarge,
+      ));
+    }
+
+    return TextSpan(children: textSpans);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final user = context.read<PocketBaseServiceCubit>().state.pb.authStore.model
-        as RecordModel;
+    final user = context.read<PocketBaseServiceCubit>().state.pb.authStore.model as RecordModel;
     final data = widget.post;
     hasLiked ??= widget.post.likes.contains(user.id);
+    
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.symmetric(
-        horizontal: 5,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 5),
       margin: const EdgeInsets.symmetric(vertical: 1),
-
-      // elevation: 1,
-      // shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Post Header
           ListTile(
             onTap: () {
-              try {
-                openCommunity(context, widget.post.communityId!);
-              } catch (e) {
-                NotificationService.showError('Something went wrong');
+              if (!widget.inPage) {
+                try {
+                  openCommunity(context, widget.post.communityId!);
+                } catch (e) {
+                  NotificationService.showError('Something went wrong');
+                }
               }
             },
             contentPadding: const EdgeInsets.all(10),
@@ -102,8 +147,7 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
               backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
               child: widget.post.getAvatar(context) != null
                   ? null
-                  : Icon(FontAwesomeIcons.church,
-                      color: Theme.of(context).primaryColor),
+                  : Icon(FontAwesomeIcons.church, color: Theme.of(context).primaryColor),
             ),
             title: Text(
               widget.post.community!,
@@ -113,10 +157,12 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
             trailing: user.id == widget.post.author.getStringValue('leader')
                 ? GestureDetector(
                     onTap: () {
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (context) {
-                        return CreatePostPage(postToEdit: widget.post);
-                      }));
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CreatePostPage(postToEdit: widget.post),
+                        ),
+                      );
                     },
                     child: const Text(
                       'Edit Post',
@@ -125,19 +171,15 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
                   )
                 : null,
           ),
-          // Post Content with See More
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  widget.post.post,
-                  style: Theme.of(context).textTheme.bodyLarge,
+                RichText(
+                  text: _buildTextSpanWithLinks(widget.post.post),
                   maxLines: _isExpanded ? null : _maxLines,
-                  overflow: _isExpanded
-                      ? TextOverflow.visible
-                      : TextOverflow.ellipsis,
+                  overflow: _isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
                 ),
                 if (_shouldShowMoreButton)
                   GestureDetector(
@@ -160,16 +202,16 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
               ],
             ),
           ),
-          // Post Image
           if (widget.post.image!.isNotEmpty)
             GestureDetector(
               onTap: () {
-                openImageView(context, widget.post.image!,
-                    imageUrl: widget.post.image);
+                openImageView(context, widget.post.image!, imageUrl: widget.post.image);
               },
               onLongPress: () async {
-                var save = await confirm(context,
-                    content: const Text('Do you want to save this image?'));
+                var save = await confirm(
+                  context,
+                  content: const Text('Do you want to save this image?'),
+                );
                 if (save) {
                   FileDownloadHandler.downloadRawFile(widget.post.image!);
                 }
@@ -178,15 +220,15 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
                 margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 9),
                 height: 200,
                 decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    color: Theme.of(context).primaryColor.withOpacity(0.1),
-                    image: DecorationImage(
-                      image: NetworkImage(widget.post.image!),
-                      fit: BoxFit.cover,
-                    )),
+                  borderRadius: BorderRadius.circular(12),
+                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+                  image: DecorationImage(
+                    image: NetworkImage(widget.post.image!),
+                    fit: BoxFit.cover,
+                  ),
+                ),
               ),
             ),
-          // Post Actions
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -198,7 +240,6 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
                     final pb = context.read<PocketBaseServiceCubit>().state.pb;
                     final postHelper = PostHelper(pb);
                     if (hasLiked!) {
-                      // unlike the post
                       await postHelper.dislikePost(data.id);
                       (data.likes).remove(data.id);
                     } else {
@@ -422,6 +463,7 @@ class _PrayerRequestCardState extends State<PrayerRequestCard> {
                 ),
                 const SizedBox(width: 16),
                 _PrayerAction(
+                  iscomment: true,
                   icon: Icons.comment_outlined,
                   label: 'Comment (${formatCount(widget.data.comment.length)})',
                   onTap: () async {
@@ -512,26 +554,30 @@ class _PrayerAction extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final bool iscomment;
 
-  const _PrayerAction({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
+  const _PrayerAction(
+      {required this.icon,
+      required this.label,
+      required this.onTap,
+      this.iscomment = false});
 
   @override
   Widget build(BuildContext context) {
     return TextButton.icon(
       onPressed: onTap,
-      icon: Icon(icon, size: 20),
+      icon: Icon(
+        icon,
+        size: 20,
+        color: iscomment ? Colors.black : Colors.red,
+      ),
       label: Text(label),
       style: TextButton.styleFrom(
-        foregroundColor: Theme.of(context).primaryColor,
+        foregroundColor: Colors.black.withOpacity(.8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: BorderSide(
-              color: Theme.of(context).primaryColor.withOpacity(0.5)),
+          side: BorderSide(color: Colors.black.withOpacity(0.5)),
         ),
       ),
     );
