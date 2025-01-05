@@ -209,7 +209,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
+                            color: Colors.black.withOpacity(0.8),
                           ),
                         ),
                         const SizedBox(height: 30),
@@ -229,7 +229,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
+                            color: Colors.black.withOpacity(0.8),
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -251,7 +251,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
+                            color: Colors.black.withOpacity(0.8),
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -338,9 +338,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
           controller: controller,
           keyboardType: keyboardType,
           cursorColor: Colors.black,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 17,
-            color: AppColors.primary,
+            color: Colors.black,
           ),
           decoration: InputDecoration(
             hintText: hint,

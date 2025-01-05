@@ -175,7 +175,11 @@ class _PrayerRequestGroupsListState extends State<PrayerRequestGroupsList> {
       stream: groupsStream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
+          return const Center(
+              child: Padding(
+            padding: EdgeInsets.all(20.0),
+            child: Text('Error Loading Prayer Status'),
+          ));
         }
 
         if (!snapshot.hasData) {
@@ -298,7 +302,6 @@ class _StoryAvatar extends StatelessWidget {
   final RecordModel user;
 
   const _StoryAvatar({required this.index, required this.user});
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -336,7 +339,11 @@ class _StoryAvatar extends StatelessWidget {
         ),
         const Gap(4),
         Text(
-          index == 0 ? 'Say Prayer' : user.getStringValue('username'),
+          index == 0
+              ? 'Say Prayer'
+              : index == 1
+                  ? 'You'
+                  : user.getStringValue('username'),
           style: Theme.of(context).textTheme.labelSmall,
         ),
       ],

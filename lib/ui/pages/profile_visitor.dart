@@ -54,7 +54,10 @@ class _ProfileVisitorPageState extends State<ProfileVisitorPage> {
               final data = state.guestProfile;
               bool isfollowing =
                   data!.user.getListValue('followers').contains(currentUser.id);
-              print(isfollowing);
+              final communities = data.community.where((e) {
+                return e.getStringValue('leader') == data.user.id;
+              }).toList();
+
               return CustomScrollView(slivers: [
                 // Custom App Bar with Gradient and Profile Info
                 SliverToBoxAdapter(
@@ -136,7 +139,7 @@ class _ProfileVisitorPageState extends State<ProfileVisitorPage> {
                                 ),
                                 const Gap(16),
                                 Text(
-                                  getFullName(data.user),
+                                  '${getFullName(data.user)} (${data.user.getStringValue('username')})',
                                   style: const TextStyle(
                                     fontSize: 24,
                                     color: Colors.white,
@@ -144,13 +147,20 @@ class _ProfileVisitorPageState extends State<ProfileVisitorPage> {
                                     letterSpacing: 0.5,
                                   ),
                                 ),
-                                Text(
-                                  data.user.getStringValue('username'),
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w300,
-                                    letterSpacing: 0.5,
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10),
+                                  child: Text(
+                                    (data.user.getBoolValue('priest'))
+                                        ? '· Priest ·'
+                                        : '',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w300,
+                                      letterSpacing: 0.5,
+                                    ),
+                                    textAlign: TextAlign.center,
                                   ),
                                 ),
                                 const Gap(12),
