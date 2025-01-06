@@ -8,6 +8,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:hive/hive.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
+import 'package:oratio_app/ui/widgets/prayer_requests.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
@@ -132,6 +133,7 @@ void main() async {
   final prayerRequestHelper = PrayerRequestHelper(pb);
   final postHelper = PostHelper(pb);
   final adsRepo = AdsRepo(pb);
+  final prayerRequestService = PrayerRequestGroupService(pb);
 
   runApp(
     MultiBlocProvider(
@@ -174,6 +176,9 @@ void main() async {
         BlocProvider<ProfileDataCubit>(
           create: (context) => ProfileDataCubit(pbCubit.state.pb),
         ),
+     BlocProvider<PrayerRequestCubit>(
+  create: (context) => PrayerRequestCubit(prayerRequestService),
+),
         BlocProvider(
           create: (context) => CentralCubit(
             adsRepo: adsRepo,
