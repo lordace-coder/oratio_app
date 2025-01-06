@@ -115,7 +115,9 @@ class MessageCubit extends Cubit<MessageState> {
       emit(MessageState(
         messages: results,
       ));
-    } catch (e) {}
+    } catch (e) { 
+      
+     }
   }
 
   Future<void> sendMessage({

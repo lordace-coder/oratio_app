@@ -29,6 +29,7 @@ class RouteNames {
   static String createPrayerRequest = 'createPrayerRequest';
   // priest pages
   static String dashboard = 'dashboardPage';
+  static String parishTransactions = 'parishTransactionsPage';
   static String createEvent = 'createEventPage';
   static String massRequests = 'mass-requests-page';
   static String createCommunityPage = 'create-community-page';

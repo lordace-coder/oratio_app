@@ -45,7 +45,6 @@ class MyHttpOverrides extends HttpOverrides {
 class ConnectivityCubit extends Cubit<bool> {
   final Connectivity _connectivity = Connectivity();
   StreamSubscription? connectivitySubscription;
-
   ConnectivityCubit() : super(true) {
     monitorConnection();
   }
@@ -103,16 +102,18 @@ void main() async {
           clear: () => pref.remove('pb_auth')),
     );
   } catch (e) {
-    print('Error creating PocketBase instance: $e');
+    debugPrint('Error creating PocketBase instance: $e');
   }
   
-  print('auth valid == ${pb?.authStore.isValid}');
+  debugPrint('auth valid == ${pb?.authStore.isValid}');
+  
   try {
     pb?.collection('users').authRefresh();
   } catch (e) {
     pb?.authStore.clear();
-    print('Error refreshing PocketBase auth: $e');
+    debugPrint('Error refreshing PocketBase auth: $e');
   }
+
   final repository = MessageRepository(
     pocketBase: pb!,
     messageBox: await Hive.openBox<MessageModel>('messages'),
@@ -122,7 +123,7 @@ void main() async {
   try {
     await notificationCubit.fetchNotifications();
   } catch (e) {
-    print('Error fetching notifications: $e');
+    debugPrint('Error fetching notifications: $e');
   }
   final appRouter = AppRouter(pref: pref);
 
@@ -159,7 +160,7 @@ void main() async {
               chat.loadRecentChats();
               chat.subscribeToMessages(context);
             } catch (e) {
-              print(
+              debugPrint(
                   'Error loading recent chats or subscribing to messages: $e');
             }
             return chat;
@@ -202,6 +203,7 @@ class MainApp extends StatefulWidget {
 class _MainAppState extends State<MainApp> {
   bool _isInitialized = false;
   WebSocketChannel? channel;
+
   @override
   void initState() {
     super.initState();
@@ -221,13 +223,13 @@ class _MainAppState extends State<MainApp> {
 
     channel!.stream.listen(
       (message) {
-        print('Received: $message');
+        debugPrint('Received: $message');
       },
       onDone: () {
-        print('WebSocket closed');
+        debugPrint('WebSocket closed');
       },
       onError: (error) {
-        print('WebSocket error: $error');
+        debugPrint('WebSocket error: $error');
       },
     );
   }
@@ -327,7 +329,6 @@ class _MainAppState extends State<MainApp> {
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
-
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -335,7 +336,7 @@ class SplashScreen extends StatelessWidget {
       home: Scaffold(
         body: Center(
           child: Image.asset("assets/images/app_logo.png",
-              width: 200, height: 200, fit: BoxFit.cover),
+              width: 180, height: 180, fit: BoxFit.cover),
         ),
       ),
     );

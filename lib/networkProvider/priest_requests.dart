@@ -12,3 +12,10 @@ Future<void> sendWithdrawalRequest(
   final pb = getPocketBaseFromContext(ctx);
   await pb.collection('withdrawal_request').create(body: data);
 }
+
+
+Future<List<RecordModel>> getTransactions(BuildContext ctx)async{
+  final pb = getPocketBaseFromContext(ctx);
+  final data = await pb.collection("transaction_history_parish").getList();
+  return data.items;
+}

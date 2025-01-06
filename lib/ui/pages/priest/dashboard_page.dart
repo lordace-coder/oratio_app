@@ -6,13 +6,18 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
+import 'package:oratio_app/bloc/priest_bloc/event.dart';
+import 'package:oratio_app/bloc/priest_bloc/priest_bloc.dart';
+import 'package:oratio_app/bloc/priest_bloc/state.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
+import 'package:oratio_app/bloc/transactions_cubit/state.dart';
 import 'package:oratio_app/bloc/transactions_cubit/transaction_cubit.dart';
 import 'package:oratio_app/networkProvider/paystack_payment.dart';
 import 'package:oratio_app/ui/bright/pages/withdrawal_modal.dart';
 import 'package:oratio_app/ui/pages/priest/live_page.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
+import 'package:oratio_app/ui/widgets/home.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -90,6 +95,9 @@ class _DashboardPageState extends State<DashboardPage> {
                   color: AppColors.primary,
                   onRefresh: () async {
                     await loadChurchForPriest();
+                    context
+                        .read<PriestBloc>()
+                        .add(FetchTransactionsEvent(ctx: context));
                   },
                   child: ListView(
                     padding: const EdgeInsets.all(16),
@@ -471,13 +479,43 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 TextButton(
                   onPressed: () =>
-                      context.pushNamed(RouteNames.transactionsPage),
+                      context.pushNamed(RouteNames.parishTransactions),
                   child: const Text('See All'),
                 ),
               ],
             ),
             const Gap(16),
-            // TODO fix this
+
+            BlocConsumer<PriestBloc, PriestState>(
+              listener: (context, state) {},
+              builder: (context, state) {
+                if (state.transactions.isEmpty) {
+                  context
+                      .read<PriestBloc>()
+                      .add(FetchTransactionsEvent(ctx: context));
+                  return const SizedBox.shrink();
+                }
+                return Column(
+                  children: [
+                    ...state.transactions.map(
+                      (item) => TransactionItem(
+                        transaction: Transaction(
+                            created: DateTime.parse(item.created),
+                            id: item.id,
+                            read: item.getBoolValue('read'),
+                            successful: item.getBoolValue('succesfull'),
+                            title: item.getStringValue('title'),
+                            transaction: item.getStringValue('transaction'),
+                            type: Transaction.getTransactionType(
+                                item.getStringValue('type')),
+                            
+                            amount: item.getIntValue('amount').toDouble()),
+                      ),
+                    )
+                  ],
+                );
+              },
+            )
             // const TransactionItem(),
             // const TransactionItem(),
             // const TransactionItem(),

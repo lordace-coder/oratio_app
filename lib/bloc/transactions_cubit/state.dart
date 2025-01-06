@@ -6,25 +6,21 @@ class Transaction {
   final String id;
   final String transaction;
   final String title;
-  final String userId;
   final bool read;
   final bool successful;
   final double? amount;
   final TransactionType type;
   final DateTime created;
-  final DateTime updated;
 
   const Transaction({
     required this.id,
     required this.transaction,
     required this.title,
-    required this.userId,
     required this.read,
     required this.successful,
     this.amount,
     required this.type,
     required this.created,
-    required this.updated,
   });
 
   factory Transaction.fromJson(Map<String, dynamic> json) {
@@ -32,13 +28,11 @@ class Transaction {
       id: json['id'],
       transaction: json['transaction'],
       title: json['title'],
-      userId: json['user'],
       read: json['read'] ?? false,
       successful: json['successful'] ?? false,
       amount: json['amount']?.toDouble(),
       type: getTransactionType(json['type'] as String),
       created: DateTime.parse(json['created']),
-      updated: DateTime.parse(json['updated']),
     );
   }
 
@@ -47,13 +41,11 @@ class Transaction {
       'id': id,
       'transaction': transaction,
       'title': title,
-      'user': userId,
       'read': read,
       'successful': successful,
       'amount': amount,
       'type': type.toString().split('.').last,
       'created': created.toIso8601String(),
-      'updated': updated.toIso8601String(),
     };
   }
 
