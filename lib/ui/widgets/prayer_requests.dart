@@ -1,6 +1,6 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/bloc/prayer_requests/requests_state.dart';
@@ -149,54 +149,49 @@ class PrayerRequestGroupService {
   }
 }
 
-class PrayerRequestGroupsList extends StatefulWidget {
+class PrayerRequestCubit extends Cubit<List<UserPrayerRequestGroup>> {
+  final PrayerRequestGroupService service;
+
+  PrayerRequestCubit(this.service) : super([]) {
+    _init();
+  }
+
+  Future<void> _init() async {
+    emit(await service.getGroupedPrayerRequests());
+    service.subscribeToUpdates().listen((groups) {
+      emit(groups);
+    });
+  }
+
+  Future<void> addPrayerRequest(String request, bool urgent) async {
+    await service.addPrayerRequest(request: request, urgent: urgent);
+    emit(await service.getGroupedPrayerRequests());
+  }
+}
+
+class PrayerRequestGroupsList extends StatelessWidget {
   const PrayerRequestGroupsList({super.key});
 
   @override
-  _PrayerRequestGroupsListState createState() =>
-      _PrayerRequestGroupsListState();
-}
-
-class _PrayerRequestGroupsListState extends State<PrayerRequestGroupsList> {
-  late PrayerRequestGroupService service;
-  late Stream<List<UserPrayerRequestGroup>> groupsStream;
-
-  @override
-  void initState() {
-    super.initState();
-    service = PrayerRequestGroupService(getPocketBaseFromContext(context));
-    groupsStream = service.subscribeToUpdates();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return StreamBuilder<List<UserPrayerRequestGroup>>(
-      stream: groupsStream,
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
+    return BlocBuilder<PrayerRequestCubit, List<UserPrayerRequestGroup>>(
+      builder: (context, groups) {
+        if (groups.isEmpty) {
           return const Center(
-              child: Padding(
-            padding: EdgeInsets.all(20.0),
-            child: Text('Error Loading Prayer Status'),
-          ));
+            child: Padding(
+              padding: EdgeInsets.all(20.0),
+              child: Text('Loading Prayers...'),
+            ),
+          );
         }
-
-        if (!snapshot.hasData) {
-          return const Center(
-              child: Center(
-                  child: Padding(
-            padding: EdgeInsets.all(20),
-            child: Text('Loading Prayers...'),
-          )));
-        }
-
-        final groups = snapshot.data!;
-        final currentUserId = service.pb.authStore.model.id;
-
+    
+        final currentUserId =
+            context.read<PrayerRequestCubit>().service.pb.authStore.model.id;
+    
         // Separate the current user's group
         UserPrayerRequestGroup? currentUserGroup;
         final otherGroups = <UserPrayerRequestGroup>[];
-
+    
         for (var group in groups) {
           if (group.user.id == currentUserId) {
             currentUserGroup = group;
@@ -204,12 +199,13 @@ class _PrayerRequestGroupsListState extends State<PrayerRequestGroupsList> {
             otherGroups.add(group);
           }
         }
-
+    
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 9),
+              padding:
+                  const EdgeInsets.symmetric(vertical: 16, horizontal: 9),
               child: Text(
                 'Prayers',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -220,76 +216,76 @@ class _PrayerRequestGroupsListState extends State<PrayerRequestGroupsList> {
             SizedBox(
               height: 100,
               child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: otherGroups.length +
-                      2, // Add two for "Say Prayer" and user's own item
-                  itemBuilder: (context, index) {
-                    if (index == 0) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 12),
-                        child: GestureDetector(
-                          onTap: () async {
-                            await context
-                                .pushNamed(RouteNames.createPrayerRequest);
-                          },
-                          child: _StoryAvatar(
-                            index: 0,
-                            user:
-                                RecordModel(), // Pass a dummy user or handle accordingly
-                          ),
-                        ),
-                      );
-                    }
-
-                    if (index == 1 && currentUserGroup != null) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 12),
-                        child: GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => PrayerRequestViewer(
-                                  prayerRequests:
-                                      currentUserGroup!.prayerRequests,
-                                  initialIndex: 0,
-                                  otherPrayerRequests: groups,
-                                ),
-                              ),
-                            );
-                          },
-                          child: _StoryAvatar(
-                            index: 1,
-                            user: currentUserGroup.user,
-                          ),
-                        ),
-                      );
-                    }
-
-                    final group =
-                        otherGroups[index - 2]; // Adjust index for other groups
-
+                scrollDirection: Axis.horizontal,
+                itemCount: otherGroups.length +
+                    2, // Add two for "Say Prayer" and user's own item
+                itemBuilder: (context, index) {
+                  if (index == 0) {
                     return Padding(
                       padding: const EdgeInsets.only(right: 12),
                       child: GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => PrayerRequestViewer(
-                                  prayerRequests: group.prayerRequests,
-                                  initialIndex: 0,
-                                  otherPrayerRequests: groups,
-                                ),
-                              ),
-                            );
-                          },
-                          child: _StoryAvatar(
-                            index: index,
-                            user: group.user,
-                          )),
+                        onTap: () async {
+                          await context
+                              .pushNamed(RouteNames.createPrayerRequest);
+                        },
+                        child: _StoryAvatar(
+                          index: 0,
+                          user:
+                              RecordModel(), // Pass a dummy user or handle accordingly
+                        ),
+                      ),
                     );
-                  }),
+                  }
+    
+                  if (index == 1 && currentUserGroup != null) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 12),
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PrayerRequestViewer(
+                                prayerRequests:
+                                    currentUserGroup!.prayerRequests,
+                                initialIndex: 0,
+                              ),
+                            ),
+                          );
+                        },
+                        child: _StoryAvatar(
+                          index: 1,
+                          user: currentUserGroup.user,
+                        ),
+                      ),
+                    );
+                  }
+    
+                  final group =
+                      otherGroups[index - 2]; // Adjust index for other groups
+    
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PrayerRequestViewer(
+                              prayerRequests: group.prayerRequests,
+                              initialIndex: 0,
+                            ),
+                          ),
+                        );
+                      },
+                      child: _StoryAvatar(
+                        index: index,
+                        user: group.user,
+                      ),
+                    ),
+                  );
+                },
+              ),
             ),
           ],
         );

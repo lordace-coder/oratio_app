@@ -20,9 +20,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController emailController = TextEditingController();
-
   final TextEditingController passwordController = TextEditingController();
-
   bool _isLoading = false;
 
   bool isValid(BuildContext context) {
@@ -35,7 +33,6 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _handleLogin(BuildContext context) async {
     if (isValid(context)) {
-      // submit form data
       try {
         final pb = context.read<PocketBaseServiceCubit>().state.pb;
         final auth = await pb.collection('users').authWithPassword(
@@ -54,135 +51,199 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return AuthListener(
       child: Scaffold(
-        backgroundColor: AppColors.primary,
+        backgroundColor: Colors.white,
         body: SafeArea(
-            child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 10),
-          child: ListView(
-            children: [
-              const Gap(30),
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    'WELCOME BACK!',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 27,
-                        fontWeight: FontWeight.bold),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 24),
+            child: ListView(
+              children: [
+                const Gap(40),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                        image: const DecorationImage(
+                            image: AssetImage('assets/images/app_logo.png'),
+                            fit: BoxFit.cover),
+                      ),
+                      // child: Icon(
+                      //   Icons.church_outlined,
+                      //   size: 48,
+                      //   color: AppColors.primary,
+                      // ),
+                    ),
+                    const Gap(24),
+                    Text(
+                      'Welcome Back',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Gap(12),
+                    Text(
+                      'Continue Your Spiritual Journey',
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 16,
+                      ),
+                    ),
+                  ],
+                ),
+                const Gap(48),
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        blurRadius: 20,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
                   ),
-                  Gap(20),
-                  Text('Get Closer With God Today',
-                      style: TextStyle(color: Colors.white, fontSize: 16)),
-                  Text('TODAY',
-                      style: TextStyle(color: Colors.white, fontSize: 18))
-                ],
-              ),
-              const Gap(40),
-              TextFieldd(
-                labeltext: 'Email Address',
-                hintText: 'e.g johndoe@gmail.com',
-                controller: emailController,
-                isPassword: false,
-                inputType: TextInputType.emailAddress,
-              ),
-              const Gap(20),
-              TextFieldd(
-                labeltext: 'Password',
-                hintText: 'must contain 8 or more characters',
-                controller: passwordController,
-                isPassword: true,
-              ),
-              const Gap(10),
-              GestureDetector(
-                onTap: () {
-                  context.pushNamed(RouteNames.forgotpwpage);
-                },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                  child: Column(
+                    children: [
+                      TextFieldd(
+                        labeltext: 'Email Address',
+                        hintText: 'e.g johndoe@gmail.com',
+                        controller: emailController,
+                        isPassword: false,
+                        inputType: TextInputType.emailAddress,
+                      ),
+                      const Gap(20),
+                      TextFieldd(
+                        labeltext: 'Password',
+                        hintText: 'must contain 8 or more characters',
+                        controller: passwordController,
+                        isPassword: true,
+                      ),
+                      const Gap(16),
+                      GestureDetector(
+                        onTap: () {
+                          context.pushNamed(RouteNames.forgotpwpage);
+                        },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text(
+                              'Forgot password?',
+                              style: TextStyle(
+                                color: AppColors.primary.withOpacity(0.8),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                      const Gap(24),
+                      StatefulBuilder(
+                        builder: (context, rebuild) {
+                          return ElevatedButton(
+                            onPressed: _isLoading
+                                ? null
+                                : () async {
+                                    rebuild(() => _isLoading = true);
+                                    await _handleLogin(context);
+                                    rebuild(() => _isLoading = false);
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              disabledBackgroundColor:
+                                  AppColors.primary.withOpacity(0.6),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              minimumSize: const Size(double.infinity, 50),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                            ),
+                            child: Text(
+                              _isLoading ? 'Please wait...' : 'Sign In',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+                const Gap(24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'forgot password?',
-                      style: TextStyle(color: Colors.white.withOpacity(.5)),
+                      "Don't have an account? ",
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 15,
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        context.goNamed(RouteNames.signup);
+                      },
+                      child: Text(
+                        'Sign up',
+                        style: TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
                     )
                   ],
                 ),
-              ),
-              const SizedBox(
-                height: 40,
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    "Don't have an account? ",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      context.goNamed(RouteNames.signup);
-                    },
-                    child: Text(
-                      ' sign up!',
-                      style: TextStyle(color: AppColors.green),
+                const Gap(32),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    GestureDetector(
+                      onTap: () async {
+                        openTermsUrl(context);
+                      },
+                      child: Text(
+                        "Terms of Use",
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
-                  )
-                ],
-              ),
-              const Gap(20),
-              StatefulBuilder(builder: (context, rebuild) {
-                return SubmitButtonV1(
-                    ontap: () async {
-                      if (_isLoading) return;
-                      rebuild(() {
-                        _isLoading = true;
-                      });
-                      // await Future.delayed(Durations.extralong4);
-                      await _handleLogin(context);
-                      rebuild(() {
-                        _isLoading = false;
-                      });
-                    },
-                    radius: 15,
-                    backgroundcolor: _isLoading
-                        ? Colors.white.withOpacity(.6)
-                        : Colors.white,
-                    child: Text(
-                      _isLoading ? 'Please wait..' : 'Continue',
-                      style: TextStyle(
-                          color: _isLoading
-                              ? AppColors.primary.withOpacity(0.6)
-                              : AppColors.primary,
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold),
-                    ));
-              }),
-              const Gap(20),
-              // terms and conditions here
-              Row(
-                children: [
-                  GestureDetector(
-                    onTap: () async {
-                      openTermsUrl(context);
-                    },
-                    child: const Text(
-                      "Terms for use",
-                      style: TextStyle(color: Colors.white54),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      child: Text(
+                        "•",
+                        style: TextStyle(color: Colors.grey[400]),
+                      ),
                     ),
-                  ),
-                  Expanded(child: Container()),
-                  GestureDetector(
-                    onTap: () async {},
-                    child: const Text(
-                      "Privacy Policy",
-                      style: TextStyle(color: Colors.white54),
+                    GestureDetector(
+                      onTap: () async {},
+                      child: Text(
+                        "Privacy Policy",
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
-              )
-            ],
+                  ],
+                ),
+                const Gap(24),
+              ],
+            ),
           ),
-        )),
+        ),
       ),
     );
   }

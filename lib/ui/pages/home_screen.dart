@@ -233,7 +233,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Sacred Services',
+                          'Services',
                           style:
                               Theme.of(context).textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.bold,
@@ -256,6 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             if (isPriest)
                               _buildSacredAction(
                                 icon: FontAwesomeIcons.desktop,
+                                label: 'Dashboard',
                                 label: 'Dashboard',
                                 onTap: () =>
                                     context.pushNamed(RouteNames.dashboard),
@@ -303,15 +304,15 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             _buildMinistryCard(
                               icon: FontAwesomeIcons.peopleGroup,
-                              label: 'Faith Community',
+                              label: 'Communities',
                               description: 'Connect with fellow believers',
                               onTap: () =>
                                   context.pushNamed(RouteNames.communitypage),
                             ),
                             _buildMinistryCard(
                               icon: FontAwesomeIcons.clock,
-                              label: 'Sacred Schedule',
-                              description: 'View liturgical calendar',
+                              label: 'Schedules',
+                              description: 'View liturgical schedules',
                               onTap: () =>
                                   context.pushNamed(RouteNames.schedule),
                             ),
@@ -412,8 +413,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

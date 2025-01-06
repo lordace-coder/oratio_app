@@ -39,7 +39,9 @@ class _TextFielddState extends State<TextFieldd> {
           Text(
             widget.labeltext,
             style: widget.labelTextStyle ??
-                TextStyle(color: AppColors.appBg, fontWeight: FontWeight.w600),
+                TextStyle(
+                    color: Colors.black.withOpacity(0.5),
+                    fontWeight: FontWeight.w600),
           ),
           const Gap(5),
           Container(
@@ -52,7 +54,7 @@ class _TextFielddState extends State<TextFieldd> {
               obscureText: widget.isPassword ? isvisible : false,
               style: widget.inputTextStyle ??
                   TextStyle(
-                    color: AppColors.gray,
+                    color: Colors.black.withOpacity(0.8),
                   ),
               controller: widget.controller,
               // cursorColor: AppColors.textColor,
@@ -61,8 +63,7 @@ class _TextFielddState extends State<TextFieldd> {
                   ) ??
                   InputDecoration(
                       hintStyle: TextStyle(
-                          color: AppColors.dimGray,
-                          fontWeight: FontWeight.normal),
+                          color: AppColors.gray, fontWeight: FontWeight.normal),
                       border: InputBorder.none,
                       hintText: widget.hintText,
                       suffixIcon: widget.isPassword

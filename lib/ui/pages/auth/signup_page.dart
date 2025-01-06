@@ -5,12 +5,12 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/helpers/snackbars.dart';
+import 'package:oratio_app/helpers/url_launcher.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/inputs.dart';
 import 'package:pocketbase/pocketbase.dart';
 
-// ignore: must_be_immutable
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
 
@@ -29,13 +29,12 @@ class _SignupPageState extends State<SignupPage> {
 
   final TextEditingController confirmPassword = TextEditingController();
 
-  final TextEditingController referralController = TextEditingController();
-
   final TextEditingController firstNameController = TextEditingController();
 
   final TextEditingController lastNameController = TextEditingController();
 
   bool _isLoading = false;
+  int _currentStep = 0;
 
   bool isValid(BuildContext context) {
     if (usernameController.text.isEmpty ||
@@ -120,10 +119,87 @@ class _SignupPageState extends State<SignupPage> {
     }
   }
 
+  List<Step> getSteps() {
+    return [
+      Step(
+        title: const Text('Account Info'),
+        content: Column(
+          children: [
+            TextFieldd(
+              controller: usernameController,
+              hintText: 'e.g johndoe',
+              isPassword: false,
+              labeltext: 'Username',
+            ),
+            const Gap(10),
+            TextFieldd(
+              controller: emailController,
+              hintText: 'e.g johndoe@gmail.com',
+              isPassword: false,
+              labeltext: 'Email Address',
+              inputType: TextInputType.emailAddress,
+            ),
+            const Gap(10),
+            TextFieldd(
+              controller: phoneController,
+              hintText: 'e.g 090124....',
+              isPassword: false,
+              labeltext: 'Phone Number',
+              inputType: TextInputType.phone,
+            ),
+          ],
+        ),
+        isActive: _currentStep >= 0,
+      ),
+      Step(
+        title: const Text('Personal Info'),
+        content: Column(
+          children: [
+            TextFieldd(
+              controller: firstNameController,
+              hintText: 'Your FirstName here',
+              isPassword: false,
+              labeltext: 'First Name',
+            ),
+            const Gap(10),
+            TextFieldd(
+              controller: lastNameController,
+              hintText: 'Your Last Name Here',
+              isPassword: false,
+              labeltext: 'Last Name',
+            ),
+          ],
+        ),
+        isActive: _currentStep >= 1,
+      ),
+      Step(
+        title: const Text('Password'),
+        content: Column(
+          children: [
+            TextFieldd(
+              controller: passwordController,
+              hintText: 'must contain 8 or more characters',
+              isPassword: true,
+              labeltext: 'Password',
+            ),
+            const Gap(10),
+            TextFieldd(
+              controller: confirmPassword,
+              hintText: 'must contain 8 or more characters',
+              isPassword: true,
+              labeltext: 'Confirm Password',
+            ),
+          ],
+        ),
+        isActive: _currentStep >= 2,
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primary,
+      backgroundColor: Colors.white,
       body: SafeArea(
           child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 10),
@@ -131,118 +207,193 @@ class _SignupPageState extends State<SignupPage> {
           child: Column(
             children: [
               const Gap(20),
-              const Column(
+              Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      shape: BoxShape.circle,
+                      image: const DecorationImage(
+                          image: AssetImage('assets/images/app_logo.png'),
+                          fit: BoxFit.cover),
+                    ),
+                    // child: Icon(
+                    //   Icons.church_outlined,
+                    //   size: 48,
+                    //   color: AppColors.primary,
+                    // ),
+                  ),
+                  const Gap(24),
                   Text(
-                    'Create Your Account!',
+                    'Create Account',
                     style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 27,
-                        fontWeight: FontWeight.bold),
+                      color: AppColors.primary,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Gap(12),
+                  Text(
+                    'Begin Your Spiritual Journey',
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 16,
+                    ),
                   ),
                 ],
               ),
               const Gap(20),
-              TextFieldd(
-                controller: usernameController,
-                hintText: 'e.g johndoe',
-                isPassword: false,
-                labeltext: 'Username',
+              SizedBox(
+                height: 400, // Adjust the height as needed
+                child: Stepper(
+                  type: StepperType.vertical,
+                  currentStep: _currentStep,
+                  connectorColor: WidgetStateProperty.all(AppColors.primary),
+                  controlsBuilder:
+                      (BuildContext context, ControlsDetails details) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Row(
+                        children: <Widget>[
+                          ElevatedButton(
+                            onPressed: details.onStepContinue,
+                            style: ElevatedButton.styleFrom(
+                              shape: const BeveledRectangleBorder(),
+                              backgroundColor: AppColors.primary,
+                            ),
+                            child: const Text(
+                              'Continue',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          TextButton(
+                            onPressed: details.onStepCancel,
+                            child: Text('Cancel',
+                                style: TextStyle(color: AppColors.primary)),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  onStepContinue: () {
+                    if (_currentStep < getSteps().length - 1) {
+                      setState(() {
+                        _currentStep += 1;
+                      });
+                    } else {
+                      handleSignup(context);
+                    }
+                  },
+                  onStepCancel: () {
+                    if (_currentStep > 0) {
+                      setState(() {
+                        _currentStep -= 1;
+                      });
+                    }
+                  },
+                  steps: getSteps(),
+                ),
               ),
               const Gap(10),
-              TextFieldd(
-                controller: firstNameController,
-                hintText: 'Your FirstName here',
-                isPassword: false,
-                labeltext: 'First Name',
-              ),
-              const Gap(10),
-              TextFieldd(
-                controller: lastNameController,
-                hintText: 'Your Last Name Here',
-                isPassword: false,
-                labeltext: 'Last Name',
-              ),
-              const Gap(10),
-              TextFieldd(
-                controller: emailController,
-                hintText: 'e.g johndoe@gmail.com',
-                isPassword: false,
-                labeltext: 'Email Address',
-                inputType: TextInputType.emailAddress,
-              ),
-              const Gap(10),
-              TextFieldd(
-                controller: phoneController,
-                hintText: 'e.g 090124....',
-                isPassword: false,
-                labeltext: 'Phone Number',
-                inputType: TextInputType.phone,
-              ),
-              const Gap(10),
-              TextFieldd(
-                controller: passwordController,
-                hintText: 'must contain 8 or more characters',
-                isPassword: true,
-                labeltext: 'Password',
-              ),
-              const Gap(10),
-              TextFieldd(
-                controller: confirmPassword,
-                hintText: 'must contain 8 or more characters',
-                isPassword: true,
-                labeltext: 'Confirm Password',
-              ),
-              const Gap(10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    "Already have an account? ",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      context.pushNamed(RouteNames.login);
-                    },
-                    child: Text(
-                      ' login!',
-                      style: TextStyle(color: AppColors.green),
-                    ),
-                  )
-                ],
-              ),
               const Gap(10),
               StatefulBuilder(builder: (context, rebuild) {
-                return SubmitButtonV1(
-                    ontap: () async {
+                return ElevatedButton(
+                    onPressed: () async {
                       if (_isLoading) return;
                       rebuild(() {
                         _isLoading = true;
                       });
-                      // await Future.delayed(Durations.extralong4);
                       await handleSignup(context);
 
                       rebuild(() {
                         _isLoading = false;
                       });
                     },
-                    radius: 15,
-                    backgroundcolor: _isLoading
-                        ? Colors.white.withOpacity(.6)
-                        : Colors.white,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor:
+                          AppColors.primary.withOpacity(0.6),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      minimumSize: const Size(double.infinity, 50),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
                     child: Text(
                       _isLoading ? 'Please wait..' : 'Register',
                       style: TextStyle(
                           color: _isLoading
-                              ? AppColors.primary.withOpacity(0.6)
-                              : AppColors.primary,
+                              ? Colors.white.withOpacity(0.6)
+                              : Colors.white,
                           fontSize: 20,
                           fontWeight: FontWeight.bold),
                     ));
               }),
               const Gap(20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    "Already have an account? ",
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 15,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      context.goNamed(RouteNames.login);
+                    },
+                    child: Text(
+                      'Login',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                  )
+                ],
+              ),
+              const Gap(20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    onTap: () async {
+                      openTermsUrl(context);
+                    },
+                    child: Text(
+                      "Terms of Use",
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(
+                      "•",
+                      style: TextStyle(color: Colors.grey[400]),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: () async {},
+                    child: Text(
+                      "Privacy Policy",
+                      style: TextStyle(
+                        color: Colors.grey[600],
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),

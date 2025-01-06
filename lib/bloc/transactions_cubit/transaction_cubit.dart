@@ -43,4 +43,45 @@ class TransactionCubit extends Cubit<TransactionState> {
       rethrow;
     }
   }
+
+Future<void> fetchParishTransactions() async {
+    try {
+      if (state.transactions.isEmpty) {
+        emit(state.copyWith(status: TransactionStatus.loading));
+      }
+
+      final now = DateTime.now();
+      final startOfMonth = DateTime(now.year, now.month, 1);
+      final endOfMonth = DateTime(now.year, now.month + 1, 0);
+
+      final records =
+          await pocketBase.collection('transaction_history').getFullList(
+                sort: '-created',
+                filter:
+                    'created >= "${DateFormat('yyyy-MM-dd').format(startOfMonth)}" && created <= "${DateFormat('yyyy-MM-dd').format(endOfMonth)}"',
+              );
+
+      final transactions = records
+          .map((record) => Transaction.fromJson(record.toJson()))
+          .toList();
+
+      emit(state.copyWith(
+        transactions: transactions,
+        status: TransactionStatus.success,
+      ));
+    } catch (e) {
+      emit(state.copyWith(
+        status: TransactionStatus.failure,
+        error: e.toString(),
+      ));
+      rethrow;
+    }
+  }
+
+
+
+
+
+
+
 }

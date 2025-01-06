@@ -132,7 +132,7 @@ class _DashboardPageState extends State<DashboardPage> {
               },
               icon: const Icon(FontAwesomeIcons.arrowLeft)),
           Text(
-            '$parishName\'s Dashboard',
+            parishName.isNotEmpty ? '$parishName\'s Dashboard' : 'Dashboard',
             style: const TextStyle(
               fontSize: 24,
               // color: Colors.white,

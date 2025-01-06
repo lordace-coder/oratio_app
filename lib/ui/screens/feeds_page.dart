@@ -10,6 +10,7 @@ import 'package:oratio_app/bloc/central_cubit/central_cubit.dart';
 import 'package:oratio_app/bloc/posts/post_state.dart';
 import 'package:oratio_app/bloc/prayer_requests/requests_state.dart';
 import 'package:oratio_app/helpers/user.dart';
+import 'package:oratio_app/ui/pages/priest/live_page.dart';
 import 'package:oratio_app/ui/routes/routes.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/buttons.dart';
@@ -232,8 +233,20 @@ class _FeedsListScreenState extends State<FeedsListScreen> {
                     ),
                     context.watch<CentralCubit>().liveParishes.isNotEmpty
                         ? LiveWidget(
+                            parishId: context
+                                .read<CentralCubit>()
+                                .liveParishes
+                                .first
+                                .id,
                             currentAttendees: 'Bright and others',
-                            onJoinPressed: () {},
+                            onJoinPressed: () {
+                              Navigator.of(context).push(LiveMassPage.route(
+                                  parishId: context
+                                      .read<CentralCubit>()
+                                      .liveParishes
+                                      .first
+                                      .id));
+                            },
                             parishName: context
                                 .read<CentralCubit>()
                                 .liveParishes
@@ -553,9 +566,10 @@ class LiveWidget extends StatefulWidget {
   final String parishName;
   final String currentAttendees;
   final VoidCallback onJoinPressed;
-
+  final String parishId;
   const LiveWidget({
     super.key,
+    required this.parishId,
     required this.parishName,
     required this.currentAttendees,
     required this.onJoinPressed,
@@ -696,32 +710,35 @@ class _LiveWidgetState extends State<LiveWidget>
                 //   ],
                 // ),
                 const SizedBox(height: 16.0),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: widget.onJoinPressed,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red.shade400,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12.0),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      elevation: 2.0,
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.headphones),
-                        SizedBox(width: 8.0),
-                        Text(
-                          'Join Live Mass',
-                          style: TextStyle(
-                            fontSize: 16.0,
-                            fontWeight: FontWeight.bold,
-                          ),
+                GestureDetector(
+                  onTap: () {},
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: widget.onJoinPressed,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red.shade400,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
                         ),
-                      ],
+                        elevation: 2.0,
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.headphones),
+                          SizedBox(width: 8.0),
+                          Text(
+                            'Join Live Mass',
+                            style: TextStyle(
+                              fontSize: 16.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
