@@ -177,19 +177,30 @@ class _ParishListPageState extends State<ParishListPage>
                   )
                 else if (_loading)
                   SliverToBoxAdapter(
-                    child: SizedBox(
-                        height: 300,
-                        child: Center(
-                            child: CircularProgressIndicator(
-                          color: AppColors.primary,
-                        ))),
-                  )
+                      child: SizedBox(
+                    height: 300,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Center(
+                          child: CircularProgressIndicator(
+                            color: AppColors.primary,
+                          ),
+                        )
+                      ],
+                    ),
+                  ))
                 else
                   const SliverToBoxAdapter(
                     child: SizedBox(
                         height: 300,
-                        child: Center(
-                          child: Text('No Parish Available'),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Center(
+                              child: Text('No Parish Available'),
+                            ),
+                          ],
                         )),
                   )
               ],

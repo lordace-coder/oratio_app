@@ -6,6 +6,7 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:oratio_app/bloc/booking_bloc/state.dart';
+import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
@@ -495,6 +496,7 @@ class NoParishYet extends StatelessWidget {
 
 Widget buildChurchItem(BuildContext context, RecordModel church,
     Function()? onTap, bool selected) {
+  final pb = getPocketBaseFromContext(context);
   return GestureDetector(
     onTap: onTap,
     child: Card(
@@ -513,7 +515,9 @@ Widget buildChurchItem(BuildContext context, RecordModel church,
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: Image.network(
-                'https://via.placeholder.com/60', // Reduced size
+                pb
+                    .getFileUrl(church, church.getStringValue('image'))
+                    .toString(), // Use actual image URL
                 width: 60,
                 height: 60,
                 fit: BoxFit.cover,

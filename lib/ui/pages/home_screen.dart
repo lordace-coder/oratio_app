@@ -67,12 +67,16 @@ class _HomeScreenState extends State<HomeScreen> {
               setState(() {});
               await context.read<TransactionCubit>().fetchTransactions();
             },
-            child: CustomScrollView(
-              slivers: [
-                // Spiritual Header
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 15, 5, 10),
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      10,
+                      15,
+                      5,
+                      MediaQuery.of(context).size.height * 0.01,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -89,12 +93,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
-                ),
-
-                // Balance Card with Sacred Design
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: MediaQuery.of(context).size.width * 0.03,
+                    ),
                     child: Card(
                       elevation: 0,
                       shape: RoundedRectangleBorder(
@@ -114,7 +116,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         child: Padding(
-                          padding: const EdgeInsets.all(15.0),
+                          padding: EdgeInsets.all(
+                            MediaQuery.of(context).size.width * 0.04,
+                          ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -123,7 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
-                                    'Stewardship Balance',
+                                    'Wallet Balance',
                                     style: Theme.of(context)
                                         .textTheme
                                         .bodyLarge
@@ -136,7 +140,10 @@ class _HomeScreenState extends State<HomeScreen> {
                                     onTap: () => setState(
                                         () => showBalance = !showBalance),
                                     child: Container(
-                                      padding: const EdgeInsets.all(8),
+                                      padding: EdgeInsets.all(
+                                        MediaQuery.of(context).size.width *
+                                            0.02,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: Colors.white.withOpacity(0.2),
                                         borderRadius: BorderRadius.circular(12),
@@ -196,7 +203,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Expanded(
                                     child: _buildActionButton(
                                       icon: FontAwesomeIcons.clockRotateLeft,
-                                      label: 'Offerings History',
+                                      label: 'Transaction History',
                                       onTap: () => context.pushNamed(
                                           RouteNames.transactionsPage),
                                     ),
@@ -209,17 +216,18 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ),
-                ),
-
-                // Sacred Actions Grid
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(
+                      MediaQuery.of(context).size.width * 0.05,
+                      24,
+                      MediaQuery.of(context).size.width * 0.05,
+                      10,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Sacred Services',
+                          'Services',
                           style:
                               Theme.of(context).textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.bold,
@@ -229,7 +237,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         GridView.count(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          crossAxisCount: 4,
+                          crossAxisCount:
+                              MediaQuery.of(context).size.width > 600 ? 6 : 4,
                           mainAxisSpacing: 16,
                           crossAxisSpacing: 16,
                           children: [
@@ -241,7 +250,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             if (isPriest)
                               _buildSacredAction(
                                 icon: FontAwesomeIcons.desktop,
-                                label: 'Parish Portal',
+                                label: 'Dashboard',
                                 onTap: () =>
                                     context.pushNamed(RouteNames.dashboard),
                               ),
@@ -261,12 +270,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
-                ),
-
-                // Ministry Features
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
+                  Padding(
+                    padding: EdgeInsets.all(
+                      MediaQuery.of(context).size.width * 0.05,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -281,22 +288,23 @@ class _HomeScreenState extends State<HomeScreen> {
                         GridView.count(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          crossAxisCount: 2,
+                          crossAxisCount:
+                              MediaQuery.of(context).size.width > 600 ? 3 : 2,
                           mainAxisSpacing: 10,
                           crossAxisSpacing: 10,
                           childAspectRatio: 1.1,
                           children: [
                             _buildMinistryCard(
                               icon: FontAwesomeIcons.peopleGroup,
-                              label: 'Faith Community',
+                              label: 'Communities',
                               description: 'Connect with fellow believers',
                               onTap: () =>
                                   context.pushNamed(RouteNames.communitypage),
                             ),
                             _buildMinistryCard(
                               icon: FontAwesomeIcons.clock,
-                              label: 'Sacred Schedule',
-                              description: 'View liturgical calendar',
+                              label: 'Schedules',
+                              description: 'View liturgical schedules',
                               onTap: () =>
                                   context.pushNamed(RouteNames.schedule),
                             ),
@@ -319,12 +327,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
-                ),
-
-                // Offerings History
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
+                  Padding(
+                    padding: EdgeInsets.all(
+                      MediaQuery.of(context).size.width * 0.05,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -397,8 +403,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -457,13 +463,15 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           const Gap(8),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black87,
-                ),
-            textAlign: TextAlign.center,
+          Expanded(
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
+                  ),
+              textAlign: TextAlign.center,
+            ),
           ),
         ],
       ),
