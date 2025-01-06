@@ -257,7 +257,6 @@ class _HomeScreenState extends State<HomeScreen> {
                               _buildSacredAction(
                                 icon: FontAwesomeIcons.desktop,
                                 label: 'Dashboard',
-                                label: 'Dashboard',
                                 onTap: () =>
                                     context.pushNamed(RouteNames.dashboard),
                               ),
@@ -413,8 +412,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       ],
                     ),
                   ),
-                ],
-              ),
+                )
+              ],
             ),
           ),
         ),

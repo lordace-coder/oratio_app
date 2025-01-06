@@ -184,14 +184,14 @@ class PrayerRequestGroupsList extends StatelessWidget {
             ),
           );
         }
-    
+
         final currentUserId =
             context.read<PrayerRequestCubit>().service.pb.authStore.model.id;
-    
+
         // Separate the current user's group
         UserPrayerRequestGroup? currentUserGroup;
         final otherGroups = <UserPrayerRequestGroup>[];
-    
+
         for (var group in groups) {
           if (group.user.id == currentUserId) {
             currentUserGroup = group;
@@ -199,13 +199,12 @@ class PrayerRequestGroupsList extends StatelessWidget {
             otherGroups.add(group);
           }
         }
-    
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 16, horizontal: 9),
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 9),
               child: Text(
                 'Prayers',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -236,7 +235,7 @@ class PrayerRequestGroupsList extends StatelessWidget {
                       ),
                     );
                   }
-    
+
                   if (index == 1 && currentUserGroup != null) {
                     return Padding(
                       padding: const EdgeInsets.only(right: 12),
@@ -246,6 +245,7 @@ class PrayerRequestGroupsList extends StatelessWidget {
                             context,
                             MaterialPageRoute(
                               builder: (context) => PrayerRequestViewer(
+                                otherPrayerRequests: groups,
                                 prayerRequests:
                                     currentUserGroup!.prayerRequests,
                                 initialIndex: 0,
@@ -260,10 +260,10 @@ class PrayerRequestGroupsList extends StatelessWidget {
                       ),
                     );
                   }
-    
+
                   final group =
                       otherGroups[index - 2]; // Adjust index for other groups
-    
+
                   return Padding(
                     padding: const EdgeInsets.only(right: 12),
                     child: GestureDetector(
@@ -274,6 +274,7 @@ class PrayerRequestGroupsList extends StatelessWidget {
                             builder: (context) => PrayerRequestViewer(
                               prayerRequests: group.prayerRequests,
                               initialIndex: 0,
+                              otherPrayerRequests: groups,
                             ),
                           ),
                         );
