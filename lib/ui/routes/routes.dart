@@ -11,6 +11,7 @@ import 'package:oratio_app/ui/pages/create_new_post.dart';
 import 'package:oratio_app/ui/pages/edit_profile_page.dart';
 import 'package:oratio_app/ui/pages/post_detail_page.dart';
 import 'package:oratio_app/ui/pages/priest/live_page.dart';
+import 'package:oratio_app/ui/pages/priest/parish_transactions_page.dart';
 import 'package:oratio_app/ui/pages/search_page.dart';
 import 'package:oratio_app/ui/routes/priest_shell_route.dart';
 import 'package:oratio_app/ui/screens/chat_screen.dart';
@@ -289,6 +290,11 @@ class AppRouter {
                 path: '/priest/${RouteNames.massRequests}',
                 name: RouteNames.massRequests,
                 builder: (context, state) => const BookedMassesPage(),
+              ),
+              GoRoute(
+                path: '/priest/${RouteNames.parishTransactions}',
+                name: RouteNames.parishTransactions,
+                builder: (context, state) => const ParishTransactionsPage(),
               ),
               GoRoute(
                 path: '/priest/${RouteNames.createCommunityPage}',
