@@ -149,7 +149,6 @@ class PrayerRequestGroupService {
   }
 }
 
-
 class PrayerRequestGroupsList extends StatefulWidget {
   const PrayerRequestGroupsList({super.key});
 
@@ -254,6 +253,7 @@ class _PrayerRequestGroupsListState extends State<PrayerRequestGroupsList> {
                                   prayerRequests:
                                       currentUserGroup!.prayerRequests,
                                   initialIndex: 0,
+                                  otherPrayerRequests: groups,
                                 ),
                               ),
                             );
@@ -279,6 +279,7 @@ class _PrayerRequestGroupsListState extends State<PrayerRequestGroupsList> {
                                 builder: (context) => PrayerRequestViewer(
                                   prayerRequests: group.prayerRequests,
                                   initialIndex: 0,
+                                  otherPrayerRequests: groups,
                                 ),
                               ),
                             );

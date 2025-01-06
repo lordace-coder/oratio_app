@@ -7,10 +7,13 @@ plugins {
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id "dev.flutter.flutter-gradle-plugin"
 }
+dependencies {
+  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+}
 
 android {
     namespace = "com.acemedia.oratio"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 33
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -26,10 +29,12 @@ android {
         applicationId = "com.acemedia.oratio"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = 22
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+
     }
 
     buildTypes {

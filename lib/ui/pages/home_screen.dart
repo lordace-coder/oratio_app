@@ -28,6 +28,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final isSmallScreen = screenSize.width < 360;
+    final horizontalPadding = isSmallScreen ? 10.0 : 20.0;
+
     final pb = context.read<PocketBaseServiceCubit>().state.pb;
     if (!pb.authStore.isValid) {
       pb.authStore.clear();
@@ -72,7 +76,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Spiritual Header
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 15, 5, 10),
+                    padding: EdgeInsets.fromLTRB(
+                        horizontalPadding, 15, horizontalPadding, 10),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -94,119 +99,127 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Balance Card with Sacred Design
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                    child: Card(
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      color: Theme.of(context).primaryColor,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(28),
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              Theme.of(context).primaryColor,
-                              Theme.of(context).primaryColor.withOpacity(0.8),
-                            ],
+                    padding:
+                        EdgeInsets.symmetric(horizontal: horizontalPadding),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return Card(
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
                           ),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(15.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Stewardship Balance',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyLarge
-                                        ?.copyWith(
-                                          color: Colors.white.withOpacity(0.9),
-                                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context).primaryColor,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(28),
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Theme.of(context).primaryColor,
+                                  Theme.of(context)
+                                      .primaryColor
+                                      .withOpacity(0.8),
+                                ],
+                              ),
+                            ),
+                            padding:
+                                EdgeInsets.all(isSmallScreen ? 12.0 : 15.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Stewardship Balance',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyLarge
+                                          ?.copyWith(
+                                            color:
+                                                Colors.white.withOpacity(0.9),
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                    ),
+                                    GestureDetector(
+                                      onTap: () => setState(
+                                          () => showBalance = !showBalance),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.2),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
                                         ),
-                                  ),
-                                  GestureDetector(
-                                    onTap: () => setState(
-                                        () => showBalance = !showBalance),
-                                    child: Container(
-                                      padding: const EdgeInsets.all(8),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Icon(
-                                        showBalance
-                                            ? FontAwesomeIcons.eye
-                                            : FontAwesomeIcons.eyeSlash,
-                                        color: Colors.white,
-                                        size: 16,
+                                        child: Icon(
+                                          showBalance
+                                              ? FontAwesomeIcons.eye
+                                              : FontAwesomeIcons.eyeSlash,
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const Gap(16),
-                              FutureBuilder<String>(
-                                  initialData: bal,
-                                  future: getUserBalance(
-                                      user.id,
-                                      context
-                                          .read<PocketBaseServiceCubit>()
-                                          .state
-                                          .pb),
-                                  builder: (context, snapshot) {
-                                    if (snapshot.hasData) {
-                                      bal = snapshot.data!;
-                                      return Text(
-                                        showBalance
-                                            ? '${snapshot.data}'
-                                            : '• • • • • •',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .headlineMedium
-                                            ?.copyWith(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                      );
-                                    }
-                                    return Container();
-                                  }),
-                              const Gap(24),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: _buildActionButton(
-                                      icon: FontAwesomeIcons.plus,
-                                      label: 'Add Offering',
-                                      onTap: () async {
-                                        await collectPayment(context);
-                                        setState(() {});
-                                      },
+                                  ],
+                                ),
+                                const Gap(16),
+                                FutureBuilder<String>(
+                                    initialData: bal,
+                                    future: getUserBalance(
+                                        user.id,
+                                        context
+                                            .read<PocketBaseServiceCubit>()
+                                            .state
+                                            .pb),
+                                    builder: (context, snapshot) {
+                                      if (snapshot.hasData) {
+                                        bal = snapshot.data!;
+                                        return Text(
+                                          showBalance
+                                              ? '${snapshot.data}'
+                                              : '• • • • • •',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .headlineMedium
+                                              ?.copyWith(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        );
+                                      }
+                                      return Container();
+                                    }),
+                                const Gap(24),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: _buildActionButton(
+                                        icon: FontAwesomeIcons.plus,
+                                        label: 'Add Offering',
+                                        onTap: () async {
+                                          await collectPayment(context);
+                                          setState(() {});
+                                        },
+                                      ),
                                     ),
-                                  ),
-                                  const Gap(12),
-                                  Expanded(
-                                    child: _buildActionButton(
-                                      icon: FontAwesomeIcons.clockRotateLeft,
-                                      label: 'Offerings History',
-                                      onTap: () => context.pushNamed(
-                                          RouteNames.transactionsPage),
+                                    const Gap(12),
+                                    Expanded(
+                                      child: _buildActionButton(
+                                        icon: FontAwesomeIcons.clockRotateLeft,
+                                        label: 'Offerings History',
+                                        onTap: () => context.pushNamed(
+                                            RouteNames.transactionsPage),
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -214,7 +227,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Sacred Actions Grid
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 24, 20, 10),
+                    padding: EdgeInsets.fromLTRB(
+                        horizontalPadding, 24, horizontalPadding, 10),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -229,9 +243,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         GridView.count(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          crossAxisCount: 4,
-                          mainAxisSpacing: 16,
-                          crossAxisSpacing: 16,
+                          crossAxisCount: screenSize.width < 300 ? 2 : 4,
+                          mainAxisSpacing: isSmallScreen ? 12 : 16,
+                          crossAxisSpacing: isSmallScreen ? 12 : 16,
+                          childAspectRatio: isSmallScreen ? 0.9 : 1.0,
                           children: [
                             _buildSacredAction(
                               icon: FontAwesomeIcons.book,
@@ -241,7 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             if (isPriest)
                               _buildSacredAction(
                                 icon: FontAwesomeIcons.desktop,
-                                label: 'Parish Portal',
+                                label: 'Dashboard',
                                 onTap: () =>
                                     context.pushNamed(RouteNames.dashboard),
                               ),
@@ -266,7 +281,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Ministry Features
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.all(20.0),
+                    padding: EdgeInsets.all(horizontalPadding),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -281,10 +296,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         GridView.count(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 10,
-                          crossAxisSpacing: 10,
-                          childAspectRatio: 1.1,
+                          crossAxisCount: screenSize.width < 600 ? 2 : 3,
+                          mainAxisSpacing: isSmallScreen ? 8 : 10,
+                          crossAxisSpacing: isSmallScreen ? 8 : 10,
+                          childAspectRatio: screenSize.width < 360 ? 1.2 : 1.3,
                           children: [
                             _buildMinistryCard(
                               icon: FontAwesomeIcons.peopleGroup,
@@ -324,7 +339,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 // Offerings History
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.all(20.0),
+                    padding: EdgeInsets.all(horizontalPadding),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -411,6 +426,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required String label,
     required VoidCallback onTap,
   }) {
+    final isSmallScreen = MediaQuery.of(context).size.width < 360;
     return ElevatedButton(
       onPressed: onTap,
       style: ElevatedButton.styleFrom(
@@ -425,11 +441,14 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 16),
-          const Gap(8),
+          Icon(icon, size: isSmallScreen ? 14 : 16),
+          Gap(isSmallScreen ? 4 : 8),
           Text(
             label,
-            style: const TextStyle(fontWeight: FontWeight.w600),
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: isSmallScreen ? 12 : 14,
+            ),
           ),
         ],
       ),
@@ -441,12 +460,20 @@ class _HomeScreenState extends State<HomeScreen> {
     required String label,
     required VoidCallback onTap,
   }) {
+    final isSmallScreen = MediaQuery.of(context).size.width < 360;
+    final iconSize = isSmallScreen ? 20.0 : 24.0;
+    final containerPadding = isSmallScreen ? 8.0 : 12.0;
+
     return GestureDetector(
       onTap: onTap,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
+            width: isSmallScreen ? 48.0 : 56.0,
+            height: isSmallScreen ? 48.0 : 56.0,
+            padding: EdgeInsets.all(containerPadding),
             decoration: BoxDecoration(
               color: Theme.of(context).primaryColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(16),
@@ -454,16 +481,22 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Icon(
               icon,
               color: Theme.of(context).primaryColor,
+              size: iconSize,
             ),
           ),
-          const Gap(8),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  color: Colors.black87,
-                ),
-            textAlign: TextAlign.center,
+          const Gap(4),
+          Flexible(
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    color: Colors.black87,
+                    fontSize: isSmallScreen ? 11 : 12,
+                  ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
@@ -476,6 +509,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required String description,
     required VoidCallback onTap,
   }) {
+    final isSmallScreen = MediaQuery.of(context).size.width < 360;
     return GestureDetector(
       onTap: onTap,
       child: Card(
@@ -487,7 +521,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         child: Container(
-          padding: const EdgeInsets.all(10.0),
+          padding: EdgeInsets.all(isSmallScreen ? 8.0 : 10.0),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             gradient: LinearGradient(
@@ -500,10 +534,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min, // Add this
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                padding: EdgeInsets.all(isSmallScreen ? 8 : 10),
                 decoration: BoxDecoration(
                   color: Theme.of(context).primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(14),
@@ -511,24 +546,36 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Icon(
                   icon,
                   color: Theme.of(context).primaryColor,
-                  size: 20,
+                  size: isSmallScreen ? 18 : 20,
                 ),
               ),
-              const Gap(12),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
+              Gap(isSmallScreen ? 6 : 8),
+              Flexible(
+                // Wrap with Flexible
+                child: Text(
+                  label,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                        fontSize: isSmallScreen ? 13 : 14,
+                      ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              const Gap(4),
-              Text(
-                description,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade600,
-                      height: 1.3,
-                    ),
+              Gap(isSmallScreen ? 2 : 3),
+              Flexible(
+                // Wrap with Flexible
+                child: Text(
+                  description,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.grey.shade600,
+                        height: 1.2,
+                        fontSize: isSmallScreen ? 11 : 12,
+                      ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
