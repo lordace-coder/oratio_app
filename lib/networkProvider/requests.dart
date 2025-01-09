@@ -29,7 +29,6 @@ Future<List<PrayerCommunity>> getCommunities(BuildContext context,
       );
     }).toList();
   } catch (e) {
-    print(e);
     onError?.call();
   }
   return data;

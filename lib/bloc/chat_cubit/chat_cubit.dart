@@ -105,7 +105,6 @@ class ChatCubit extends Cubit<ChatState> {
       // Refresh chat list
       await loadRecentChats();
     } catch (e) {
-      print(e);
       emit(ChatError('Failed to mark messages as read: $e'));
     }
   }

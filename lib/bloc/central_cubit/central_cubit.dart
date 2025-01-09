@@ -49,7 +49,7 @@ class CentralCubit extends Cubit<List> {
         getFeeds();
       }
     } catch (e) {
-      print('initialization error $e');
+      debugPrint('initialization error $e');
     }
     // NotificationService.initialize(context);
   }

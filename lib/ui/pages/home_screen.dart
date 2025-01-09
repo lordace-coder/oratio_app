@@ -133,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      'Stewardship Balance',
+                                      'Balance',
                                       style: Theme.of(context)
                                           .textTheme
                                           .bodyLarge
@@ -197,7 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     Expanded(
                                       child: _buildActionButton(
                                         icon: FontAwesomeIcons.plus,
-                                        label: 'Add Offering',
+                                        label: 'Fund Account',
                                         onTap: () async {
                                           await collectPayment(context);
                                           setState(() {});
@@ -208,7 +208,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     Expanded(
                                       child: _buildActionButton(
                                         icon: FontAwesomeIcons.clockRotateLeft,
-                                        label: 'Offerings History',
+                                        label: 'Transaction History',
                                         onTap: () => context.pushNamed(
                                             RouteNames.transactionsPage),
                                       ),

@@ -20,6 +20,17 @@ class NotificationCubit extends Cubit<NotificationState> {
     }
   }
 
+  Future<void> deleteAllNotifications() async {
+    try {
+      emit(const NotificationLoaded([]));
+      for (var i in (state as NotificationLoaded).notifications) {
+        await _pocketBase.collection('notifications').delete(i.id);
+      }
+    } catch (e) {
+      emit(NotificationError(e.toString()));
+    }
+  }
+
   Future<void> deleteNotification(String id) async {
     try {
       await _pocketBase.collection('notifications').delete(id);

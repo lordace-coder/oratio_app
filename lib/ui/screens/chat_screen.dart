@@ -30,14 +30,6 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       // backgroundColor: Theme.of(context).colorScheme.surface,
       body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            colorFilter: ColorFilter.mode(
-                Colors.white.withOpacity(0.8), BlendMode.overlay),
-            image: const AssetImage('assets/images/wallet_bg.jpeg'),
-            fit: BoxFit.cover,
-          ),
-        ),
         child: SafeArea(
           child: Stack(
             children: [

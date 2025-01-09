@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
+import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
+import 'package:oratio_app/networkProvider/priest_requests.dart';
+import 'package:oratio_app/ui/themes.dart';
+import 'package:pocketbase/pocketbase.dart';
+import 'package:shimmer/shimmer.dart';
+
+const String DEFAULT_MASS_TYPE = 'Regular Mass';
 
 class MassBooking {
   final String id;
@@ -10,7 +19,7 @@ class MassBooking {
   final List<String> attendees;
   final String bookedBy;
   final double donationAmount;
-  final String massType;
+  final String? massType;
   MassStatus status;
 
   MassBooking({
@@ -21,9 +30,11 @@ class MassBooking {
     required this.attendees,
     required this.bookedBy,
     required this.donationAmount,
-    required this.massType,
+    this.massType,
     this.status = MassStatus.pending,
   });
+
+  String get displayMassType => massType ?? DEFAULT_MASS_TYPE;
 }
 
 enum MassStatus { pending, accepted, rejected }
@@ -36,20 +47,83 @@ class BookedMassesPage extends StatefulWidget {
 }
 
 class _BookedMassesPageState extends State<BookedMassesPage> {
-  final List<MassBooking> _massBookings = [
-    MassBooking(
-      id: '001',
-      parish: "St. Mary's Cathedral",
-      time: DateTime(2024, 3, 15, 9, 0),
-      intention:
-          'For the repose of the soul of John Smith, a longtime parishioner who dedicated his life to community service and faith',
-      attendees: ['Mary Smith', 'James Smith', 'Elizabeth Jones'],
-      bookedBy: 'Mary Smith',
-      donationAmount: 50.00,
-      massType: 'Memorial Mass',
-    ),
-    // More sample data...
-  ];
+  bool _isLoading = true;
+  String? _error;
+  final List<MassBooking> _massBookings = [];
+  RecordModel? myParish;
+
+  @override
+  void initState() {
+    super.initState();
+    loadChurchForPriest();
+    _fetchMassBookings();
+  }
+
+  Future<void> loadChurchForPriest() async {
+    final pb = getPocketBaseFromContext(context);
+    final userId = pb.authStore.model.id;
+    try {
+      final record = await pb.collection('parish').getFirstListItem(
+            'priest = "$userId"',
+          );
+      setState(() {
+        myParish = record;
+      });
+    } catch (e) {
+      print('Error fetching parish: $e');
+    }
+    final profile = context.read<ProfileDataCubit>();
+    await profile.getMyProfile();
+  }
+
+  Future<void> _fetchMassBookings() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+      if (myParish == null) {
+        await loadChurchForPriest();
+      }
+
+      // TODO: Replace with actual API call
+      final pb = getPocketBaseFromContext(context);
+      final data = await pb.collection('mass_booking').getFullList(
+          filter: 'parish ="${myParish!.id}"', expand: 'donation,user');
+      await Future.delayed(
+          const Duration(seconds: 2)); // Simulate network delay
+
+      final List<MassBooking> bookings = data.map((z) {
+        var i = z.data;
+        return MassBooking(
+          id: z.id,
+          parish: i['parish'],
+          time: DateTime.parse(z.getStringValue('time')),
+          intention: i['intention'],
+          attendees: [i['attendees']],
+          bookedBy: i['user'],
+          donationAmount: 22,
+// TODO FIX THIS
+          //z.expand['donation']!.first.getDoubleValue('amount'),
+          massType: i['mass_type'] as String?, // Make nullable
+          status:
+              i['confirmed'] == true ? MassStatus.accepted : MassStatus.pending,
+        );
+      }).toList();
+
+      setState(() {
+        _massBookings.clear();
+        _massBookings.addAll(bookings);
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = 'Failed to load mass bookings. Please try again.';
+        _isLoading = false;
+      });
+      rethrow;
+    }
+  }
 
   void _showMassDetailsModal(MassBooking mass) {
     showModalBottomSheet(
@@ -57,13 +131,13 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black26,
-              blurRadius: 15,
+              color: AppColors.shadow,
+              blurRadius: 20,
               spreadRadius: 5,
             )
           ],
@@ -72,26 +146,78 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
-              decoration: const BoxDecoration(
-                color: Color(0xFF4A184C),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+              padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.primary, AppColors.blue],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(30)),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Mass Details',
-                    style: GoogleFonts.nunito(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Mass Details',
+                        style: GoogleFonts.nunito(
+                          color: Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.white),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  )
+                  const SizedBox(height: 15),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.church_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              mass.parish,
+                              style: GoogleFonts.nunito(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              DateFormat('MMMM d, yyyy • h:mm a')
+                                  .format(mass.time),
+                              style: GoogleFonts.nunito(
+                                color: Colors.white.withOpacity(0.8),
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -99,71 +225,77 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
               child: ListView(
                 padding: const EdgeInsets.all(20),
                 children: [
-                  _buildDetailRow('Parish', mass.parish),
-                  _buildDetailRow(
-                      'Date', DateFormat('MMMM d, yyyy').format(mass.time)),
-                  _buildDetailRow(
-                      'Time', DateFormat('h:mm a').format(mass.time)),
-                  _buildDetailRow('Intention', mass.intention),
-                  _buildDetailRow('Mass Type', mass.massType),
-                  _buildDetailRow('Booked By', mass.bookedBy),
-                  _buildDetailRow('Donation',
-                      '\$${mass.donationAmount.toStringAsFixed(2)}'),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Attendees',
-                    style: GoogleFonts.nunito(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: const Color(0xFF4A184C),
-                    ),
+                  _buildDetailSection(
+                    'Intention',
+                    mass.intention,
+                    Icons.description_outlined,
                   ),
-                  ...mass.attendees.map((attendee) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 5),
-                        child: Text(
-                          attendee,
-                          style: GoogleFonts.nunito(fontSize: 16),
-                        ),
-                      )),
                   const SizedBox(height: 20),
+                  _buildDetailSection(
+                    'Mass Type',
+                    mass.displayMassType, // Use the getter instead of direct access
+                    Icons.category_outlined,
+                  ),
+                  const SizedBox(height: 20),
+                  _buildDetailSection(
+                    'Booked By',
+                    mass.bookedBy,
+                    Icons.person_outline,
+                  ),
+                  const SizedBox(height: 20),
+                  _buildDetailSection(
+                    'Donation',
+                    '\$${mass.donationAmount.toStringAsFixed(2)}',
+                    Icons.payments_outlined,
+                  ),
+                  const SizedBox(height: 25),
+                  _buildAttendeesSection(mass.attendees),
+                  const SizedBox(height: 30),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      ElevatedButton(
-                        onPressed: () =>
-                            _updateMassStatus(mass, MassStatus.accepted),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 30, vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () =>
+                              _updateMassStatus(mass, MassStatus.accepted),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.success,
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            elevation: 0,
                           ),
-                        ),
-                        child: Text(
-                          'Accept',
-                          style: GoogleFonts.nunito(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                          child: Text(
+                            'Accept',
+                            style: GoogleFonts.nunito(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                            ),
                           ),
                         ),
                       ),
-                      ElevatedButton(
-                        onPressed: () =>
-                            _updateMassStatus(mass, MassStatus.rejected),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 30, vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
+                      const SizedBox(width: 15),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: () =>
+                              _updateMassStatus(mass, MassStatus.rejected),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                              side: BorderSide(color: AppColors.error),
+                            ),
+                            elevation: 0,
                           ),
-                        ),
-                        child: Text(
-                          'Reject',
-                          style: GoogleFonts.nunito(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                          child: Text(
+                            'Reject',
+                            style: GoogleFonts.nunito(
+                              color: AppColors.error,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16,
+                            ),
                           ),
                         ),
                       ),
@@ -174,6 +306,111 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildDetailSection(String title, String content, IconData icon) {
+    if (title == 'Mass Type' && content.isEmpty) {
+      content = DEFAULT_MASS_TYPE;
+    }
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: AppColors.primary),
+          ),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.nunito(
+                    color: Colors.grey.shade600,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  content,
+                  style: GoogleFonts.nunito(
+                    fontSize: 16,
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAttendeesSection(List<String> attendees) {
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(Icons.people_outline, color: AppColors.primary),
+              ),
+              const SizedBox(width: 15),
+              Text(
+                'Attendees (${attendees.length})',
+                style: GoogleFonts.nunito(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 15),
+          ...attendees.map((attendee) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Row(
+                  children: [
+                    Icon(Icons.person, size: 16, color: Colors.grey.shade600),
+                    const SizedBox(width: 10),
+                    Text(
+                      attendee,
+                      style: GoogleFonts.nunito(
+                        fontSize: 15,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              )),
+        ],
       ),
     );
   }
@@ -210,86 +447,333 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Mass Bookings',
-          style: GoogleFonts.nunito(
-            color: Colors.white.withOpacity(0.5),
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: const Color(0xFF4A184C),
-        elevation: 0,
-      ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(10),
-        itemCount: _massBookings.length,
-        itemBuilder: (context, index) {
-          final mass = _massBookings[index];
-          return Card(
-            elevation: 5,
-            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 5),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(15),
-              title: Text(
-                mass.intention,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.nunito(
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF4A184C),
-                ),
-              ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildLoadingCard() {
+    return Card(
+      elevation: 8,
+      shadowColor: AppColors.shadow,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Shimmer.fromColors(
+        baseColor: Colors.grey[300]!,
+        highlightColor: Colors.grey[100]!,
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  const SizedBox(height: 8),
-                  Text(
-                    'Parish: ${mass.parish}',
-                    style: GoogleFonts.nunito(color: Colors.black87),
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  Text(
-                    'Date: ${DateFormat('MMMM d, yyyy').format(mass.time)}',
-                    style: GoogleFonts.nunito(color: Colors.black87),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          height: 20,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(height: 8),
+                        Container(
+                          width: 140,
+                          height: 16,
+                          color: Colors.white,
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    width: 80,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
                   ),
                 ],
               ),
-              trailing: _buildStatusIndicator(mass.status),
-              onTap: () => _showMassDetailsModal(mass),
-            ),
-          );
-        },
+              const SizedBox(height: 16),
+              Container(
+                width: 100,
+                height: 16,
+                color: Colors.white,
+              ),
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                height: 32,
+                color: Colors.white,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildStatusIndicator(MassStatus status) {
+  Widget _buildErrorView() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 48, color: AppColors.error),
+          const SizedBox(height: 16),
+          Text(
+            _error ?? 'An error occurred',
+            style: GoogleFonts.nunito(color: Colors.grey[600]),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton(
+            onPressed: _fetchMassBookings,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              'Retry',
+              style: GoogleFonts.nunito(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final double statusBarHeight = MediaQuery.of(context).padding.top;
+
+    return Scaffold(
+      backgroundColor: AppColors.appBg,
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        iconTheme:
+            const IconThemeData(color: Colors.white), // Makes back button white
+        title: Column(
+          children: [
+            Text(
+              'Mass Bookings',
+              style: GoogleFonts.nunito(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 24,
+              ),
+            ),
+            Text(
+              '${_massBookings.length} Bookings',
+              style: GoogleFonts.nunito(
+                color: Colors.white70,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+        centerTitle: true,
+        backgroundColor: AppColors.primary,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.primary,
+                AppColors.primary.withOpacity(0.8),
+                AppColors.blue,
+              ],
+            ),
+          ),
+        ),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(30)),
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.filter_list_rounded),
+            onPressed: () {
+              // Add filter functionality here
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      body: SafeArea(
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [AppColors.primary.withOpacity(0.1), AppColors.appBg],
+            ),
+          ),
+          child: RefreshIndicator(
+            onRefresh: _fetchMassBookings,
+            child: _error != null
+                ? _buildErrorView()
+                : ListView.builder(
+                    padding:
+                        EdgeInsets.fromLTRB(16, statusBarHeight + 16, 16, 16),
+                    itemCount: _isLoading ? 3 : _massBookings.length,
+                    itemBuilder: (context, index) {
+                      if (_isLoading) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: _buildLoadingCard(),
+                        );
+                      }
+
+                      final mass = _massBookings[index];
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        margin: const EdgeInsets.only(bottom: 16),
+                        child: Card(
+                          elevation: 8,
+                          shadowColor: AppColors.shadow,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(20),
+                            onTap: () => _showMassDetailsModal(mass),
+                            child: Container(
+                              padding: const EdgeInsets.all(20),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primary
+                                              .withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        child: Icon(
+                                          Icons.event,
+                                          color: AppColors.primary,
+                                          size: 24,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          DateFormat('MMMM d, yyyy • h:mm a')
+                                              .format(mass.time),
+                                          style: GoogleFonts.nunito(
+                                            color: Colors.grey[600],
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      ),
+                                      _buildStatusBadge(mass.status),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Intention:',
+                                    style: GoogleFonts.nunito(
+                                      fontSize: 14,
+                                      color: Colors.grey[600],
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    mass.intention,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.nunito(
+                                      fontSize: 16,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.people,
+                                          size: 20, color: AppColors.purple),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        '${mass.attendees.length} Attendees',
+                                        style: GoogleFonts.nunito(
+                                          color: AppColors.purple,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      Text(
+                                        '\$${mass.donationAmount.toStringAsFixed(2)}',
+                                        style: GoogleFonts.nunito(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w800,
+                                          color: AppColors.accent,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(MassStatus status) {
     Color color;
-    IconData icon;
+    String text;
 
     switch (status) {
       case MassStatus.pending:
-        color = Colors.orange;
-        icon = Icons.pending;
+        color = AppColors.pending;
+        text = 'Pending';
         break;
       case MassStatus.accepted:
-        color = Colors.green;
-        icon = Icons.check_circle;
+        color = AppColors.success;
+        text = 'Accepted';
         break;
       case MassStatus.rejected:
-        color = Colors.red;
-        icon = Icons.cancel;
+        color = AppColors.error;
+        text = 'Rejected';
         break;
     }
 
-    return Icon(icon, color: color);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color, width: 1),
+      ),
+      child: Text(
+        text,
+        style: GoogleFonts.nunito(
+          color: color,
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
+        ),
+      ),
+    );
   }
 }

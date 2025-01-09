@@ -27,8 +27,13 @@ class NotificationPage extends StatelessWidget {
             actions: [
               PopupMenuButton(itemBuilder: (context) {
                 return [
-                  const PopupMenuItem(
-                    child: Row(
+                  PopupMenuItem(
+                    onTap: () async {
+                      await context
+                          .read<NotificationCubit>()
+                          .deleteAllNotifications();
+                    },
+                    child: const Row(
                       children: [
                         Icon(
                           FontAwesomeIcons.trash,
@@ -70,7 +75,7 @@ class NotificationPage extends StatelessWidget {
                 );
               } else {
                 // there are notifications
-                final data = state.notifications.reversed.toList();
+                final data = state.notifications;
                 return RefreshIndicator.adaptive(
                   onRefresh: () async {
                     await context
