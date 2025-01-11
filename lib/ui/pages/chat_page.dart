@@ -142,7 +142,6 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   void _handleFileSelection() async {
-    print('lala');
     final result = await FilePicker.platform.pickFiles(
       type: FileType.any,
       allowMultiple: false,
@@ -347,101 +346,116 @@ class _ChatPageState extends State<ChatPage> {
           ),
         ],
       ),
-      body: BlocConsumer<MessageCubit, MessageState>(
-          listener: (ctx, state) {},
-          builder: (context, state) {
-            final messages = state.messages.map((msg) {
-              if (msg.filePath != null && msg.filePath!.isNotEmpty) {
-                // Handle file message
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: const AssetImage(
+              'assets/images/wallet_bg.jpeg',
+            ),
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(
+                Colors.white.withOpacity(.85), BlendMode.lighten),
+          ),
+        ),
+        child: BlocConsumer<MessageCubit, MessageState>(
+            listener: (ctx, state) {},
+            builder: (context, state) {
+              final messages = state.messages.map((msg) {
+                if (msg.filePath != null && msg.filePath!.isNotEmpty) {
+                  // Handle file message
 
-                return types.FileMessage(
-                  author: msg.senderId == _user.id ? _user : _otherUser,
-                  id: msg.id,
-                  name: msg.filePath!.split('/').last, // Get filename from path
-                  size: 0, // You might want to store file size in your model
-                  uri: pb.files
-                      .getUrl(
-                          RecordModel(
-                              collectionName: "messages",
-                              id: msg.id,
-                              collectionId: "nnh9nuyiwl32nsv"),
-                          msg.filePath!)
-                      .toString(),
-                  createdAt: msg.created.millisecondsSinceEpoch,
-                  status: msg.read ? types.Status.seen : types.Status.sent,
-                );
-              } else {
-                // Handle text message
-                final createdAtUtc = msg.created.toUtc().millisecondsSinceEpoch;
+                  return types.FileMessage(
+                    author: msg.senderId == _user.id ? _user : _otherUser,
+                    id: msg.id,
+                    name:
+                        msg.filePath!.split('/').last, // Get filename from path
+                    size: 0, // You might want to store file size in your model
+                    uri: pb.files
+                        .getUrl(
+                            RecordModel(
+                                collectionName: "messages",
+                                id: msg.id,
+                                collectionId: "nnh9nuyiwl32nsv"),
+                            msg.filePath!)
+                        .toString(),
+                    createdAt: msg.created.millisecondsSinceEpoch,
+                    status: msg.read ? types.Status.seen : types.Status.sent,
+                  );
+                } else {
+                  // Handle text message
+                  final createdAtUtc =
+                      msg.created.toUtc().millisecondsSinceEpoch;
 
-                return types.TextMessage(
-                  author: msg.senderId == _user.id ? _user : _otherUser,
-                  id: msg.id,
-                  text: msg.message,
-                  status: msg.read ? types.Status.seen : types.Status.sent,
-                  createdAt: createdAtUtc,
-                );
-              }
-            }).toList();
+                  return types.TextMessage(
+                    author: msg.senderId == _user.id ? _user : _otherUser,
+                    id: msg.id,
+                    text: msg.message,
+                    status: msg.read ? types.Status.seen : types.Status.sent,
+                    createdAt: createdAtUtc,
+                  );
+                }
+              }).toList();
 
-            return Chat(
-              bubbleBuilder: (child,
-                      {required message, required nextMessageInGroup}) =>
-                  CustomBubble(
-                      message: message, isUser: message.author == _user),
+              return Chat(
+                bubbleBuilder: (child,
+                        {required message, required nextMessageInGroup}) =>
+                    CustomBubble(
+                        message: message, isUser: message.author == _user),
 
-              messages: messages,
-              onAttachmentPressed: _handleAttachmentPressed,
-              onMessageTap: _handleMessageTap,
-              onPreviewDataFetched: _handlePreviewDataFetched,
-              onSendPressed: _handleSendPressed,
-              // showUserAvatars: true,
-              customBottomWidget: CustomChatInput(
-                onSendMessage: _handleSendPressed,
+                messages: messages,
                 onAttachmentPressed: _handleAttachmentPressed,
-              ),
-              dateIsUtc: true,
+                onMessageTap: _handleMessageTap,
+                onPreviewDataFetched: _handlePreviewDataFetched,
+                onSendPressed: _handleSendPressed,
+                // showUserAvatars: true,
+                customBottomWidget: CustomChatInput(
+                  onSendMessage: _handleSendPressed,
+                  onAttachmentPressed: _handleAttachmentPressed,
+                ),
+                dateIsUtc: true,
 
-              dateHeaderThreshold: 7200000,
-              // showUserNames: true,
-              user: _user,
-              theme: DefaultChatTheme(
-                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                inputBackgroundColor: Theme.of(context).colorScheme.surface,
-                primaryColor: AppColors.primary,
-                secondaryColor:
-                    Theme.of(context).colorScheme.surfaceContainerHighest,
-                inputTextColor: Theme.of(context).colorScheme.onSurface,
-                inputTextCursorColor: Theme.of(context).colorScheme.primary,
-                inputTextDecoration: InputDecoration(
-                  hintStyle: TextStyle(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withOpacity(0.5),
+                dateHeaderThreshold: 7200000,
+                // showUserNames: true,
+                user: _user,
+                emojiEnlargementBehavior: EmojiEnlargementBehavior.single,
+                theme: DefaultChatTheme(
+                  backgroundColor: Colors.transparent,
+                  inputBackgroundColor: Theme.of(context).colorScheme.surface,
+                  primaryColor: AppColors.primary,
+                  secondaryColor:
+                      Theme.of(context).colorScheme.surfaceContainerHighest,
+                  inputTextColor: Theme.of(context).colorScheme.onSurface,
+                  inputTextCursorColor: Theme.of(context).colorScheme.primary,
+                  inputTextDecoration: InputDecoration(
+                    hintStyle: TextStyle(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withOpacity(0.5),
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                   ),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
+                  sentMessageBodyTextStyle: TextStyle(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                    fontSize: 16,
                   ),
+                  receivedMessageBodyTextStyle: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 16,
+                  ),
+                  userAvatarNameColors: [
+                    Colors.blue,
+                    Theme.of(context).colorScheme.secondary,
+                    Theme.of(context).colorScheme.tertiary,
+                  ],
                 ),
-                sentMessageBodyTextStyle: TextStyle(
-                  color: Theme.of(context).colorScheme.onPrimary,
-                  fontSize: 16,
-                ),
-                receivedMessageBodyTextStyle: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontSize: 16,
-                ),
-                userAvatarNameColors: [
-                  Colors.blue,
-                  Theme.of(context).colorScheme.secondary,
-                  Theme.of(context).colorScheme.tertiary,
-                ],
-              ),
-            );
-          }),
+              );
+            }),
+      ),
     );
   }
 }

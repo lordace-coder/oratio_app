@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
+import 'package:oratio_app/networkProvider/users.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:shimmer/shimmer.dart';
@@ -86,28 +88,32 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
         await loadChurchForPriest();
       }
 
-      // TODO: Replace with actual API call
       final pb = getPocketBaseFromContext(context);
-      final data = await pb.collection('mass_booking').getFullList(
-          filter: 'parish ="${myParish!.id}"', expand: 'donation,user');
+      final data = await pb.collection('mass_booking').getList(
+          filter: 'parish ="${myParish!.id}"',
+          expand: 'user, donation , parish');
       await Future.delayed(
           const Duration(seconds: 2)); // Simulate network delay
 
-      final List<MassBooking> bookings = data.map((z) {
+      final List<MassBooking> bookings = data.items.map((z) {
         var i = z.data;
+        MassStatus status = MassStatus.pending;
+
+        if (i['confirmed'] == true) {
+          status = MassStatus.accepted;
+        } else if (i['confirmed'] == false && i['used_callback'] == true) {
+          status = MassStatus.rejected;
+        }
         return MassBooking(
           id: z.id,
-          parish: i['parish'],
+          parish: z.expand['parish']!.first.getStringValue('name'),
           time: DateTime.parse(z.getStringValue('time')),
           intention: i['intention'],
           attendees: [i['attendees']],
-          bookedBy: i['user'],
-          donationAmount: 22,
-// TODO FIX THIS
-          //z.expand['donation']!.first.getDoubleValue('amount'),
+          bookedBy: getFullName(z.expand['user']!.first),
+          donationAmount: z.expand['donation']!.first.getDoubleValue('amount'),
           massType: i['mass_type'] as String?, // Make nullable
-          status:
-              i['confirmed'] == true ? MassStatus.accepted : MassStatus.pending,
+          status: status,
         );
       }).toList();
 
@@ -245,7 +251,7 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
                   const SizedBox(height: 20),
                   _buildDetailSection(
                     'Donation',
-                    '\$${mass.donationAmount.toStringAsFixed(2)}',
+                    '₦${mass.donationAmount.toStringAsFixed(2)}',
                     Icons.payments_outlined,
                   ),
                   const SizedBox(height: 25),
@@ -415,7 +421,17 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
     );
   }
 
-  void _updateMassStatus(MassBooking mass, MassStatus status) {
+  void _updateMassStatus(MassBooking mass, MassStatus status) async {
+    try {
+      if (status == MassStatus.accepted) {
+        await acceptMassRequest(context, mass.id);
+      } else {
+        await declineMassRequest(context, mass.id);
+      }
+      NotificationService.showSuccess('Booking updated successfully');
+    } catch (e) {
+      return NotificationService.showError('Failed to update status');
+    }
     setState(() {
       mass.status = status;
     });
@@ -717,7 +733,7 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
                                       ),
                                       const Spacer(),
                                       Text(
-                                        '\$${mass.donationAmount.toStringAsFixed(2)}',
+                                        '₦${mass.donationAmount.toStringAsFixed(2)}',
                                         style: GoogleFonts.nunito(
                                           fontSize: 18,
                                           fontWeight: FontWeight.w800,

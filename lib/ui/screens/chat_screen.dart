@@ -30,6 +30,15 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       // backgroundColor: Theme.of(context).colorScheme.surface,
       body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+              image: const AssetImage(
+                'assets/images/wallet_bg.jpeg',
+              ),
+              fit: BoxFit.cover,
+              colorFilter: ColorFilter.mode(
+                  Colors.white.withOpacity(.85), BlendMode.lighten)),
+        ),
         child: SafeArea(
           child: Stack(
             children: [
@@ -242,23 +251,20 @@ class _ChatScreenState extends State<ChatScreen> {
   // ... rest of your existing code ...
 
   Widget _buildProfileButton() {
-    return Hero(
-      tag: 'finduser',
-      child: Material(
-        color: Colors.transparent,
-        child: CircleAvatar(
-          radius: 20,
-          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-          child: IconButton(
-            icon: const Icon(
-              FontAwesomeIcons.userPlus,
-              size: 18,
-            ),
-            onPressed: () {
-              // Handle profile tap
-              context.pushNamed(RouteNames.connect);
-            },
+    return Material(
+      color: Colors.transparent,
+      child: CircleAvatar(
+        radius: 20,
+        backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+        child: IconButton(
+          icon: const Icon(
+            FontAwesomeIcons.userPlus,
+            size: 18,
           ),
+          onPressed: () {
+            // Handle profile tap
+            context.pushNamed(RouteNames.connect);
+          },
         ),
       ),
     );
@@ -273,22 +279,19 @@ class _ChatScreenState extends State<ChatScreen> {
           color: Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(25),
         ),
-        child: Hero(
-          tag: 'search',
-          child: Row(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Icon(
-                  FontAwesomeIcons.search,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+        child: Row(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Icon(
+                FontAwesomeIcons.search,
+                size: 16,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
-              Text('Search friends...',
-                  style: TextStyle(color: Colors.black.withOpacity(0.5)))
-            ],
-          ),
+            ),
+            Text('Search friends...',
+                style: TextStyle(color: Colors.black.withOpacity(0.5)))
+          ],
         ),
       ),
     );
