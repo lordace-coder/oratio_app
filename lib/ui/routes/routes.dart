@@ -222,11 +222,6 @@ class AppRouter {
                 ),
 
                 GoRoute(
-                  path: '/create-event-page',
-                  name: RouteNames.createEvent,
-                  builder: (context, state) => const CreateEventPage(),
-                ),
-                GoRoute(
                   path: '/parishdetails:id',
                   name: RouteNames.parishlanding,
                   builder: (context, state) => ParishLandingPage(
@@ -290,6 +285,11 @@ class AppRouter {
                 path: '/priest/${RouteNames.massRequests}',
                 name: RouteNames.massRequests,
                 builder: (context, state) => const BookedMassesPage(),
+              ),
+              GoRoute(
+                path: '/create-event-page',
+                name: RouteNames.createEvent,
+                builder: (context, state) => const CreateEventPage(),
               ),
               GoRoute(
                 path: '/priest/${RouteNames.parishTransactions}',

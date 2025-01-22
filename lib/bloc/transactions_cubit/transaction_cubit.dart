@@ -24,7 +24,7 @@ class TransactionCubit extends Cubit<TransactionState> {
           await pocketBase.collection('transaction_history').getFullList(
                 sort: '-created',
                 filter:
-                    'created >= "${DateFormat('yyyy-MM-dd').format(startOfMonth)}" && created <= "${DateFormat('yyyy-MM-dd').format(endOfMonth)}"',
+                    'created >= "${DateFormat('yyyy-MM-dd').format(startOfMonth)}" && created <= "${DateFormat('yyyy-MM-dd').format(endOfMonth)}" ',
               );
 
       final transactions = records
