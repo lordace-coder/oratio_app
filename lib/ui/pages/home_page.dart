@@ -8,7 +8,6 @@ import 'package:oratio_app/ui/screens/chat_screen.dart';
 import 'package:oratio_app/ui/screens/feeds_page.dart';
 import 'package:oratio_app/ui/pages/home_screen.dart';
 import 'package:oratio_app/ui/themes.dart';
-import 'package:pocketbase/pocketbase.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -60,6 +59,13 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    int unreadchats = 0;
+
+    if (context.watch<ChatCubit>().state is ChatsLoaded) {
+      final chatsState = context.watch<ChatCubit>().state as ChatsLoaded;
+      unreadchats = chatsState.chats.fold(0, (sum, chat) => sum + chat.unreadCount);
+    }
+
     return PopScope(
       onPopInvokedWithResult: (x, y) {
         if (_selectedIndex != 0) {
@@ -80,14 +86,9 @@ class _HomePageState extends State<HomePage> {
                 icon: Icon(FontAwesomeIcons.wallet), label: 'Wallet'),
             BottomNavigationBarItem(
                 icon: Badge(
-                    isLabelVisible:
-                        context.read<ChatCubit>().unreadCount(true) > 0,
-                    label: context.read<ChatCubit>().unreadCount(true) > 0
-                        ? Text(context
-                            .watch<ChatCubit>()
-                            .unreadCount(true)
-                            .toString())
-                        : null,
+                    isLabelVisible: unreadchats > 0,
+                    label:
+                        unreadchats > 0 ? Text(unreadchats.toString()) : null,
                     child: const Icon(FontAwesomeIcons.solidMessage)),
                 label: 'Check Up'),
           ],

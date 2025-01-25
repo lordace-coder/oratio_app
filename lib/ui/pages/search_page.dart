@@ -7,7 +7,7 @@ import 'package:oratio_app/ui/pages/chat_page.dart';
 import 'package:oratio_app/ui/pages/pages.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
-import 'package:pocketbase/pocketbase.dart'; // Add this import
+import 'package:pocketbase/pocketbase.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
@@ -19,7 +19,8 @@ class SearchPage extends StatefulWidget {
 class _SearchPageState extends State<SearchPage> {
   final TextEditingController _searchController = TextEditingController();
   bool _isSearching = false;
-  List<Map<String, dynamic>> _searchResults = [];
+  bool _isLoading = false;
+  List<RecordModel> _searchResults = [];
 
   late PocketBase pb;
 
@@ -27,142 +28,149 @@ class _SearchPageState extends State<SearchPage> {
   void initState() {
     super.initState();
     pb = getPocketBaseFromContext(context);
+    _loadDefaultData();
   }
 
-  void _handleSearch(String query) async {
+  void _loadDefaultData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    final currentUser = pb.authStore.model as RecordModel;
+    final result = await pb
+        .collection('users')
+        .getList(filter: "followers ~ '${currentUser.id}'");
+
+    setState(() {
+      _searchResults = result.items;
+      _isLoading = false;
+    });
+  }
+
+  void _handleSearch() async {
+    final query = _searchController.text;
     setState(() {
       _isSearching = query.isNotEmpty;
+      _isLoading = true;
     });
 
     if (_isSearching) {
       final currentUser = pb.authStore.model as RecordModel;
-      final result = await pb.collection('users').getList();
+      final result = await pb.collection('users').getList(
+          filter:
+              "followers ~ '${currentUser.id}' &&  (username ~ '$query' || first_name ~ '$query' || last_name ~ '$query' || phone_number ~ '$query')");
 
       setState(() {
         _searchResults = result.items
             .where((item) =>
-                item.getListValue('followers').contains(currentUser.id) &&
                 currentUser.getListValue('followers').contains(item.id))
-            .map((item) {
-          return {
-            'id': item.id,
-            'name':
-                '${item.getStringValue('first_name')} ${item.getStringValue('last_name')}',
-            'username': item.getStringValue('username'),
-            'followers': (item).getListValue('followers').length.toString(),
-            'profile_picture': getAvatarUrl(context,
-                record: item, fileName: item.getStringValue('avatar'))
-          };
-        }).toList();
+            .toList();
+        _isLoading = false;
       });
     } else {
-      setState(() {
-        _searchResults = [];
-      });
+      _loadDefaultData();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        title: const Text(
+          'Search Friends',
+          style: TextStyle(color: Colors.black),
+        ),
+        leading: IconButton(
+          icon: const Icon(FontAwesomeIcons.chevronLeft, color: Colors.black),
+          onPressed: () {
+            context.pop();
+          },
+        ),
+        iconTheme: const IconThemeData(color: Colors.black),
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            Container(
+            Padding(
               padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.primary,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
+              child: TextField(
+                cursorColor: AppColors.primary,
+                textInputAction: TextInputAction.search,
+                controller: _searchController,
+                onSubmitted: (_) => _handleSearch(),
+                decoration: InputDecoration(
+                  hintText: 'Search by name or username',
+                  prefixIcon: IconButton(
+                    icon: const Icon(Icons.search),
+                    onPressed: _handleSearch,
                   ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(
-                          FontAwesomeIcons.chevronLeft,
-                          color: Colors.white,
-                        ),
-                        onPressed: () {
-                          context.pop();
-                        },
-                      ),
-                      const SizedBox(width: 16),
-                      const Hero(
-                        tag: 'search',
-                        child: Text(
-                          'Search Friends',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
                   ),
-                  TextField(
-                    cursorColor: AppColors.primary,
-                    controller: _searchController,
-                    onChanged: _handleSearch,
-                    decoration: InputDecoration(
-                      hintText: 'Search by name or username',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[300],
-                    ),
-                  ),
-                ],
+                  filled: true,
+                  fillColor: Colors.grey[300],
+                ),
               ),
             ),
             Expanded(
-              child: _isSearching
-                  ? ListView.builder(
-                      itemCount: _searchResults.length,
-                      itemBuilder: (context, index) {
-                        final user = _searchResults[index];
-                        return ChatCard(
-                          id: user['id'],
-                          name: user['name'],
-                          username: user['username'],
-                          followers: user['followers'],
-                          profilePicture: user['profile_picture'],
-                          onFollowTap: () {
-                            // Implement follow functionality
-                            print('Following ${user['name']}');
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _searchResults.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.search_off,
+                                size: 64,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No results found',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: _searchResults.length,
+                          itemBuilder: (context, index) {
+                            final user = _searchResults[index];
+                            return ChatCard(
+                              id: user.id,
+                              name:
+                                  '${user.getStringValue('first_name')} ${user.getStringValue('last_name')}',
+                              username: user.getStringValue('username'),
+                              followers: user
+                                  .getListValue('followers')
+                                  .length
+                                  .toString(),
+                              profilePicture: getAvatarUrl(context,
+                                  record: user,
+                                  fileName: user.getStringValue('avatar')),
+                              onChat: () {
+                                // Implement follow functionality
+                                context.pushNamed(RouteNames.chatDetailPage,
+                                    pathParameters: {
+                                      'profile': Profile(
+                                        community: [],
+                                        contact:
+                                            user.getStringValue('phone_number'),
+                                        parish: [],
+                                        user: user,
+                                        userId: user.id,
+                                      ).toJsonString()
+                                    });
+                              },
+                            );
                           },
-                        );
-                      },
-                    )
-                  : Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.search,
-                            size: 64,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Search for friends',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                        ),
             ),
           ],
         ),
@@ -171,12 +179,11 @@ class _SearchPageState extends State<SearchPage> {
   }
 }
 
-class ChatCard extends StatefulWidget {
+class ChatCard extends StatelessWidget {
   final String name;
   final String username;
   final String followers;
-
-  final VoidCallback onFollowTap;
+  final VoidCallback onChat;
   final String id;
   final String? profilePicture;
 
@@ -186,52 +193,20 @@ class ChatCard extends StatefulWidget {
     required this.name,
     required this.username,
     required this.followers,
-    required this.onFollowTap,
+    required this.onChat,
     required this.id,
   });
-
-  @override
-  State<ChatCard> createState() => _ChatCardState();
-}
-
-class _ChatCardState extends State<ChatCard> {
-  void chatUser() async {
-    final pb = getPocketBaseFromContext(context);
-    final userRecord = await pb.collection('users').getOne(widget.id);
-
-    final profile = Profile(
-      user: userRecord,
-      userId: userRecord.id,
-      parish: [], // Fetch actual data
-      contact: userRecord.getStringValue('phone_number'),
-      community: [], // Fetch actual data
-    );
-
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ChatPage(
-          profile: profile,
-        ),
-      ),
-    );
-
-    widget.onFollowTap.call();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () {
         context.pushNamed(RouteNames.profilepagevisitor,
-            pathParameters: {'id': widget.id});
+            pathParameters: {'id': id});
       },
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+        margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -243,55 +218,61 @@ class _ChatCardState extends State<ChatCard> {
             ),
           ],
         ),
-        child: ListTile(
-          contentPadding: const EdgeInsets.all(16),
-          leading: CircleAvatar(
+        child: Row(
+          children: [
+            CircleAvatar(
               radius: 28,
               backgroundColor: Colors.grey[200],
-              backgroundImage: widget.profilePicture != null &&
-                      widget.profilePicture!.isNotEmpty
-                  ? NetworkImage(widget.profilePicture!)
-                  : null,
-              child: widget.profilePicture == null
+              backgroundImage:
+                  profilePicture != null && profilePicture!.isNotEmpty
+                      ? NetworkImage(profilePicture!)
+                      : null,
+              child: profilePicture == null
                   ? Text(
-                      widget.name[0],
+                      name[0],
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),
                     )
-                  : null),
-          title: Text(
-            widget.name,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
+                  : null,
             ),
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                widget.username,
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${widget.followers} followers',
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-            ],
-          ),
-          trailing: ElevatedButton(
-            onPressed: chatUser,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).primaryColor,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  Text(
+                    username,
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '$followers followers',
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                ],
               ),
             ),
-            child: const Text('Chat'),
-          ),
+            ElevatedButton(
+              onPressed: onChat,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              child: const Text("Chat"),
+            ),
+          ],
         ),
       ),
     );

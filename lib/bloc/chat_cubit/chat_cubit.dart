@@ -7,6 +7,8 @@ import 'package:oratio_app/popup_notification/popup_notification.dart';
 import 'package:oratio_app/services/chat/chat_service.dart';
 import 'package:oratio_app/ui/pages/chat_page.dart';
 import 'package:pocketbase/pocketbase.dart';
+import 'dart:async';
+import 'dart:isolate';
 
 // Chat State
 abstract class ChatState extends Equatable {
@@ -42,6 +44,9 @@ class ChatsLoaded extends ChatState {
 class ChatCubit extends Cubit<ChatState> {
   final ChatService _chatService;
   final PocketBase _pb;
+  Timer? _resubscribeTimer;
+  Isolate? _resubscribeIsolate;
+  ReceivePort? _receivePort;
 
   ChatCubit(this._chatService, this._pb) : super(ChatInitial());
 
@@ -121,55 +126,52 @@ class ChatCubit extends Cubit<ChatState> {
           if (msg == "{{file}}") {
             msg = 'sent you a file';
           }
-          // PopupNotification.show(
-          //   onTap: () async {
-          //     await context
-          //         .read<ProfileDataCubit>()
-          //         .visitProfile(message.getStringValue('sender'));
-          //     Navigator.of(context).push(
-          //       MaterialPageRoute(
-          //         builder: (_) => ChatPage(
-          //             profile: (context.read<ProfileDataCubit>().state
-          //                     as ProfileDataLoaded)
-          //                 .guestProfile!),
-          //       ),
-          //     );
-          //   },
-          //   title:
-          //       '${message.expand['sender']?.first.getStringValue('username')} :',
-          //   message: msg,
-          //   icon: FontAwesomeIcons.message,
-          // );
         }
-        if (message.data['sender'] == currentUserId ||
-            message.data['receiver'].toString().contains(currentUserId)) {
-          loadRecentChats();
-        }
+
+        loadRecentChats();
       }
     },
-        filter:
-            'sender.id = "$currentUserId" || reciever.id = "$currentUserId"',
+        filter: 'sender = "$currentUserId" || reciever = "$currentUserId"',
         expand: 'sender');
+
+    // Start the resubscribe timer
+    _startResubscribeTimer(context);
+  }
+
+  void _startResubscribeTimer(BuildContext context) {
+    _resubscribeTimer?.cancel();
+    _resubscribeTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+      _resubscribeIsolate?.kill(priority: Isolate.immediate);
+      _receivePort?.close();
+      _receivePort = ReceivePort();
+      Isolate.spawn(_resubscribeIsolateEntry, _receivePort!.sendPort)
+          .then((isolate) {
+        _resubscribeIsolate = isolate;
+        _receivePort!.listen((message) {
+          if (message == 'resubscribe') {
+            subscribeToMessages(context);
+          }
+        });
+      });
+    });
+  }
+
+  static void _resubscribeIsolateEntry(SendPort sendPort) {
+    Timer(const Duration(minutes: 1), () {
+      sendPort.send('resubscribe');
+    });
   }
 
   RecordModel get currentUser => _pb.authStore.model;
-  int unreadCount(bool friend) {
-    int count = 0;
-    if (friend) {
-      getRecentChats().forEach((item) {
-        if (item.unreadCount > 0) {
-          count++;
-        }
-      });
-    } else {
-      getMessageRequests().forEach((item) {
-        if (item.unreadCount > 0) {
-          count++;
-        }
-      });
-    }
 
-    return count;
+  int unreadCount({required bool isFriend}) {
+    if (state is ChatsLoaded) {
+      return (state as ChatsLoaded)
+          .chats
+          .where((chat) => chat.isFriend == isFriend && chat.unreadCount > 0)
+          .length;
+    }
+    return 0;
   }
 
   List<ChatPreview> getRecentChats() {
@@ -195,11 +197,17 @@ class ChatCubit extends Cubit<ChatState> {
   @override
   Future<void> close() {
     _pb.collection('messages').unsubscribe('*');
+    _resubscribeTimer?.cancel();
+    _resubscribeIsolate?.kill(priority: Isolate.immediate);
+    _receivePort?.close();
     return super.close();
   }
 
   Future<void> logout() async {
     _pb.collection('messages').unsubscribe('*');
+    _resubscribeTimer?.cancel();
+    _resubscribeIsolate?.kill(priority: Isolate.immediate);
+    _receivePort?.close();
     emit(ChatInitial());
   }
 }

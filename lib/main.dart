@@ -79,6 +79,7 @@ class ConnectivityCubit extends Cubit<bool> {
 }
 
 void main() async {
+
   WidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = MyHttpOverrides();
 
@@ -101,7 +102,7 @@ void main() async {
   // Update Bible readings if needed
   bibleService.updateIfNeeded(fetchReadings);
   PocketBase? pb;
-  
+
   try {
     pb = PocketBase(
       AppData.baseUrl,
@@ -113,9 +114,9 @@ void main() async {
   } catch (e) {
     debugPrint('Error creating PocketBase instance: $e');
   }
-  
+
   debugPrint('auth valid == ${pb?.authStore.isValid}');
-  
+
   try {
     pb?.collection('users').authRefresh();
   } catch (e) {
@@ -216,6 +217,7 @@ class MainApp extends StatefulWidget {
 class _MainAppState extends State<MainApp> {
   bool _isInitialized = false;
   WebSocketChannel? channel;
+  Timer? _reconnectTimer;
 
   @override
   void initState() {
@@ -229,6 +231,8 @@ class _MainAppState extends State<MainApp> {
     if (!pb.authStore.isValid || pb.authStore.model == null) {
       return;
     }
+    // connect all realtime listeners
+    context.read<CentralCubit>().realTimeInit(context);
     final userId = pb.authStore.model.id;
     channel = WebSocketChannel.connect(
       Uri.parse('ws://bookmass.fly.dev/ws?uid=$userId'),
@@ -240,11 +244,20 @@ class _MainAppState extends State<MainApp> {
       },
       onDone: () {
         debugPrint('WebSocket closed');
+        _scheduleReconnect();
       },
       onError: (error) {
         debugPrint('WebSocket error: $error');
+        _scheduleReconnect();
       },
     );
+  }
+
+  void _scheduleReconnect() {
+    _reconnectTimer?.cancel();
+    _reconnectTimer = Timer(const Duration(seconds: 10), () {
+      connectWebSocket();
+    });
   }
 
   Future<void> _initializeApp() async {
@@ -272,6 +285,7 @@ class _MainAppState extends State<MainApp> {
   @override
   void dispose() {
     channel?.sink.close(status.goingAway);
+    _reconnectTimer?.cancel();
     super.dispose();
   }
 
@@ -352,10 +366,72 @@ class SplashScreen extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       home: Scaffold(
         body: Center(
-          child: Image.asset("assets/images/app_logo.png",
-              width: 180, height: 180, fit: BoxFit.cover),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                "assets/images/app_logo.png",
+                width: 150, // Reduced size
+                height: 150, // Reduced size
+                fit: BoxFit.cover,
+              ),
+              const SizedBox(height: 20),
+              const DotIndicator(), // Replace CircularProgressIndicator with DotIndicator
+            ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+class DotIndicator extends StatefulWidget {
+  const DotIndicator({super.key});
+
+  @override
+  _DotIndicatorState createState() => _DotIndicatorState();
+}
+
+class _DotIndicatorState extends State<DotIndicator> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<int> _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    )..repeat();
+    _animation = IntTween(begin: 1, end: 6).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animation,
+      builder: (context, child) {
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(6, (index) {
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 2),
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: index < _animation.value ? Colors.blue : Colors.grey,
+              ),
+            );
+          }),
+        );
+      },
     );
   }
 }

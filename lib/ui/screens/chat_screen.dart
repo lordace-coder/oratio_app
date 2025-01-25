@@ -6,7 +6,9 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/bloc/chat_cubit/chat_cubit.dart';
+import 'package:oratio_app/bloc/chat_cubit/message_cubit.dart';
 import 'package:oratio_app/helpers/functions.dart';
+import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/services/chat/chat_service.dart';
 import 'package:oratio_app/ui/pages/chat_page.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
@@ -22,129 +24,178 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final bool _showFloatingButton = false;
+  bool _showFloatingButton = false;
   int _selectedTabIndex = 0; // Track selected tab
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_scrollListener);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (context.read<ChatCubit>().state is! ChatsLoaded) {
+        context.read<ChatCubit>().loadRecentChats();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_scrollListener);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    setState(() {
+      _showFloatingButton = _scrollController.offset > 200;
+    });
+  }
+
+  Future<void> _refreshChats() async {
+    await context.read<ChatCubit>().loadRecentChats();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       // backgroundColor: Theme.of(context).colorScheme.surface,
-      body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-              image: const AssetImage(
-                'assets/images/wallet_bg.jpeg',
-              ),
-              fit: BoxFit.cover,
-              colorFilter: ColorFilter.mode(
-                  Colors.white.withOpacity(.85), BlendMode.lighten)),
-        ),
-        child: SafeArea(
-          child: Stack(
-            children: [
-              CustomScrollView(
-                controller: _scrollController,
-                slivers: [
-                  SliverAppBar(
-                    floating: true,
-                    snap: true,
-                    elevation: 0,
-                    backgroundColor: Colors.transparent,
-                    expandedHeight:
-                        170, // Increased height to accommodate tab bar
-                    flexibleSpace: FlexibleSpaceBar(
-                      background: Column(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                            child: Row(
-                              children: [
-                                Text(
-                                  'Chats',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineMedium
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                ),
-                                const Spacer(),
-                                _buildProfileButton(),
-                              ],
-                            ),
-                          ),
-                          GestureDetector(
-                              onTap: () async {
-                                await context.pushNamed(RouteNames.searchPage);
-                              },
-                              child: _buildSearchBar()),
-                          _buildCustomTabBar(),
-                        ],
-                      ),
-                    ),
-                  ),
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    sliver: BlocBuilder<ChatCubit, ChatState>(
-                      builder: (context, state) {
-                        if (state is ChatLoading) {
-                          return const SliverToBoxAdapter(
-                            child: Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                          );
-                        } else if (state is ChatsLoaded) {
-                          // !Filter chats based on selected tab
-                          final filteredChats = _selectedTabIndex == 0
-                              ? context.watch<ChatCubit>().getRecentChats()
-                              : context.watch<ChatCubit>().getMessageRequests();
-
-                          return AnimationLimiter(
-                            child: SliverList(
-                              delegate: SliverChildBuilderDelegate(
-                                (context, index) =>
-                                    AnimationConfiguration.staggeredList(
-                                  position: index,
-                                  duration: const Duration(milliseconds: 375),
-                                  child: SlideAnimation(
-                                    verticalOffset: 50.0,
-                                    child: FadeInAnimation(
-                                      child: ChatItem(
-                                        index: index,
-                                        chatPreview: filteredChats[index],
-                                      ),
-                                    ),
+      body: RefreshIndicator(
+        onRefresh: _refreshChats,
+        child: Container(
+          decoration: BoxDecoration(
+            image: DecorationImage(
+                image: const AssetImage(
+                  'assets/images/wallet_bg.jpeg',
+                ),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(
+                    Colors.white.withOpacity(.85), BlendMode.lighten)),
+          ),
+          child: SafeArea(
+            child: Stack(
+              children: [
+                CustomScrollView(
+                  controller: _scrollController,
+                  slivers: [
+                    SliverAppBar(
+                      floating: true,
+                      snap: true,
+                      elevation: 0,
+                      backgroundColor: Colors.transparent,
+                      expandedHeight:
+                          170, // Increased height to accommodate tab bar
+                      flexibleSpace: FlexibleSpaceBar(
+                        background: Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                              child: Row(
+                                children: [
+                                  Text(
+                                    'Chats',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                   ),
-                                ),
-                                childCount: filteredChats.length,
+                                  const Spacer(),
+                                  _buildProfileButton(),
+                                ],
                               ),
                             ),
-                          );
-                        } else if (state is ChatError) {
-                          return SliverToBoxAdapter(child: Text(state.message));
-                        }
-                        return const SliverToBoxAdapter();
+                            GestureDetector(
+                                onTap: () async {
+                                  await context
+                                      .pushNamed(RouteNames.searchPage);
+                                },
+                                child: _buildSearchBar()),
+                            _buildCustomTabBar(),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      sliver: BlocBuilder<ChatCubit, ChatState>(
+                        builder: (context, state) {
+                          if (state is ChatLoading) {
+                            return const SliverToBoxAdapter(
+                              child: Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+                          } else if (state is ChatsLoaded) {
+                            // !Filter chats based on selected tab
+                            final filteredChats = _selectedTabIndex == 0
+                                ? context.watch<ChatCubit>().getRecentChats()
+                                : context
+                                    .watch<ChatCubit>()
+                                    .getMessageRequests();
+                            print(filteredChats);
+                            if (filteredChats.isEmpty) {
+                              return const SliverToBoxAdapter(
+                                child: Center(
+                                  child: Text('No chats available'),
+                                ),
+                              );
+                            }
+
+                            return AnimationLimiter(
+                              child: SliverList(
+                                delegate: SliverChildBuilderDelegate(
+                                  (context, index) {
+                                    print([
+                                      'current index ',
+                                      filteredChats[index]
+                                    ]);
+                                    return AnimationConfiguration.staggeredList(
+                                      position: index,
+                                      duration:
+                                          const Duration(milliseconds: 375),
+                                      child: SlideAnimation(
+                                        verticalOffset: 50.0,
+                                        child: FadeInAnimation(
+                                          child: ChatItem(
+                                            index: index,
+                                            chatPreview: filteredChats[index],
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  childCount: filteredChats.length,
+                                ),
+                              ),
+                            );
+                          } else if (state is ChatError) {
+                            return SliverToBoxAdapter(
+                                child: Text(state.message));
+                          }
+                          return const SliverToBoxAdapter();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                if (_showFloatingButton) // ... existing floating button code ...
+                  Positioned(
+                    right: 16,
+                    bottom: 16,
+                    child: FloatingActionButton(
+                      onPressed: () {
+                        _scrollController.animateTo(
+                          0,
+                          duration: const Duration(milliseconds: 500),
+                          curve: Curves.easeOutCubic,
+                        );
                       },
+                      child: const Icon(Icons.arrow_upward),
                     ),
                   ),
-                ],
-              ),
-              if (_showFloatingButton) // ... existing floating button code ...
-                Positioned(
-                  right: 16,
-                  bottom: 16,
-                  child: FloatingActionButton(
-                    onPressed: () {
-                      _scrollController.animateTo(
-                        0,
-                        duration: const Duration(milliseconds: 500),
-                        curve: Curves.easeOutCubic,
-                      );
-                    },
-                    child: const Icon(Icons.arrow_upward),
-                  ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -163,40 +214,66 @@ class _ChatScreenState extends State<ChatScreen> {
         child: Row(
           children: [
             Expanded(
-              child: Badge(
-                isLabelVisible:
-                    context.watch<ChatCubit>().unreadCount(true) > 0,
-                label: Text(
-                  context.watch<ChatCubit>().unreadCount(true).toString(),
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                    fontSize: 12,
+              child: Builder(builder: (context) {
+                int unreadchats = 0;
+
+                if (context.watch<ChatCubit>().state is ChatsLoaded) {
+                  final chatsState =
+                      context.watch<ChatCubit>().state as ChatsLoaded;
+                  unreadchats = context
+                      .watch<ChatCubit>()
+                      .getRecentChats()
+                      .fold(0, (sum, chat) {
+                    return sum + chat.unreadCount;
+                  });
+                }
+                return Badge(
+                  isLabelVisible: unreadchats > 0,
+                  label: Text(
+                    unreadchats.toString(),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      fontSize: 12,
+                    ),
                   ),
-                ),
-                child: _buildTabItem(
-                  title: 'Recent Chats',
-                  isSelected: _selectedTabIndex == 0,
-                  onTap: () => _onTabSelected(0),
-                ),
-              ),
+                  child: _buildTabItem(
+                    title: 'Recent Chats',
+                    isSelected: _selectedTabIndex == 0,
+                    onTap: () => _onTabSelected(0),
+                  ),
+                );
+              }),
             ),
             Expanded(
-              child: Badge(
-                isLabelVisible:
-                    context.watch<ChatCubit>().unreadCount(false) > 0,
-                label: Text(
-                  context.watch<ChatCubit>().unreadCount(false).toString(),
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                    fontSize: 12,
+              child: Builder(builder: (context) {
+                int unreadchats = 0;
+
+                if (context.read<ChatCubit>().state is ChatsLoaded) {
+                  final chatsState =
+                      context.watch<ChatCubit>().state as ChatsLoaded;
+                  unreadchats = context
+                      .watch<ChatCubit>()
+                      .getMessageRequests()
+                      .fold(0, (sum, chat) {
+                    return sum + chat.unreadCount;
+                  });
+                }
+                return Badge(
+                  isLabelVisible: unreadchats > 0,
+                  label: Text(
+                    unreadchats.toString(),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      fontSize: 12,
+                    ),
                   ),
-                ),
-                child: _buildTabItem(
-                  title: 'Message Requests',
-                  isSelected: _selectedTabIndex == 1,
-                  onTap: () => _onTabSelected(1),
-                ),
-              ),
+                  child: _buildTabItem(
+                    title: 'Message Requests',
+                    isSelected: _selectedTabIndex == 1,
+                    onTap: () => _onTabSelected(1),
+                  ),
+                );
+              }),
             ),
           ],
         ),
@@ -328,7 +405,15 @@ class _ChatItemState extends State<ChatItem>
   }
 
   String getInitials() {
-    return '${widget.chatPreview.profile.user.getStringValue('first_name')[0]} ${widget.chatPreview.profile.user.getStringValue('last_name')[0]}';
+    final firstName =
+        widget.chatPreview.profile.user.getStringValue('first_name');
+    final lastName =
+        widget.chatPreview.profile.user.getStringValue('last_name');
+
+    if (firstName.isNotEmpty && lastName.isNotEmpty) {
+      return '${firstName[0]} ${lastName[0]}';
+    }
+    return '';
   }
 
   @override
@@ -355,13 +440,11 @@ class _ChatItemState extends State<ChatItem>
       onTapDown: (_) => _controller.forward(),
       onTapUp: (_) => _controller.reverse(),
       onTapCancel: () => _controller.reverse(),
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => ChatPage(
-            profile: widget.chatPreview.profile,
-          ),
-        ),
-      ),
+      onTap: () => {
+        context.pushNamed(RouteNames.chatDetailPage, pathParameters: {
+          'profile': widget.chatPreview.profile.toJsonString(),
+        })
+      },
       child: AnimatedBuilder(
         animation: _scaleAnimation,
         builder: (context, child) => Transform.scale(

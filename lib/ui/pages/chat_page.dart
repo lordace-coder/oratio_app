@@ -56,7 +56,10 @@ class _ChatPageState extends State<ChatPage> {
         firstName: widget.profile.user.getStringValue('first_name'),
         lastName: widget.profile.user.getStringValue('last_name'));
     subscribeToMessages();
-    context.read<MessageCubit>().markMessagesAsRead().then((_) {
+    context
+        .read<ChatCubit>()
+        .markMessagesAsRead(widget.profile.userId)
+        .then((_) {
       context.read<ChatCubit>().loadRecentChats();
     });
     _loadInitialMessages();

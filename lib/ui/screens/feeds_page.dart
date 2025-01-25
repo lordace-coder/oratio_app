@@ -105,7 +105,8 @@ class FeedsListScreenState extends State<FeedsListScreen> {
       }
     });
     final unreadNotificationCount =
-        context.read<NotificationCubit>().unreadNotificationCount();
+        context.watch<NotificationCubit>().unreadNotificationCount();
+
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,

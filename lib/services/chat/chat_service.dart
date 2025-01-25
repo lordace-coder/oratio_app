@@ -205,12 +205,6 @@ class ChatPreview {
   }
 
   bool isFriend(RecordModel currentUser) {
-    print([
-      currentUser.getStringValue('username'),
-      profile.user.getListValue("followers"),
-      currentUser.id,
-      currentUser.getListValue("followers").contains(profile.userId)
-    ]);
     return profile.user.getListValue("followers").contains(currentUser.id) &&
         currentUser.getListValue("followers").contains(profile.userId);
   }

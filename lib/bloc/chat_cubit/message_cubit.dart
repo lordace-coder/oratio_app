@@ -90,7 +90,6 @@ class MessageCubit extends Cubit<MessageState> {
         }
       }
 
-      await markMessagesAsRead();
     } catch (e) {
       emit(state.copyWith(
         error: e.toString(),
@@ -154,21 +153,31 @@ class MessageCubit extends Cubit<MessageState> {
     }
   }
 
-  Future<void> markMessagesAsRead() async {
-    try {
-      if (!pb.authStore.isValid) return;
-      final currentUserId = pb.authStore.model.id;
+  Future<void> markMessagesAsRead(String otherParticipantId) async {
+    if (!pb.authStore.isValid) return;
+    final currentUserId = pb.authStore.model.id;
 
-      for (var msg in state.messages) {
-        if (msg.read || msg.senderId == currentUserId) continue;
-        await pb.collection('messages').update(
-          msg.id,
-          body: {'read': true},
-        );
+    try {
+      // Get unread messages
+      final result = await pb.collection('messages').getList(
+            filter:
+                'reciever = "$currentUserId" && sender = "$otherParticipantId" && read = false',
+          );
+
+      // Mark each message as read
+      for (final message in result.items) {
+        await pb.collection('messages').update(message.id, body: {
+          'read': true,
+        });
       }
 
-      // emit(state.copyWith(messages: updatedMessages));
-    } catch (e) {}
+      // Refresh chat list
+      await loadMessages(otherParticipantId);
+    } catch (e) {
+      emit(state.copyWith(
+        error: 'Failed to mark messages as read: $e',
+      ));
+    }
   }
 
   void _handleNewMessage(MessageModel message) {

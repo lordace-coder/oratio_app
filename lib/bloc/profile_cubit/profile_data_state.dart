@@ -31,6 +31,43 @@ class Profile {
       community: community ?? this.community,
     );
   }
+
+  factory Profile.fromJson(Map<String, dynamic> json) {
+    return Profile(
+      user: RecordModel.fromJson(json['user']),
+      userId: json['userId'],
+      parish:
+          (json['parish'] as List).map((e) => RecordModel.fromJson(e)).toList(),
+      contact: json['contact'],
+      community: (json['community'] as List)
+          .map((e) => RecordModel.fromJson(e))
+          .toList(),
+      parishLeading: json['parishLeading'] != null
+          ? RecordModel.fromJson(json['parishLeading'])
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'user': user.toJson(),
+      'userId': userId,
+      'parish': parish.map((e) => e.toJson()).toList(),
+      'contact': contact,
+      'community': community.map((e) => e.toJson()).toList(),
+      'parishLeading': parishLeading?.toJson(),
+    };
+  }
+
+  factory Profile.fromJsonString(String jsonString) {
+    final Map<String, dynamic> json = jsonDecode(jsonString);
+    return Profile.fromJson(json);
+  }
+
+  String toJsonString() {
+    final Map<String, dynamic> json = toJson();
+    return jsonEncode(json);
+  }
 }
 
 @immutable
@@ -43,9 +80,7 @@ final class ProfileDataLoading extends ProfileDataState {}
 final class ProfileDataError extends ProfileDataState {
   final String error;
 
-  ProfileDataError(this.error) {
-   
-  }
+  ProfileDataError(this.error);
 }
 
 final class ProfileDataLoaded extends ProfileDataState {

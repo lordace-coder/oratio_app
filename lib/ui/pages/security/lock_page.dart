@@ -44,6 +44,7 @@ class _LockScreenState extends State<LockScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            const Row(),
             const Gap(20),
             Text(
               'Welcome Back',

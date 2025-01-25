@@ -3,10 +3,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/ui/bright/pages/create_community.dart';
 import 'package:oratio_app/ui/bright/pages/create_event.dart';
 import 'package:oratio_app/ui/bright/pages/mass_booking_page.dart';
+import 'package:oratio_app/ui/pages/chat_page.dart';
 import 'package:oratio_app/ui/pages/create_new_post.dart';
 import 'package:oratio_app/ui/pages/edit_profile_page.dart';
 import 'package:oratio_app/ui/pages/post_detail_page.dart';
@@ -245,6 +247,14 @@ class AppRouter {
                   builder: (context, state) => const SchedulesPage(),
                 ),
 
+                GoRoute(
+                  path: '/${RouteNames.chatDetailPage}/:profile',
+                  name: RouteNames.chatDetailPage,
+                  builder: (context, state) => ChatPage(
+                    profile: Profile.fromJsonString(
+                        state.pathParameters['profile'].toString()),
+                  ),
+                ),
                 GoRoute(
                   path: '/${RouteNames.transactionDetails}',
                   name: RouteNames.transactionDetails,

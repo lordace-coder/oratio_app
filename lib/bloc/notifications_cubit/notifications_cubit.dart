@@ -80,6 +80,10 @@ class NotificationCubit extends Cubit<NotificationState> {
     if (_unreadCount != 0) return _unreadCount;
     if (state is NotificationLoaded) {
       // count unread notifications
+      return (state as NotificationLoaded)
+          .notifications
+          .where((notification) => notification.getBoolValue('read'))
+          .length;
     }
     return _unreadCount;
   }

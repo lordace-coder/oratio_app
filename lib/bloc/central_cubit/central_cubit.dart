@@ -67,6 +67,7 @@ class CentralCubit extends Cubit<List> {
     final posts = await postHelper.fetchPosts();
     final prayerRequests = await prayerRequestHelper.fetchPrayerRequests();
     final ads = await adsRepo.getAds();
+    notificationCubit.fetchNotifications();
     await checkLiveParishes();
     emit([...posts, ...prayerRequests, ...ads]..shuffle());
   }
@@ -95,5 +96,11 @@ class CentralCubit extends Cubit<List> {
     }
     liveParishes = [data];
     emit([...state]);
+  }
+
+  ///Initialize realtime connections througth the entire app
+  Future<void> realTimeInit(BuildContext context) async {
+    chatCubit.subscribeToMessages(context);
+    notificationCubit.realtimeConnection();
   }
 }
