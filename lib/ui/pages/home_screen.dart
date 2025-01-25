@@ -18,13 +18,21 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  HomeScreenState createState() => HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> {
   bool showBalance = false;
   final _pageController = PageController();
   String bal = '₦0.00';
+
+  void scrollToTop() {
+    _pageController.animateToPage(
+      0,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,6 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
               await context.read<TransactionCubit>().fetchTransactions();
             },
             child: CustomScrollView(
+              controller: _pageController,
               slivers: [
                 // Spiritual Header
                 SliverToBoxAdapter(
@@ -96,130 +105,99 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-                // Balance Card with Sacred Design
+                // Balance Section
                 SliverToBoxAdapter(
                   child: Padding(
                     padding:
                         EdgeInsets.symmetric(horizontal: horizontalPadding),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        return Card(
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          color: Theme.of(context).primaryColor,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(28),
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Theme.of(context).primaryColor,
-                                  Theme.of(context)
-                                      .primaryColor
-                                      .withOpacity(0.8),
-                                ],
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Balance',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge
+                                  ?.copyWith(
+                                    color: Colors.black.withOpacity(0.9),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                            ),
+                            GestureDetector(
+                              onTap: () =>
+                                  setState(() => showBalance = !showBalance),
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(
+                                  showBalance
+                                      ? FontAwesomeIcons.eye
+                                      : FontAwesomeIcons.eyeSlash,
+                                  color: Colors.black,
+                                  size: 16,
+                                ),
                               ),
                             ),
-                            padding:
-                                EdgeInsets.all(isSmallScreen ? 12.0 : 15.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      'Balance',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .bodyLarge
-                                          ?.copyWith(
-                                            color:
-                                                Colors.white.withOpacity(0.9),
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                    ),
-                                    GestureDetector(
-                                      onTap: () => setState(
-                                          () => showBalance = !showBalance),
-                                      child: Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.2),
-                                          borderRadius:
-                                              BorderRadius.circular(12),
-                                        ),
-                                        child: Icon(
-                                          showBalance
-                                              ? FontAwesomeIcons.eye
-                                              : FontAwesomeIcons.eyeSlash,
-                                          color: Colors.white,
-                                          size: 16,
-                                        ),
+                          ],
+                        ),
+                        const Gap(16),
+                        FutureBuilder<String>(
+                            initialData: bal,
+                            future: getUserBalance(
+                                user.id,
+                                context
+                                    .read<PocketBaseServiceCubit>()
+                                    .state
+                                    .pb),
+                            builder: (context, snapshot) {
+                              if (snapshot.hasData) {
+                                bal = snapshot.data!;
+                                return Text(
+                                  showBalance
+                                      ? '${snapshot.data}'
+                                      : '• • • • • •',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineMedium
+                                      ?.copyWith(
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.bold,
                                       ),
-                                    ),
-                                  ],
-                                ),
-                                const Gap(16),
-                                FutureBuilder<String>(
-                                    initialData: bal,
-                                    future: getUserBalance(
-                                        user.id,
-                                        context
-                                            .read<PocketBaseServiceCubit>()
-                                            .state
-                                            .pb),
-                                    builder: (context, snapshot) {
-                                      if (snapshot.hasData) {
-                                        bal = snapshot.data!;
-                                        return Text(
-                                          showBalance
-                                              ? '${snapshot.data}'
-                                              : '• • • • • •',
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .headlineMedium
-                                              ?.copyWith(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.bold,
-                                              ),
-                                        );
-                                      }
-                                      return Container();
-                                    }),
-                                const Gap(24),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: _buildActionButton(
-                                        icon: FontAwesomeIcons.plus,
-                                        label: 'Fund Account',
-                                        onTap: () async {
-                                          await collectPayment(context);
-                                          setState(() {});
-                                        },
-                                      ),
-                                    ),
-                                    const Gap(12),
-                                    Expanded(
-                                      child: _buildActionButton(
-                                        icon: FontAwesomeIcons.clockRotateLeft,
-                                        label: 'Transaction History',
-                                        onTap: () => context.pushNamed(
-                                            RouteNames.transactionsPage),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
+                                );
+                              }
+                              return Container();
+                            }),
+                        const Gap(24),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildActionButton(
+                                icon: FontAwesomeIcons.plus,
+                                label: 'Fund Account',
+                                onTap: () async {
+                                  await collectPayment(context);
+                                  setState(() {});
+                                },
+                              ),
                             ),
-                          ),
-                        );
-                      },
+                            const Gap(12),
+                            Expanded(
+                              child: _buildActionButton(
+                                icon: FontAwesomeIcons.clockRotateLeft,
+                                label: 'Transaction History',
+                                onTap: () => context
+                                    .pushNamed(RouteNames.transactionsPage),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -534,7 +512,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           child: Column(
-            mainAxisSize: MainAxisSize.min, // Add this
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
@@ -551,7 +529,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               Gap(isSmallScreen ? 6 : 8),
               Flexible(
-                // Wrap with Flexible
                 child: Text(
                   label,
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -565,7 +542,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               Gap(isSmallScreen ? 2 : 3),
               Flexible(
-                // Wrap with Flexible
                 child: Text(
                   description,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(

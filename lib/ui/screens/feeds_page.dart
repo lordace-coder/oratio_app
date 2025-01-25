@@ -28,10 +28,10 @@ class FeedsListScreen extends StatefulWidget {
   const FeedsListScreen({super.key});
 
   @override
-  _FeedsListScreenState createState() => _FeedsListScreenState();
+  FeedsListScreenState createState() => FeedsListScreenState();
 }
 
-class _FeedsListScreenState extends State<FeedsListScreen> {
+class FeedsListScreenState extends State<FeedsListScreen> {
   final ScrollController _scrollController = ScrollController();
   late PocketBase pb;
   bool _isLoadingMore = false;
@@ -46,16 +46,6 @@ class _FeedsListScreenState extends State<FeedsListScreen> {
       final feeds = context.read<CentralCubit>().state;
       if (feeds.isEmpty) {
         context.read<CentralCubit>().getFeeds();
-      }
-      try {
-        context
-            .read<PocketBaseServiceCubit>()
-            .state
-            .pb
-            .collection('users')
-            .authRefresh();
-      } catch (e) {
-        print('auth refresh in feeds screen failed pls logout');
       }
     });
   }
@@ -83,6 +73,14 @@ class _FeedsListScreenState extends State<FeedsListScreen> {
     setState(() {
       _isLoadingMore = false;
     });
+  }
+
+  void scrollToTop() {
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
@@ -189,38 +187,7 @@ class _FeedsListScreenState extends State<FeedsListScreen> {
         child: BlocBuilder<CentralCubit, List>(
           builder: (context, feeds) {
             if (feeds.isEmpty) {
-              return SizedBox(
-                height: 400,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Lottie.network(
-                        height: 100,
-                        'https://lottie.host/fece67a7-2389-4c66-b33c-6eb5bb658347/dK1IxI9mjB.json'),
-                    const Row(),
-                    const Gap(20),
-                    const Text(
-                      'Join A Community to start seeing feeds',
-                      textAlign: TextAlign.center,
-                    ),
-                    const Gap(20),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Row(
-                        children: [
-                          Expanded(
-                              child: BookingButton(
-                                  label: 'Join Community',
-                                  isEnabled: true,
-                                  onPressed: () {
-                                    context.pushNamed(RouteNames.communitypage);
-                                  })),
-                        ],
-                      ),
-                    )
-                  ],
-                ),
-              );
+              return const NoFeedsWidget();
             } else {
               return SingleChildScrollView(
                 controller: _scrollController,
@@ -310,6 +277,48 @@ class _FeedsListScreenState extends State<FeedsListScreen> {
             }
           },
         ),
+      ),
+    );
+  }
+}
+
+class NoFeedsWidget extends StatelessWidget {
+  const NoFeedsWidget({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 400,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Lottie.network(
+              height: 100,
+              'https://lottie.host/fece67a7-2389-4c66-b33c-6eb5bb658347/dK1IxI9mjB.json'),
+          const Row(),
+          const Gap(20),
+          const Text(
+            'Join A Community to start seeing feeds',
+            textAlign: TextAlign.center,
+          ),
+          const Gap(20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              children: [
+                Expanded(
+                    child: BookingButton(
+                        label: 'Join Community',
+                        isEnabled: true,
+                        onPressed: () {
+                          context.pushNamed(RouteNames.communitypage);
+                        })),
+              ],
+            ),
+          )
+        ],
       ),
     );
   }

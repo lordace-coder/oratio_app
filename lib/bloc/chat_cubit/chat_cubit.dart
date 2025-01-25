@@ -114,15 +114,10 @@ class ChatCubit extends Cubit<ChatState> {
     if (!_pb.authStore.isValid) return;
     final currentUserId = (_pb.authStore.model as RecordModel).id;
     _pb.collection('messages').subscribe('*', (e) {
-      if (e.action == 'create') {
-        // Check if the message involves the current user
-
-        if (e.record == null) {
-          return;
-        }
+      if (e.action == 'create' && e.record != null) {
         final message = e.record!;
-        if (e.record?.getStringValue('sender') != currentUserId) {
-          String msg = e.record!.getStringValue('message');
+        if (message.getStringValue('sender') != currentUserId) {
+          String msg = message.getStringValue('message');
           if (msg == "{{file}}") {
             msg = 'sent you a file';
           }
@@ -130,7 +125,7 @@ class ChatCubit extends Cubit<ChatState> {
           //   onTap: () async {
           //     await context
           //         .read<ProfileDataCubit>()
-          //         .visitProfile(e.record!.getStringValue('sender'));
+          //         .visitProfile(message.getStringValue('sender'));
           //     Navigator.of(context).push(
           //       MaterialPageRoute(
           //         builder: (_) => ChatPage(
@@ -148,10 +143,8 @@ class ChatCubit extends Cubit<ChatState> {
         }
         if (message.data['sender'] == currentUserId ||
             message.data['receiver'].toString().contains(currentUserId)) {
-          loadRecentChats(); // Refresh chat list when new message arrives
+          loadRecentChats();
         }
-
-        loadRecentChats();
       }
     },
         filter:

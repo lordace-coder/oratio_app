@@ -33,6 +33,7 @@ import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:oratio_app/bloc/central_cubit/central_cubit.dart';
+import 'package:flutter/foundation.dart';
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -53,16 +54,21 @@ class ConnectivityCubit extends Cubit<bool> {
   void monitorConnection() {
     connectivitySubscription =
         _connectivity.onConnectivityChanged.listen((result) async {
-      if (result.first == ConnectivityResult.none) {
+      if (result == ConnectivityResult.none) {
         emit(false);
       } else {
-        emit(_checkInternetConnection());
+        emit(await _checkInternetConnection());
       }
     });
   }
 
-  bool _checkInternetConnection() {
-    return true;
+  Future<bool> _checkInternetConnection() async {
+    try {
+      final result = await InternetAddress.lookup('example.com');
+      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
+    } catch (_) {
+      return false;
+    }
   }
 
   @override
@@ -84,6 +90,7 @@ void main() async {
   OneSignal.Notifications.requestPermission(true);
   final appDocumentDirectory = await getApplicationDocumentsDirectory();
 
+  // Initialize Hive for local storage
   Hive.init(appDocumentDirectory.path);
   Hive.registerAdapter(
     MessageModelAdapter(),
@@ -91,6 +98,7 @@ void main() async {
 
   final pref = await SharedPreferences.getInstance();
   final bibleService = BibleReadingService();
+  // Update Bible readings if needed
   bibleService.updateIfNeeded(fetchReadings);
   PocketBase? pb;
   
@@ -176,9 +184,9 @@ void main() async {
         BlocProvider<ProfileDataCubit>(
           create: (context) => ProfileDataCubit(pbCubit.state.pb),
         ),
-     BlocProvider<PrayerRequestCubit>(
-  create: (context) => PrayerRequestCubit(prayerRequestService),
-),
+        BlocProvider<PrayerRequestCubit>(
+          create: (context) => PrayerRequestCubit(prayerRequestService),
+        ),
         BlocProvider(
           create: (context) => CentralCubit(
             adsRepo: adsRepo,
@@ -247,8 +255,12 @@ class _MainAppState extends State<MainApp> {
       });
       return;
     }
-    await context.read<CentralCubit>().initialize(context);
-    await context.read<CentralCubit>().getFeeds();
+    try {
+      await context.read<CentralCubit>().initialize(context);
+      await context.read<CentralCubit>().getFeeds();
+    } catch (e) {
+      debugPrint('Error during initialization: $e');
+    }
 
     if (mounted) {
       setState(() {

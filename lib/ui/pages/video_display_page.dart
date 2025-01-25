@@ -46,7 +46,8 @@ class _VideoDisplayPageState extends State<VideoDisplayPage> {
   }
 
   Future<void> _saveVideo() async {
-    FileDownloadHandler.downloadRawFile(widget.videoUrl);
+    FileDownloadHandler.downloadRawFile(context, widget.videoUrl,
+        isvideo: true);
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -143,7 +144,7 @@ class _VideoDisplayPageState extends State<VideoDisplayPage> {
               ),
               GestureDetector(
                 onTap: () {
-                  FileDownloadHandler.downloadRawFile(widget.videoUrl,
+                  FileDownloadHandler.downloadRawFile(context, widget.videoUrl,
                       isvideo: true);
                 },
                 child: const Column(

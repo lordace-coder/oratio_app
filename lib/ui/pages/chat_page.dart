@@ -45,7 +45,6 @@ class _ChatPageState extends State<ChatPage> {
   void initState() {
     super.initState();
     pb = context.read<PocketBaseServiceCubit>().state.pb;
-    context.read<MessageCubit>().getSavedMessages(widget.profile.userId);
     currentUser = pb.authStore.model as RecordModel;
     _user = types.User(
       id: currentUser.id,
@@ -60,6 +59,7 @@ class _ChatPageState extends State<ChatPage> {
     context.read<MessageCubit>().markMessagesAsRead().then((_) {
       context.read<ChatCubit>().loadRecentChats();
     });
+    _loadInitialMessages();
   }
 
   intl.DateFormat format = intl.DateFormat("yyyy-MM-dd HH:mm:ss.SSS'Z'");
@@ -67,14 +67,8 @@ class _ChatPageState extends State<ChatPage> {
     pb.collection('messages').subscribe(
       '*',
       (e) {
-        if (e.action == 'create') {
-          // Check if the message involves the current user
-
-          if (e.record == null) {
-            return;
-          }
+        if (e.action == 'create' && e.record != null) {
           final message = e.record!;
-          // TODO update ui with new message
           final newMsg = types.TextMessage(
               author: _otherUser,
               id: message.id,
@@ -261,8 +255,6 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) {
-    _loadInitialMessages();
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.surface,

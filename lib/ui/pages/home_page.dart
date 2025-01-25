@@ -19,16 +19,38 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
-  final _pages = <Widget>[
-    const FeedsListScreen(),
-    const HomeScreen(),
-    const ChatScreen(),
-  ];
+  final GlobalKey<FeedsListScreenState> _feedsListScreenKey;
+  final GlobalKey<HomeScreenState> _homeScreenKey;
+
+  _HomePageState()
+      : _feedsListScreenKey = GlobalKey<FeedsListScreenState>(),
+        _homeScreenKey = GlobalKey<HomeScreenState>();
+
+  late final List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
     PopupNotification.initialize(context);
+    _pages = [
+      FeedsListScreen(key: _feedsListScreenKey),
+      HomeScreen(key: _homeScreenKey),
+      const ChatScreen(),
+    ];
+  }
+
+  void _onItemTapped(int index) {
+    if (_selectedIndex == index) {
+      if (index == 0) {
+        _feedsListScreenKey.currentState?.scrollToTop();
+      } else if (index == 1) {
+        _homeScreenKey.currentState?.scrollToTop();
+      }
+    } else {
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
   }
 
   @override
@@ -74,11 +96,7 @@ class _HomePageState extends State<HomePage> {
               AppColors.primary, // Change the selected item color
           unselectedItemColor: Colors.grey, // Change the unselected item color
           backgroundColor: Colors.white, // Change the background color
-          onTap: (id) {
-            setState(() {
-              _selectedIndex = id;
-            });
-          },
+          onTap: _onItemTapped,
         ),
       ),
     );

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/services/file_downloader.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class ImageViewer extends StatelessWidget {
   final Uint8List? imageBytes;
@@ -42,13 +43,22 @@ class ImageViewer extends StatelessWidget {
             left: 0,
             right: 0,
             child: GestureDetector(
-              onTap: () {
-                imageUrl != null
-                    ? FileDownloadHandler.downloadRawFile(imageUrl!)
-                    : imageBytes != null
-                        ? FileDownloadHandler.downloadImageFromBytes(
-                            imageBytes!, 'ORATIO-IMG-${DateTime.now().toString()}')
-                        : null;
+              onTap: () async {
+                if (await Permission.manageExternalStorage.request().isGranted) {
+                  imageUrl != null
+                      ? FileDownloadHandler.downloadRawFile(context, imageUrl!)
+                      : imageBytes != null
+                          ? FileDownloadHandler.downloadImageFromBytes(
+                              context,
+                              imageBytes!,
+                              'ORATIO-IMG-${DateTime.now().toString()}')
+                          : null;
+                } else {
+                  // Handle permission denied
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Permission denied')),
+                  );
+                }
               },
               child: const Column(
                 children: [
@@ -69,7 +79,8 @@ class ImageViewer extends StatelessWidget {
 // ...existing code...
 
 void openImageView(
-  BuildContext context, String uri, {
+  BuildContext context,
+  String uri, {
   Uint8List? imageBytes,
   String? imageUrl,
 }) async {
@@ -82,4 +93,3 @@ void openImageView(
     ),
   );
 }
-

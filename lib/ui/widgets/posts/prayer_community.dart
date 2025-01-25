@@ -232,7 +232,9 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
                   content: const Text('Do you want to save this image?'),
                 );
                 if (save) {
-                  FileDownloadHandler.downloadRawFile(widget.post.image!);
+                  FileDownloadHandler.downloadRawFile(
+                      context, widget.post.image!,
+                      isvideo: false);
                 }
               },
               child: Container(

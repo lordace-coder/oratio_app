@@ -45,7 +45,6 @@ class MessageCubit extends Cubit<MessageState> {
   void _initMessageSubscription() async {
     if (!pb.authStore.isValid) return;
     final currentUserId = pb.authStore.model.id;
-    print('${currentUserId}---userid');
     await pb.collection('messages').subscribe(
       '*',
       (e) {
@@ -83,19 +82,14 @@ class MessageCubit extends Cubit<MessageState> {
         messages: messages,
         isLoading: false,
       ));
-      // save all messages
-      messages.map((msg) async {
-        if (msg.received) {
-          return;
-        }
-        repository.messageBox.add(msg);
-        // *UPDATE MODEL RECIEVED TO TRUE
-        await pb
-            .collection("messages")
-            .update(msg.id, body: {"recieved": true});
-      });
 
-      // Mark messages as read after loading
+      for (var msg in messages) {
+        if (!msg.received) {
+          repository.messageBox.add(msg);
+          await pb.collection("messages").update(msg.id, body: {"recieved": true});
+        }
+      }
+
       await markMessagesAsRead();
     } catch (e) {
       emit(state.copyWith(

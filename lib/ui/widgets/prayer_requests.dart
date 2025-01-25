@@ -176,15 +176,6 @@ class PrayerRequestGroupsList extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<PrayerRequestCubit, List<UserPrayerRequestGroup>>(
       builder: (context, groups) {
-        if (groups.isEmpty) {
-          return const Center(
-            child: Padding(
-              padding: EdgeInsets.all(20.0),
-              child: Text('Loading Prayers...'),
-            ),
-          );
-        }
-
         final currentUserId =
             context.read<PrayerRequestCubit>().service.pb.authStore.model.id;
 
@@ -216,8 +207,8 @@ class PrayerRequestGroupsList extends StatelessWidget {
               height: 100,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: otherGroups.length +
-                    2, // Add two for "Say Prayer" and user's own item
+                itemCount:
+                    otherGroups.length + 1 + (currentUserGroup != null ? 1 : 0),
                 itemBuilder: (context, index) {
                   if (index == 0) {
                     return Padding(
@@ -261,8 +252,8 @@ class PrayerRequestGroupsList extends StatelessWidget {
                     );
                   }
 
-                  final group =
-                      otherGroups[index - 2]; // Adjust index for other groups
+                  final group = otherGroups[
+                      index - 1 - (currentUserGroup != null ? 1 : 0)];
 
                   return Padding(
                     padding: const EdgeInsets.only(right: 12),

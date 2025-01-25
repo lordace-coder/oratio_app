@@ -63,7 +63,9 @@ class _PostDetailPageState extends State<PostDetailPage> {
     try {
       final pb = context.read<PocketBaseServiceCubit>().state.pb;
       final postHelper = PostHelper(pb);
-      final res = await postHelper.getPost(widget.postId,);
+      final res = await postHelper.getPost(
+        widget.postId,
+      );
       setState(() {
         data = res;
         _loading = false;
@@ -386,6 +388,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                           );
                           if (save) {
                             FileDownloadHandler.downloadRawFile(
+                              context,
                               getAvatarUrl(
                                 context,
                                 record: data!,

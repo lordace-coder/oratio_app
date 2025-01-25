@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:path_provider/path_provider.dart';
@@ -6,6 +7,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'dart:io';
 import 'package:open_filex/open_filex.dart';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 class FileDownloadHandler {
   static Future<String> getDownloadPath(String fileName) async {
@@ -34,14 +37,16 @@ class FileDownloadHandler {
     }
   }
 
-  static Future<void> downloadRawFile(String url, {bool? isvideo}) async {
-    var status = await Permission.storage.request();
+  static Future<void> downloadRawFile(BuildContext context, String url, {bool? isvideo}) async {
+    var status = await Permission.manageExternalStorage.request();
     if (!status.isGranted) {
       throw Exception('Storage permission not granted');
     }
 
     try {
-      final savePath = await getDownloadPath(url);
+      // Extract file name from URL
+      final fileName = url.split('/').last;
+      final savePath = await getDownloadPath(fileName);
 
       // Check if file already exists
       if (await isFileDownloaded(savePath)) {
@@ -59,7 +64,7 @@ class FileDownloadHandler {
           onReceiveProgress: (received, total) {
             if (total != -1) {
               double progress = (received / total) * 100;
-              print('Download Progress: ${progress.toStringAsFixed(0)}%');
+              debugPrint('Download Progress: ${progress.toStringAsFixed(0)}%');
             }
           },
         );
@@ -71,16 +76,38 @@ class FileDownloadHandler {
           onReceiveProgress: (received, total) {
             if (total != -1) {
               double progress = (received / total) * 100;
-              print('Download Progress: ${progress.toStringAsFixed(0)}%');
+              debugPrint('Download Progress: ${progress.toStringAsFixed(0)}%');
             }
           },
         );
       }
 
-      // Open the file after download
-      // await openFile(savePath);
+      // Show the dialog using the provided context
+      bool? openFileDialog = await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Download Complete'),
+            content: const Text('Do you want to open the file?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('No'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Yes'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (openFileDialog == true) {
+        await openFile(savePath);
+      }
     } catch (e) {
-      print('Error handling file: $e');
+      debugPrint('Error handling file: $e');
       throw Exception('Failed to handle file: $e');
     }
   }
@@ -110,7 +137,7 @@ class FileDownloadHandler {
         onReceiveProgress: (received, total) {
           if (total != -1) {
             double progress = (received / total) * 100;
-            print('Download Progress: ${progress.toStringAsFixed(0)}%');
+            debugPrint('Download Progress: ${progress.toStringAsFixed(0)}%');
           }
         },
       );
@@ -118,14 +145,13 @@ class FileDownloadHandler {
       // Open the file after download
       await openFile(savePath);
     } catch (e) {
-      print('Error handling file: $e');
+      debugPrint('Error handling file: $e');
       throw Exception('Failed to handle file: $e');
     }
   }
 
-  static Future<void> downloadImageFromBytes(
-      Uint8List imageBytes, String fileName) async {
-    var status = await Permission.storage.request();
+  static Future<void> downloadImageFromBytes(BuildContext context, Uint8List imageBytes, String fileName) async {
+    var status = await Permission.manageExternalStorage.request();
     if (!status.isGranted) {
       throw Exception('Storage permission not granted');
     }
@@ -140,6 +166,31 @@ class FileDownloadHandler {
 
       // Notify the user
       NotificationService.showInfo("Image saved to $savePath");
+
+      // Show the dialog using the provided context
+      bool? openFileDialog = await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Download Complete'),
+            content: const Text('Do you want to open the file?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('No'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Yes'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (openFileDialog == true) {
+        await openFile(savePath);
+      }
     } catch (e) {
       throw Exception('Error saving image: $e');
     }
