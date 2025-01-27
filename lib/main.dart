@@ -8,6 +8,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:hive/hive.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
+import 'package:oratio_app/services/user_settings_service.dart';
 import 'package:oratio_app/ui/widgets/prayer_requests.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
@@ -79,7 +80,6 @@ class ConnectivityCubit extends Cubit<bool> {
 }
 
 void main() async {
-
   WidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = MyHttpOverrides();
 
@@ -129,7 +129,7 @@ void main() async {
     messageBox: await Hive.openBox<MessageModel>('messages'),
   );
   final pbCubit = PocketBaseServiceCubit(pb);
-  final notificationCubit = NotificationCubit(pbCubit.state.pb);
+  final notificationCubit = NotificationCubit(pb);
   try {
     await notificationCubit.fetchNotifications();
   } catch (e) {
@@ -299,7 +299,6 @@ class _MainAppState extends State<MainApp> {
       debugShowCheckedModeBanner: false,
       title: 'Book Mass',
       builder: (context, child) => AppLock(
-        enabled: widget.appRouter.opened(),
         builder: (context, arg) => ScaffoldMessenger(
           child: BlocListener<ConnectivityCubit, bool>(
             listener: (context, hasConnection) {
@@ -350,6 +349,9 @@ class _MainAppState extends State<MainApp> {
         ),
         lockScreenBuilder: (context) => const LockScreen(),
         backgroundLockLatency: const Duration(seconds: 9),
+        initiallyEnabled:
+            UserSettings(widget.appRouter.pref).appSettings.secureMode &&
+                widget.appRouter.opened(),
       ),
       color: AppColors.primary,
       routerConfig: widget.appRouter.appRouter(),
@@ -392,7 +394,8 @@ class DotIndicator extends StatefulWidget {
   _DotIndicatorState createState() => _DotIndicatorState();
 }
 
-class _DotIndicatorState extends State<DotIndicator> with SingleTickerProviderStateMixin {
+class _DotIndicatorState extends State<DotIndicator>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<int> _animation;
 

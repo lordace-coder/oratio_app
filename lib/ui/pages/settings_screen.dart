@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
@@ -146,6 +147,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
 
                 ..._buildSettingsItems(),
+
+                _buildSecureModeToggle(),
 
                 const SizedBox(height: 24), // Bottom padding
 
@@ -307,7 +310,7 @@ class _SettingsPageState extends State<SettingsPage> {
         iconGradient: [Colors.teal[400]!, Colors.green[400]!],
         onTap: () {
           openWhatsApp(
-              phoneNumber: '+2349061299286', message: 'Customer support ');
+              phoneNumber: '+2347032096095', message: 'Customer support ');
         },
       ),
       _SettingsItem(
@@ -380,6 +383,47 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildSecureModeToggle() {
+    return FutureBuilder<SharedPreferences>(
+      future: SharedPreferences.getInstance(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const CircularProgressIndicator();
+        }
+        final prefs = snapshot.data!;
+        final settings = UserSettings(prefs);
+        final isSecureMode = settings.appSettings.secureMode;
+
+        return SwitchListTile(
+          title: const Text('Secure Mode'),
+          subtitle: const Text('Enable or disable secure mode'),
+          value: isSecureMode,
+          onChanged: (value) async {
+            final confirm = await dialogs.confirm(
+              context,
+              title: const Text("Confirm Action"),
+              content: const Text(
+                  "Are you sure you want to change the secure mode setting? You will be held responsible if something happens."),
+              textOK: const Text("Yes"),
+              textCancel: const Text("No"),
+            );
+            if (confirm) {
+              setState(() {
+                if (value) {
+                  settings.turnOnSecureMode();
+                  AppLock.of(context)?.enable();
+                } else {
+                  settings.turnOffSecureMode();
+                  AppLock.of(context)?.disable();
+                }
+              });
+            }
+          },
+        );
+      },
     );
   }
 }

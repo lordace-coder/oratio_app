@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/bloc/chat_cubit/chat_cubit.dart';
-import 'package:oratio_app/bloc/chat_cubit/message_cubit.dart';
 import 'package:oratio_app/helpers/functions.dart';
-import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/services/chat/chat_service.dart';
-import 'package:oratio_app/ui/pages/chat_page.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
-import 'package:pocketbase/pocketbase.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -54,9 +50,17 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _refreshChats() async {
     await context.read<ChatCubit>().loadRecentChats();
   }
+  Future<void> _errorCheck()async{
+    if(context.read<ChatCubit>().state is ChatsLoaded){
+      if((context.read<ChatCubit>().state as ChatsLoaded).chats.isEmpty){
+        await _refreshChats();
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    _errorCheck();
     return Scaffold(
       // backgroundColor: Theme.of(context).colorScheme.surface,
       body: RefreshIndicator(
@@ -72,47 +76,50 @@ class _ChatScreenState extends State<ChatScreen> {
                     Colors.white.withOpacity(.85), BlendMode.lighten)),
           ),
           child: SafeArea(
-            child: Stack(
-              children: [
-                CustomScrollView(
+            child: Builder(
+              builder: (context) {
+                return CustomScrollView(
                   controller: _scrollController,
                   slivers: [
-                    SliverAppBar(
-                      floating: true,
-                      snap: true,
-                      elevation: 0,
-                      backgroundColor: Colors.transparent,
-                      expandedHeight:
-                          170, // Increased height to accommodate tab bar
-                      flexibleSpace: FlexibleSpaceBar(
-                        background: Column(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    'Chats',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .headlineMedium
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                  ),
-                                  const Spacer(),
-                                  _buildProfileButton(),
-                                ],
+                    SliverOverlapAbsorber(
+                      handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+                      sliver: SliverAppBar(
+                        floating: true,
+                        snap: true,
+                        elevation: 0,
+                        backgroundColor: Colors.transparent,
+                        expandedHeight:
+                            170, // Increased height to accommodate tab bar
+                        flexibleSpace: FlexibleSpaceBar(
+                          background: Column(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      'Chats',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headlineMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
+                                    const Spacer(),
+                                    _buildProfileButton(),
+                                  ],
+                                ),
                               ),
-                            ),
-                            GestureDetector(
-                                onTap: () async {
-                                  await context
-                                      .pushNamed(RouteNames.searchPage);
-                                },
-                                child: _buildSearchBar()),
-                            _buildCustomTabBar(),
-                          ],
+                              GestureDetector(
+                                  onTap: () async {
+                                    await context
+                                        .pushNamed(RouteNames.searchPage);
+                                  },
+                                  child: _buildSearchBar()),
+                              _buildCustomTabBar(),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -177,24 +184,12 @@ class _ChatScreenState extends State<ChatScreen> {
                         },
                       ),
                     ),
-                  ],
-                ),
-                if (_showFloatingButton) // ... existing floating button code ...
-                  Positioned(
-                    right: 16,
-                    bottom: 16,
-                    child: FloatingActionButton(
-                      onPressed: () {
-                        _scrollController.animateTo(
-                          0,
-                          duration: const Duration(milliseconds: 500),
-                          curve: Curves.easeOutCubic,
-                        );
-                      },
-                      child: const Icon(Icons.arrow_upward),
+                    SliverOverlapInjector(
+                      handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
                     ),
-                  ),
-              ],
+                  ],
+                );
+              },
             ),
           ),
         ),
@@ -325,7 +320,7 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  // ... rest of your existing code ...
+
 
   Widget _buildProfileButton() {
     return Material(

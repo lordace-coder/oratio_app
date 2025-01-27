@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
-import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/networkProvider/users.dart';
@@ -92,8 +91,7 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
       final data = await pb.collection('mass_booking').getList(
           filter: 'parish ="${myParish!.id}"',
           expand: 'user, donation , parish');
-      await Future.delayed(
-          const Duration(seconds: 2)); // Simulate network delay
+      // Simulate network delay
 
       final List<MassBooking> bookings = data.items.map((z) {
         var i = z.data;

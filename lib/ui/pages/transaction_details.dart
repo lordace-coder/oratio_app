@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
+import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/ui/themes.dart';
 
 class TransactionDetailsPage extends StatelessWidget {
@@ -24,6 +25,10 @@ class TransactionDetailsPage extends StatelessWidget {
           IconButton(
             onPressed: () {
               // Contact customer support
+                     openWhatsApp(
+                  phoneNumber: '+2347032096095',
+                  message: 'Im looking for customer support');
+                              
             },
             icon: const Icon(
               FontAwesomeIcons.headset,

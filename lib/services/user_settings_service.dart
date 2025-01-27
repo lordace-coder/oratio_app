@@ -25,6 +25,14 @@ class UserSettings {
     _prefs.setBool('isNotificationEnabled', settings.isNotificationEnabled);
     _prefs.setBool('secureMode', settings.secureMode);
   }
+
+  void turnOnSecureMode() {
+    _prefs.setBool('secureMode', true);
+  }
+
+  void turnOffSecureMode() {
+    _prefs.setBool('secureMode', false);
+  }
 }
 
 class AppSettings {

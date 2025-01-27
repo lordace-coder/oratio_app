@@ -105,10 +105,11 @@ class CustomSearchBar extends StatelessWidget {
   const CustomSearchBar({
     super.key,
     required this.controller,
+    required this.onSubmit,
   });
 
   final TextEditingController controller;
-
+  final Function(String value) onSubmit;
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -116,6 +117,8 @@ class CustomSearchBar extends StatelessWidget {
       decoration: BoxDecoration(
           color: AppColors.dimGray, borderRadius: BorderRadius.circular(5)),
       child: TextField(
+        textInputAction: TextInputAction.search,
+        onSubmitted: onSubmit,
         keyboardType: TextInputType.name,
         style: const TextStyle(
           color: Colors.black54,

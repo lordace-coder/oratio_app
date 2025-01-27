@@ -284,7 +284,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 AppColors.primary,
                                 () {
                                   openWhatsApp(
-                                      phoneNumber: '+2349061299286',
+                                      phoneNumber: '+2347032096095',
                                       message:
                                           'Im looking for customer support');
                                 },

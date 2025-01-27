@@ -12,6 +12,7 @@ import 'package:oratio_app/bloc/priest_bloc/state.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/bloc/transactions_cubit/state.dart';
 import 'package:oratio_app/bloc/transactions_cubit/transaction_cubit.dart';
+import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/networkProvider/paystack_payment.dart';
 import 'package:oratio_app/ui/bright/pages/withdrawal_modal.dart';
 import 'package:oratio_app/ui/pages/priest/live_page.dart';
@@ -142,8 +143,13 @@ class _DashboardPageState extends State<DashboardPage> {
           PopupMenuButton(
             icon: const Icon(Icons.more_vert, color: Colors.black),
             itemBuilder: (context) => [
-              const PopupMenuItem(
-                child: Row(
+              PopupMenuItem(
+                onTap: () {
+                  openWhatsApp(
+                      phoneNumber: '+2347032096095',
+                      message: 'Im looking for customer support');
+                },
+                child: const Row(
                   children: [
                     Icon(FontAwesomeIcons.userNinja, size: 16),
                     Gap(8),
@@ -508,7 +514,6 @@ class _DashboardPageState extends State<DashboardPage> {
                             transaction: item.getStringValue('transaction'),
                             type: Transaction.getTransactionType(
                                 item.getStringValue('type')),
-                            
                             amount: item.getIntValue('amount').toDouble()),
                       ),
                     )

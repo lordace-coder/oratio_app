@@ -1,0 +1,35 @@
+Keystore type: PKCS12
+Keystore provider: SUN
+
+Your keystore contains 1 entry
+
+Alias name: my-release-key
+Creation date: 26 Jan 2025
+Entry type: PrivateKeyEntry
+Certificate chain length: 1
+Certificate[1]:
+Owner: CN=Unknown, OU=Unknown, O=Unknown, L=Unknown, ST=Unknown, C=Unknown
+Issuer: CN=Unknown, OU=Unknown, O=Unknown, L=Unknown, ST=Unknown, C=Unknown
+Serial number: 231923fb7d538d62
+Valid from: Sun Jan 26 20:52:28 SAST 2025 until: Thu Jun 13 20:52:28 SAST 2052
+Certificate fingerprints:
+         SHA1: 20:09:AB:C3:FA:90:7A:48:65:46:3F:5D:89:67:84:9C:0C:27:1F:99
+         SHA256: 50:12:A6:45:AA:D8:8D:F2:9B:81:C7:1A:C7:A2:4A:A8:2B:70:C9:0F:95:7A:CC:A2:EF:B9:A5:1D:7A:2C:CD:38
+Signature algorithm name: SHA256withRSA
+Subject Public Key Algorithm: 2048-bit RSA key
+Version: 3
+
+Extensions:
+
+#1: ObjectId: 2.5.29.14 Criticality=false
+SubjectKeyIdentifier [
+KeyIdentifier [
+0000: 80 58 74 8F A1 AE 7A 3E   D0 02 55 F4 89 1E B1 0D  .Xt...z>..U.....
+0010: 5F 09 0F 90                                        _...
+]
+]
+
+
+
+*******************************************
+*******************************************

@@ -7,7 +7,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:oratio_app/bloc/booking_bloc/state.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
-import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
@@ -30,6 +29,8 @@ class _MassBookingPageState extends State<MassBookingPage> {
   final controller = TextEditingController();
   DateTime? selectedDate;
   RecordModel? selectedChurch;
+  String searchQuery = '';
+
   bool selectedDateById(int id) =>
       massDate != null && SelectedDateType.values[id - 1] == massDate;
 
@@ -61,6 +62,12 @@ class _MassBookingPageState extends State<MassBookingPage> {
         builder: (_) => MassDetailPage(
               data: bookingData,
             )));
+  }
+
+  void updateSearchQuery(String query) {
+    setState(() {
+      searchQuery = query;
+    });
   }
 
   @override
@@ -112,6 +119,7 @@ class _MassBookingPageState extends State<MassBookingPage> {
             children: [
               Container(
                 padding: const EdgeInsets.all(16),
+                width: double.infinity,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   boxShadow: [
@@ -124,6 +132,7 @@ class _MassBookingPageState extends State<MassBookingPage> {
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.max,
                   children: [
                     Text(
                       'Select Date',
@@ -282,17 +291,45 @@ class _MassBookingPageState extends State<MassBookingPage> {
           ],
         ),
         const Gap(12),
-        CustomSearchBar(controller: controller),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              FontAwesomeIcons.circleExclamation,
+              size: 13,
+              color: AppColors.warning,
+            ),
+            const Gap(7),
+            Text(
+              "You can only book mass in parishes you attend",
+              style: TextStyle(color: AppColors.warning),
+            ),
+          ],
+        ),
+        const Gap(10),
+        CustomSearchBar(
+          controller: controller,
+          onSubmit: (String value) {
+            updateSearchQuery(value);
+          },
+        ),
         const Gap(24),
         BlocConsumer<ProfileDataCubit, ProfileDataState>(
           listener: (context, state) {},
           builder: (context, state) {
             if (state is ProfileDataLoaded) {
               if (state.profile.parish.isNotEmpty) {
+                final filteredParishes = state.profile.parish.where((parish) {
+                  return parish
+                      .getStringValue('name')
+                      .toLowerCase()
+                      .contains(searchQuery.toLowerCase());
+                }).toList();
+
                 return Column(
                   children: [
-                    ...state.profile.parish.map((i) =>
-                        buildChurchItem(context, i, () {
+                    ...filteredParishes.map((i) => buildChurchItem(context, i,
+                            () {
                           selectChurch(i);
                         },
                             selectedChurch != null
@@ -518,7 +555,7 @@ Widget buildChurchItem(BuildContext context, RecordModel church,
               child: Image.network(
                 pb
                     .getFileUrl(church, church.getStringValue('image'))
-                    .toString(), // Use actual image URL
+                    .toString(),
                 width: 60,
                 height: 60,
                 fit: BoxFit.cover,
