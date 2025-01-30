@@ -48,13 +48,13 @@
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="www.cathsapp.ng" android:pathPrefix="/" />
+                <data android:scheme="https" android:host="www.cathsapp.ng" android:pathPrefix="/app" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="cathsapp" android:host="cathsapp.ng" />
+                <data android:scheme="cathsapp" android:host="cathsapp.ng"  />
             </intent-filter>
         </activity>
         <meta-data android:name="flutter_deeplinking_enabled" android:value="true" />

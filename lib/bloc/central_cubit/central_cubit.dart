@@ -65,11 +65,11 @@ class CentralCubit extends Cubit<List> {
 
   Future<void> getFeeds() async {
     final posts = await postHelper.fetchPosts();
-    final prayerRequests = await prayerRequestHelper.fetchPrayerRequests();
+    // final prayerRequests = await prayerRequestHelper.fetchPrayerRequests();
     final ads = await adsRepo.getAds();
     notificationCubit.fetchNotifications();
     await checkLiveParishes();
-    emit([...posts, ...prayerRequests, ...ads]..shuffle());
+    emit([...posts, ...ads]..shuffle());
   }
 
   void deleteAd(String id) {

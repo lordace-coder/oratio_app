@@ -37,7 +37,7 @@ class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
 
   final TextEditingController intention = TextEditingController();
 
-  final TextEditingController attendees = TextEditingController();
+  List<RecordModel> selectedUsers = [];
 
   @override
   Widget build(BuildContext context) {
@@ -84,11 +84,7 @@ class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
             hint: 'Describe the intention why you are booking the mass',
           ),
           const Gap(16),
-          _buildTextField(
-            controller: attendees,
-            label: 'Names of attendees',
-            hint: 'Person for whom the mass is being offered',
-          ),
+          _buildUserSelection(),
           const Gap(24),
           if (donation != null) _buildSuccessMessage(),
           const Gap(20),
@@ -161,6 +157,100 @@ class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
         isPassword: false,
       ),
     );
+  }
+
+  Widget _buildUserSelection() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Names of attendees',
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const Gap(8),
+                InkWell(
+                  onTap: () => _showUserSelectionDialog(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey[300]!),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          FontAwesomeIcons.userPlus,
+                          size: 16,
+                          color: Colors.grey[600],
+                        ),
+                        const Gap(8),
+                        Text(
+                          'Add Attendees',
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (selectedUsers.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: selectedUsers.map((user) {
+                  return Chip(
+                    label: Text(
+                        "${user.data['first_name']} ${user.data['last_name']}"),
+                    onDeleted: () {
+                      setState(() {
+                        selectedUsers.remove(user);
+                      });
+                    },
+                    backgroundColor: Colors.grey[200],
+                  );
+                }).toList(),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _showUserSelectionDialog() async {
+    final result = await showDialog<List<RecordModel>>(
+      context: context,
+      builder: (context) => UserSelectionDialog(
+        selectedUsers: selectedUsers,
+      ),
+    );
+    if (result != null) {
+      setState(() {
+        selectedUsers = result;
+      });
+    }
   }
 
   Widget _buildSuccessMessage() {
@@ -283,56 +373,67 @@ class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
         const Gap(12),
         SubmitButtonV1(
           ontap: () async {
-            final userId = context
-                .read<PocketBaseServiceCubit>()
-                .state
-                .pb
-                .authStore
-                .model
-                .id;
+            final userId = pb.authStore.model.id;
             if (donation != null) {
               // validate form fields
               if (intention.text.isEmpty) {
                 return showError(context,
                     message: 'Mass Intention cant be empty');
               }
-              if (attendees.text.isEmpty) {
+              if (selectedUsers.isEmpty) {
                 return showError(context, message: 'Add at least one attendee');
               }
-              // form is valid
-              print({
-                "time": widget.data.getDateTime(),
-                "parish": widget.data.selectedChurch.id,
-                "intention": intention.text.trim(),
-                "attendees": attendees.text.trim(),
-                "user": userId,
-                "donation": donation,
-              });
+
+              // Create booking records for each selected date
               try {
-                final res = await pb.collection("mass_booking").create(body: {
-                  "time": widget.data.getDateTime().toString(),
-                  "parish": widget.data.selectedChurch.id,
-                  "intention": intention.text.trim(),
-                  "attendees": attendees.text.trim(),
-                  "user": userId,
-                  "donation": donation,
-                });
-                showSuccess(context,
-                    message: 'Mass Booking completed succesfully');
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => PaymentSuccesful(
-                      bookingData: widget.data,
-                      bookingId: res.id,
-                    ),
-                  ),
-                );
+                for (DateTime date in widget.data.selectedDates) {
+                  // Combine date with selected times
+                  final startDateTime = DateTime(
+                    date.year,
+                    date.month,
+                    date.day,
+                    widget.data.fromTime!.hour,
+                    widget.data.fromTime!.minute,
+                  );
+
+                  final endDateTime = DateTime(
+                    date.year,
+                    date.month,
+                    date.day,
+                    widget.data.finishTime!.hour,
+                    widget.data.finishTime!.minute,
+                  );
+
+                  final res = await pb.collection("mass_booking").create(body: {
+                    "start_time": startDateTime.toIso8601String(),
+                    "end_time": endDateTime.toIso8601String(),
+                    "parish": widget.data.selectedChurch.id,
+                    "intention": intention.text.trim(),
+                    "attendees": selectedUsers.map((u) => u.id).toList(),
+                    "user": userId,
+                    "donation": donation,
+                  });
+
+                  // Store the first booking ID for success page
+                  if (date == widget.data.selectedDates.first) {
+                    showSuccess(context,
+                        message: 'Mass Booking completed successfully');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PaymentSuccesful(
+                          bookingData: widget.data,
+                          bookingId: res.id,
+                        ),
+                      ),
+                    );
+                  }
+                }
               } catch (e) {
                 final err = e as ClientException;
                 print(e);
                 showError(context,
-                    message: 'Error occured ${err.response['message']}');
+                    message: 'Error occurred ${err.response['message']}');
               }
             }
           },
@@ -363,6 +464,145 @@ class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class UserSelectionDialog extends StatefulWidget {
+  final List<RecordModel> selectedUsers;
+
+  const UserSelectionDialog({
+    Key? key,
+    required this.selectedUsers,
+  }) : super(key: key);
+
+  @override
+  State<UserSelectionDialog> createState() => _UserSelectionDialogState();
+}
+
+class _UserSelectionDialogState extends State<UserSelectionDialog> {
+  final TextEditingController _searchController = TextEditingController();
+  List<RecordModel> selectedUsers = [];
+  List<RecordModel> filteredUsers = [];
+  List<RecordModel> allUsers = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedUsers = List.from(widget.selectedUsers);
+    _loadUsers();
+  }
+
+  Future<void> _loadUsers() async {
+    setState(() => isLoading = true);
+    try {
+      final pb = context.read<PocketBaseServiceCubit>().state.pb;
+      final users = await pb.collection('users').getFullList(
+            fields: "first_name,last_name,username,id",
+            filter: "followers~'${pb.authStore.model.id}'",
+          );
+
+      setState(() {
+        allUsers = users;
+        filteredUsers = users;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() => isLoading = false);
+      showError(context, message: 'Failed to load users: ${e.toString()}');
+    }
+  }
+
+  void _filterUsers(String query) {
+    if (query.isEmpty) {
+      setState(() {
+        filteredUsers = allUsers;
+      });
+      return;
+    }
+
+    setState(() {
+      filteredUsers = allUsers.where((user) {
+        final name = "${user.data['first_name']} ${user.data['last_name']}"
+            .toLowerCase();
+        final username = (user.data['username'] ?? '').toLowerCase();
+        final searchQuery = query.toLowerCase();
+        return name.contains(searchQuery) || username.contains(searchQuery);
+      }).toList();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search users...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onChanged: _filterUsers,
+            ),
+            const Gap(16),
+            SizedBox(
+              height: 300,
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : filteredUsers.isEmpty
+                      ? const Center(child: Text('No users found'))
+                      : ListView.builder(
+                          itemCount: filteredUsers.length,
+                          itemBuilder: (context, index) {
+                            final user = filteredUsers[index];
+                            final isSelected = selectedUsers
+                                .any((selected) => selected.id == user.id);
+                            print([selectedUsers, isSelected]);
+                            return CheckboxListTile(
+                              title: Text(
+                                  "${user.data['first_name']} ${user.data['last_name']}"),
+                              subtitle: Text(user.data['username'] ?? ''),
+                              value: isSelected,
+                              onChanged: (bool? value) {
+                                setState(() {
+                                  if (value == true) {
+                                    if (!isSelected) {
+                                      selectedUsers.add(user);
+                                    }
+                                  } else {
+                                    selectedUsers.removeWhere(
+                                        (selected) => selected.id == user.id);
+                                  }
+                                });
+                              },
+                            );
+                          },
+                        ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () => Navigator.pop(context, selectedUsers),
+                  child: const Text('Done'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

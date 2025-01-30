@@ -53,7 +53,10 @@ class ChatCubit extends Cubit<ChatState> {
   // Fetch recent chats
   Future<void> loadRecentChats() async {
     try {
+      if(state is! ChatsLoaded){
       emit(ChatLoading());
+
+      }
       final chats = await _chatService.getRecentChats();
       emit(ChatsLoaded(chats));
     } catch (e) {
@@ -66,7 +69,6 @@ class ChatCubit extends Cubit<ChatState> {
     required String receiverId,
     required String message,
   }) async {
-    if (!_pb.authStore.isValid) return;
     final currentUserId = _pb.authStore.model.id;
 
     try {

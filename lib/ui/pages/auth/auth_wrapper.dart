@@ -38,7 +38,7 @@ class _AuthListenerState extends State<AuthListener> {
 
         if (!pb.authStore.isValid) {
           context.pushNamed(RouteNames.login);
-          context.read<CentralCubit>().logout();
+
         } else {
           if (GoRouter.of(context).state?.fullPath?.contains('auth') ?? false) {
             OneSignal.login(pb.authStore.model.id);

@@ -61,7 +61,8 @@ class _MassDetailPageState extends State<MassDetailPage>
         builder: (context, scrollController) => MassBookBottomSheet(
           scrollController: scrollController,
           slideAnimation: _slideAnimation,
-          fadeAnimation: _fadeAnimation, data: widget.data,
+          fadeAnimation: _fadeAnimation, 
+          data: widget.data,
         ),
       ),
     );
@@ -110,7 +111,7 @@ class _MassDetailPageState extends State<MassDetailPage>
                   const Gap(20),
                   _buildMassHeader(),
                   const Gap(20),
-                  _buildMassInfo(),
+                  _buildMassInfo(context),
                   const Gap(100),
                 ],
               ),
@@ -158,7 +159,7 @@ class _MassDetailPageState extends State<MassDetailPage>
     );
   }
 
-  Widget _buildMassInfo() {
+  Widget _buildMassInfo(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(16),
@@ -174,7 +175,7 @@ class _MassDetailPageState extends State<MassDetailPage>
         children: [
           _buildInfoRow(
             FontAwesomeIcons.clock,
-            widget.data.getMassTimeRange(),
+            widget.data.getMassTimeRange(context),
             widget.data.getMassDuration(),
           ),
           // const Divider(color: Colors.white24, height: 24),

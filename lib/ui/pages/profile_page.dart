@@ -296,12 +296,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 const Color(0xFFFF6B6B),
                                 const Color(0xFFFF3131),
                                 () async {
-                                  context
-                                      .read<PocketBaseServiceCubit>()
-                                      .state
-                                      .pb
-                                      .authStore
-                                      .clear();
+                                  context.read<CentralCubit>().logout();
                                 },
                               ),
                             ],

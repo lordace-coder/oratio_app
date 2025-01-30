@@ -23,15 +23,11 @@ class _ParishTransactionPageState extends State<ParishTransactionPage> {
   final ScrollController _controller = ScrollController();
   final currencyFormatter = NumberFormat("#,##0.00", "en_US");
 
-  
-
-
-
   Future<void> _refreshTransactions() async {
     await context.read<TransactionCubit>().fetchTransactions();
   }
 
-_onScroll() {
+  _onScroll() {
     if (_controller.offset >= _controller.position.maxScrollExtent) {
       _refreshTransactions();
     }
@@ -131,6 +127,7 @@ _onScroll() {
           ),
         );
       },
+       
     );
   }
 

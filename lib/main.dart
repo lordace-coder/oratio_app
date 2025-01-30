@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,6 +10,7 @@ import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:hive/hive.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/services/user_settings_service.dart';
+import 'package:oratio_app/splash.dart';
 import 'package:oratio_app/ui/widgets/prayer_requests.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
@@ -66,6 +68,7 @@ class ConnectivityCubit extends Cubit<bool> {
   Future<bool> _checkInternetConnection() async {
     try {
       final result = await InternetAddress.lookup('example.com');
+      print(result);
       return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
     } catch (_) {
       return false;
@@ -218,12 +221,15 @@ class _MainAppState extends State<MainApp> {
   bool _isInitialized = false;
   WebSocketChannel? channel;
   Timer? _reconnectTimer;
+  late AppLinks _appLinks;
+  StreamSubscription<String>? _linkSubscription;
 
   @override
   void initState() {
     super.initState();
     _initializeApp();
     connectWebSocket();
+    initDeepLinks();
   }
 
   void connectWebSocket() {
@@ -266,6 +272,7 @@ class _MainAppState extends State<MainApp> {
       setState(() {
         _isInitialized = true;
       });
+      widget.appRouter.appRouter().push('/auth/login');
       return;
     }
     try {
@@ -287,6 +294,22 @@ class _MainAppState extends State<MainApp> {
     channel?.sink.close(status.goingAway);
     _reconnectTimer?.cancel();
     super.dispose();
+  }
+
+  Future<void> initDeepLinks() async {
+    _appLinks = AppLinks();
+    _appLinks.getLatestLinkString().then((val) {
+      print('latest link is $val');
+    });
+    // Handle links
+    _linkSubscription = _appLinks.stringLinkStream.listen((uri) {
+      debugPrint('onAppLink: $uri');
+      openAppLink(uri.replaceFirst('https://www.cathsapp.ng/app', ''));
+    });
+  }
+
+  void openAppLink(String path) {
+    widget.appRouter.appRouter().push(path);
   }
 
   @override
@@ -356,85 +379,6 @@ class _MainAppState extends State<MainApp> {
       color: AppColors.primary,
       routerConfig: widget.appRouter.appRouter(),
       theme: ThemeData(fontFamily: 'Itim', primaryColor: AppColors.primary),
-    );
-  }
-}
-
-class SplashScreen extends StatelessWidget {
-  const SplashScreen({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(
-                "assets/images/app_logo.png",
-                width: 150, // Reduced size
-                height: 150, // Reduced size
-                fit: BoxFit.cover,
-              ),
-              const SizedBox(height: 20),
-              const DotIndicator(), // Replace CircularProgressIndicator with DotIndicator
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class DotIndicator extends StatefulWidget {
-  const DotIndicator({super.key});
-
-  @override
-  _DotIndicatorState createState() => _DotIndicatorState();
-}
-
-class _DotIndicatorState extends State<DotIndicator>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<int> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      duration: const Duration(seconds: 2),
-      vsync: this,
-    )..repeat();
-    _animation = IntTween(begin: 1, end: 6).animate(_controller);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(6, (index) {
-            return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: index < _animation.value ? Colors.blue : Colors.grey,
-              ),
-            );
-          }),
-        );
-      },
     );
   }
 }

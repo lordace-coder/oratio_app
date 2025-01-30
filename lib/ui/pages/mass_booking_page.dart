@@ -24,44 +24,82 @@ class MassBookingPage extends StatefulWidget {
 }
 
 class _MassBookingPageState extends State<MassBookingPage> {
-  SelectedDateType? massDate;
-  SelectedTimeType? massTime;
+  List<DateTime> selectedDates = [];
+  TimeOfDay? fromTime;
+  TimeOfDay? finishTime;
   final controller = TextEditingController();
-  DateTime? selectedDate;
   RecordModel? selectedChurch;
   String searchQuery = '';
 
-  bool selectedDateById(int id) =>
-      massDate != null && SelectedDateType.values[id - 1] == massDate;
-
-  bool selectedTimeById(int id) =>
-      massTime != null && SelectedTimeType.values[id - 1] == massTime;
-  String formattedDate = '';
-
   void selectChurch(RecordModel selection) {
-    if (selectedChurch != null) {
-      if (selectedChurch!.id == selection.id) {
-        setState(() {
-          selectedChurch = null;
-        });
-        return;
-      }
-    }
     setState(() {
-      selectedChurch = selection;
+      selectedChurch = selectedChurch?.id == selection.id ? null : selection;
     });
+  }
+
+  Future<void> selectDates() async {
+    DateTime now = DateTime.now();
+    DateTime nextMonth = DateTime(
+      now.year,
+      now.month + 1,
+      now.day,
+    );
+
+    final DateTimeRange? dateRange = await showDateRangePicker(
+      context: context,
+      firstDate: now,
+      lastDate: nextMonth,
+    );
+
+    if (dateRange != null) {
+      setState(() {
+        selectedDates = [];
+        for (DateTime date = dateRange.start;
+            date.isBefore(dateRange.end) ||
+                date.isAtSameMomentAs(dateRange.end);
+            date = date.add(const Duration(days: 1))) {
+          selectedDates.add(date);
+        }
+      });
+    }
+  }
+
+  Future<void> selectFromTime() async {
+    final time = await showTimePicker(
+      context: context,
+      initialTime: fromTime ?? TimeOfDay.now(),
+    );
+    if (time != null) {
+      setState(() {
+        fromTime = time;
+      });
+    }
+  }
+
+  Future<void> selectFinishTime() async {
+    final time = await showTimePicker(
+      context: context,
+      initialTime: finishTime ?? TimeOfDay.now(),
+    );
+    if (time != null) {
+      setState(() {
+        finishTime = time;
+      });
+    }
   }
 
   void handleBookNow() {
     final bookingData = MassBookingData(
-        massDate: massDate!,
-        selectedDate: selectedDate,
-        massTime: massTime!,
-        selectedChurch: selectedChurch!);
+      selectedDates: selectedDates,
+      fromTime: fromTime,
+      finishTime: finishTime,
+      selectedChurch: selectedChurch!,
+    );
     Navigator.of(context).push(MaterialPageRoute(
-        builder: (_) => MassDetailPage(
-              data: bookingData,
-            )));
+      builder: (_) => MassDetailPage(
+        data: bookingData,
+      ),
+    ));
   }
 
   void updateSearchQuery(String query) {
@@ -72,19 +110,6 @@ class _MassBookingPageState extends State<MassBookingPage> {
 
   @override
   Widget build(BuildContext context) {
-    final format = DateFormat('MMM d');
-    if (selectedDate != null) {
-      formattedDate = format.format(selectedDate!);
-    }
-    DateTime now = DateTime.now();
-    DateTime tmmrw = DateTime(
-      now.year,
-      now.month,
-      now.day + 1,
-      now.hour,
-      now.minute,
-      now.second,
-    );
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: createAppBar(
@@ -114,141 +139,18 @@ class _MassBookingPageState extends State<MassBookingPage> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      offset: const Offset(0, 2),
-                      blurRadius: 8,
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.max,
-                  children: [
-                    Text(
-                      'Select Date',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    const Gap(12),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: [
-                          _DateOption(
-                            isSelected: selectedDateById(1),
-                            label: 'Today',
-                            date: format.format(now),
-                            onTap: () => setState(
-                                () => massDate = SelectedDateType.today),
-                          ),
-                          _DateOption(
-                            isSelected: selectedDateById(2),
-                            label: 'Tomorrow',
-                            date: format.format(tmmrw),
-                            onTap: () => setState(
-                                () => massDate = SelectedDateType.tomorrow),
-                          ),
-                          _DateOption(
-                            isSelected: selectedDateById(3),
-                            label: 'Custom',
-                            date: selectedDate == null
-                                ? '...'
-                                : " $formattedDate",
-                            onTap: () async {
-                              DateTime nextMonth = DateTime(
-                                now.year,
-                                now.month + 1,
-                                now.day,
-                                now.hour,
-                                now.minute,
-                                now.second,
-                              );
-
-                              final day = await showDatePicker(
-                                  initialDate: selectedDate,
-                                  context: context,
-                                  firstDate: now,
-                                  lastDate: nextMonth);
-                              if (day != null) {
-                                setState(
-                                    () => massDate = SelectedDateType.custom);
-                                selectedDate = day;
-                              }
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Select Time',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    const Gap(12),
-                    GridView.count(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                      childAspectRatio: 1.5,
-                      children: [
-                        _TimeSlot(
-                          isSelected: selectedTimeById(1),
-                          time: '8:00 AM',
-                          label: 'Morning Mass',
-                          onTap: () => setState(
-                              () => massTime = SelectedTimeType.morning),
-                        ),
-                        _TimeSlot(
-                          isSelected: selectedTimeById(2),
-                          time: '10:00 AM',
-                          label: 'Late Morning Mass',
-                          onTap: () => setState(
-                              () => massTime = SelectedTimeType.lateMorning),
-                        ),
-                        _TimeSlot(
-                          isSelected: selectedTimeById(3),
-                          time: '12:00 PM',
-                          label: 'Noon Mass',
-                          onTap: () =>
-                              setState(() => massTime = SelectedTimeType.noon),
-                        ),
-                        _TimeSlot(
-                          isSelected: selectedTimeById(4),
-                          time: '2:00 PM',
-                          label: 'Afternoon Mass',
-                          onTap: () => setState(
-                              () => massTime = SelectedTimeType.afternoon),
-                        ),
-                      ],
-                    ),
-                    const Gap(24),
-                    _buildParishSection(context),
-                  ],
-                ),
-              ),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildDateSelectionCard(context),
+                const Gap(16),
+                _buildTimeSelectionCard(context),
+                const Gap(16),
+                _buildParishSection(context),
+              ],
+            ),
           ),
         ),
       ),
@@ -256,8 +158,10 @@ class _MassBookingPageState extends State<MassBookingPage> {
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: BookingButton(
-            isEnabled:
-                massDate != null && massTime != null && selectedChurch != null,
+            isEnabled: selectedDates.isNotEmpty &&
+                fromTime != null &&
+                finishTime != null &&
+                selectedChurch != null,
             onPressed: handleBookNow,
           ),
         ),
@@ -265,85 +169,219 @@ class _MassBookingPageState extends State<MassBookingPage> {
     );
   }
 
-  Widget _buildParishSection(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Select A Parish Or Mass Center',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            TextButton(
-              onPressed: () => context.pushNamed(RouteNames.parishpage),
-              child: Text(
-                'See More',
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.w600,
+  Widget _buildDateSelectionCard(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            offset: const Offset(0, 2),
+            blurRadius: 8,
+          ),
+        ],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          Text(
+            'Select Dates',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
+          ),
+          const Gap(12),
+          ElevatedButton.icon(
+            onPressed: selectDates,
+            icon: const Icon(FontAwesomeIcons.calendarAlt),
+            label: Text(selectedDates.isEmpty
+                ? 'Select Dates'
+                : 'Selected ${selectedDates.length} Dates'),
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24,
+                vertical: 12,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
               ),
             ),
-          ],
-        ),
-        const Gap(12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              FontAwesomeIcons.circleExclamation,
-              size: 13,
-              color: AppColors.warning,
-            ),
-            const Gap(7),
-            Text(
-              "You can only book mass in parishes you attend",
-              style: TextStyle(color: AppColors.warning),
-            ),
-          ],
-        ),
-        const Gap(10),
-        CustomSearchBar(
-          controller: controller,
-          onSubmit: (String value) {
-            updateSearchQuery(value);
-          },
-        ),
-        const Gap(24),
-        BlocConsumer<ProfileDataCubit, ProfileDataState>(
-          listener: (context, state) {},
-          builder: (context, state) {
-            if (state is ProfileDataLoaded) {
-              if (state.profile.parish.isNotEmpty) {
-                final filteredParishes = state.profile.parish.where((parish) {
-                  return parish
-                      .getStringValue('name')
-                      .toLowerCase()
-                      .contains(searchQuery.toLowerCase());
-                }).toList();
+          ),
+        ],
+      ),
+    );
+  }
 
-                return Column(
-                  children: [
-                    ...filteredParishes.map((i) => buildChurchItem(context, i,
-                            () {
-                          selectChurch(i);
-                        },
-                            selectedChurch != null
-                                ? i.id == selectedChurch!.id
-                                : false))
-                  ],
-                );
+  Widget _buildTimeSelectionCard(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            offset: const Offset(0, 2),
+            blurRadius: 8,
+          ),
+        ],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          Text(
+            'Select Time',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const Gap(12),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: selectFromTime,
+                  icon: const Icon(FontAwesomeIcons.clock),
+                  label: Text(fromTime == null
+                      ? 'Select From Time'
+                      : 'From: ${fromTime!.format(context)}'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+              const Gap(12),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: selectFinishTime,
+                  icon: const Icon(FontAwesomeIcons.clock),
+                  label: Text(finishTime == null
+                      ? 'Select Finish Time'
+                      : 'Finish: ${finishTime!.format(context)}'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildParishSection(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            offset: const Offset(0, 2),
+            blurRadius: 8,
+          ),
+        ],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Select A Parish Or Mass Center',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              TextButton(
+                onPressed: () => context.pushNamed(RouteNames.parishpage),
+                child: Text(
+                  'See More',
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const Gap(12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                FontAwesomeIcons.circleExclamation,
+                size: 13,
+                color: AppColors.warning,
+              ),
+              const Gap(7),
+              Text(
+                "You can only book mass in parishes you attend",
+                style: TextStyle(color: AppColors.warning),
+              ),
+            ],
+          ),
+          const Gap(10),
+          CustomSearchBar(
+            controller: controller,
+            onSubmit: (String value) {
+              updateSearchQuery(value);
+            },
+          ),
+          const Gap(24),
+          BlocConsumer<ProfileDataCubit, ProfileDataState>(
+            listener: (context, state) {},
+            builder: (context, state) {
+              if (state is ProfileDataLoaded) {
+                if (state.profile.parish.isNotEmpty) {
+                  final filteredParishes = state.profile.parish.where((parish) {
+                    return parish
+                        .getStringValue('name')
+                        .toLowerCase()
+                        .contains(searchQuery.toLowerCase());
+                  }).toList();
+
+                  return Column(
+                    children: [
+                      ...filteredParishes.map((i) => buildChurchItem(context, i,
+                              () {
+                            selectChurch(i);
+                          },
+                              selectedChurch != null
+                                  ? i.id == selectedChurch!.id
+                                  : false))
+                    ],
+                  );
+                }
               }
-            }
-            context.read<ProfileDataCubit>().getMyProfile();
-            return const NoParishYet();
-          },
-        )
-      ],
+              context.read<ProfileDataCubit>().getMyProfile();
+              return const NoParishYet();
+            },
+          )
+        ],
+      ),
     );
   }
 
@@ -366,111 +404,6 @@ class _MassBookingPageState extends State<MassBookingPage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _DateOption extends StatelessWidget {
-  final bool isSelected;
-  final String label;
-  final String date;
-  final VoidCallback onTap;
-
-  const _DateOption({
-    required this.isSelected,
-    required this.label,
-    required this.date,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(right: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.grey[300]!,
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? Colors.white : Colors.grey[700],
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const Gap(4),
-            Text(
-              date,
-              style: TextStyle(
-                color: isSelected ? Colors.white70 : Colors.grey[500],
-                fontSize: 13,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _TimeSlot extends StatelessWidget {
-  final bool isSelected;
-  final String time;
-  final String label;
-  final VoidCallback onTap;
-
-  const _TimeSlot({
-    required this.isSelected,
-    required this.time,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected ? AppColors.primary : Colors.grey[300]!,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              time,
-              style: TextStyle(
-                color: isSelected ? Colors.white : Colors.grey[900],
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const Gap(4),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? Colors.white70 : Colors.grey[600],
-                fontSize: 13,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
       ),
     );
   }

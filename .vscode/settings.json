@@ -1,3 +1,9 @@
 {
-  "cmake.ignoreCMakeListsMissing": true
+  "editor.suggest.snippetsPreventQuickSuggestions": false,
+  "editor.quickSuggestionsDelay": 10,
+  "editor.suggestSelection": "first",
+  "editor.suggest.localityBonus": true,
+  "editor.suggest.shareSuggestSelections": true,
+  "editor.suggest.showIcons": true,
+  "dart.useLegacyAnalyzerProtocol": true
 }

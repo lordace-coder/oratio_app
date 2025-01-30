@@ -127,7 +127,7 @@ class _TransactionPageState extends State<TransactionPage> {
             ],
           ),
         );
-      },
+      },  
     );
   }
 

@@ -62,7 +62,7 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     _errorCheck();
     return Scaffold(
-      // backgroundColor: Theme.of(context).colorScheme.surface,
+    
       body: RefreshIndicator(
         onRefresh: _refreshChats,
         child: Container(
@@ -76,120 +76,124 @@ class _ChatScreenState extends State<ChatScreen> {
                     Colors.white.withOpacity(.85), BlendMode.lighten)),
           ),
           child: SafeArea(
-            child: Builder(
-              builder: (context) {
-                return CustomScrollView(
-                  controller: _scrollController,
-                  slivers: [
-                    SliverOverlapAbsorber(
-                      handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-                      sliver: SliverAppBar(
-                        floating: true,
-                        snap: true,
-                        elevation: 0,
-                        backgroundColor: Colors.transparent,
-                        expandedHeight:
-                            170, // Increased height to accommodate tab bar
-                        flexibleSpace: FlexibleSpaceBar(
-                          background: Column(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                                child: Row(
-                                  children: [
-                                    Text(
-                                      'Chats',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .headlineMedium
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                    ),
-                                    const Spacer(),
-                                    _buildProfileButton(),
-                                  ],
+            child: NestedScrollView(
+              headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                SliverOverlapAbsorber(
+                  handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+                  sliver: SliverAppBar(
+                    floating: true,
+                    snap: true,
+                    elevation: 0,
+                    backgroundColor: Colors.transparent,
+                    expandedHeight:
+                        170, // Increased height to accommodate tab bar
+                    flexibleSpace: FlexibleSpaceBar(
+                      background: Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                            child: Row(
+                              children: [
+                                Text(
+                                  'Chats',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineMedium
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                 ),
-                              ),
-                              GestureDetector(
-                                  onTap: () async {
-                                    await context
-                                        .pushNamed(RouteNames.searchPage);
-                                  },
-                                  child: _buildSearchBar()),
-                              _buildCustomTabBar(),
-                            ],
+                                const Spacer(),
+                                _buildProfileButton(),
+                              ],
+                            ),
                           ),
-                        ),
+                          GestureDetector(
+                              onTap: () async {
+                                await context
+                                    .pushNamed(RouteNames.searchPage);
+                              },
+                              child: _buildSearchBar()),
+                          _buildCustomTabBar(),
+                        ],
                       ),
                     ),
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      sliver: BlocBuilder<ChatCubit, ChatState>(
-                        builder: (context, state) {
-                          if (state is ChatLoading) {
-                            return const SliverToBoxAdapter(
-                              child: Center(
-                                child: CircularProgressIndicator(),
-                              ),
-                            );
-                          } else if (state is ChatsLoaded) {
-                            // !Filter chats based on selected tab
-                            final filteredChats = _selectedTabIndex == 0
-                                ? context.watch<ChatCubit>().getRecentChats()
-                                : context
-                                    .watch<ChatCubit>()
-                                    .getMessageRequests();
-                            print(filteredChats);
-                            if (filteredChats.isEmpty) {
+                  ),
+                ),
+              ],
+              body: Builder(
+                builder: (context) {
+                  return CustomScrollView(
+                    controller: _scrollController,
+                    slivers: [
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        sliver: BlocBuilder<ChatCubit, ChatState>(
+                          builder: (context, state) {
+                            if (state is ChatLoading) {
                               return const SliverToBoxAdapter(
                                 child: Center(
-                                  child: Text('No chats available'),
+                                  child: CircularProgressIndicator(),
                                 ),
                               );
-                            }
+                            } else if (state is ChatsLoaded) {
+                              // !Filter chats based on selected tab
+                              final filteredChats = _selectedTabIndex == 0
+                                  ? context.watch<ChatCubit>().getRecentChats()
+                                  : context
+                                      .watch<ChatCubit>()
+                                      .getMessageRequests();
+                              print(filteredChats);
+                              if (filteredChats.isEmpty) {
+                                return const SliverToBoxAdapter(
+                                  child: Center(
+                                    child: Text('No chats available'),
+                                  ),
+                                );
+                              }
 
-                            return AnimationLimiter(
-                              child: SliverList(
-                                delegate: SliverChildBuilderDelegate(
-                                  (context, index) {
-                                    print([
-                                      'current index ',
-                                      filteredChats[index]
-                                    ]);
-                                    return AnimationConfiguration.staggeredList(
-                                      position: index,
-                                      duration:
-                                          const Duration(milliseconds: 375),
-                                      child: SlideAnimation(
-                                        verticalOffset: 50.0,
-                                        child: FadeInAnimation(
-                                          child: ChatItem(
-                                            index: index,
-                                            chatPreview: filteredChats[index],
+                              return AnimationLimiter(
+                                child: SliverList(
+                                  delegate: SliverChildBuilderDelegate(
+                                    (context, index) {
+                                      print([
+                                        'current index ',
+                                        filteredChats[index]
+                                      ]);
+                                      return AnimationConfiguration.staggeredList(
+                                        position: index,
+                                        duration:
+                                            const Duration(milliseconds: 375),
+                                        child: SlideAnimation(
+                                          verticalOffset: 50.0,
+                                          child: FadeInAnimation(
+                                            child: ChatItem(
+                                              index: index,
+                                              chatPreview: filteredChats[index],
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    );
-                                  },
-                                  childCount: filteredChats.length,
+                                      );
+                                    },
+                                    childCount: filteredChats.length,
+                                  ),
                                 ),
-                              ),
-                            );
-                          } else if (state is ChatError) {
-                            return SliverToBoxAdapter(
-                                child: Text(state.message));
-                          }
-                          return const SliverToBoxAdapter();
-                        },
+                              );
+                            } else if (state is ChatError) {
+                              return SliverToBoxAdapter(
+                                  child: Text(state.message));
+                            }
+                            return const SliverToBoxAdapter();
+                          },
+                        ),
                       ),
-                    ),
-                    SliverOverlapInjector(
-                      handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-                    ),
-                  ],
-                );
-              },
+                      SliverOverlapInjector(
+                        handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
           ),
         ),

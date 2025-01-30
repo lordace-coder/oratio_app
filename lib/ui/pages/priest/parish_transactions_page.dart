@@ -131,6 +131,7 @@ class _ParishTransactionsPageState extends State<ParishTransactionsPage> {
           ),
         );
       },
+       
     );
   }
 

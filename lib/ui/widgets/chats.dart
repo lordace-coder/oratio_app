@@ -4,6 +4,7 @@ import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:oratio_app/ui/themes.dart';
+import 'package:oratio_app/ui/widgets/audio_message.dart';
 import 'package:video_player/video_player.dart';
 
 // class CustomMessageBuilder implements MessageBuilder {
@@ -186,6 +187,9 @@ class CustomBubble extends StatelessWidget {
   }
 
   Widget _buildAudioMessage(types.FileMessage message) {
+    return AudioMessageWidget(
+      audioUrl: message.uri,
+    );
     return Container(
       decoration: BoxDecoration(
         color: isUser
