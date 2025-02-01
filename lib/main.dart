@@ -68,7 +68,6 @@ class ConnectivityCubit extends Cubit<bool> {
   Future<bool> _checkInternetConnection() async {
     try {
       final result = await InternetAddress.lookup('example.com');
-      print(result);
       return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
     } catch (_) {
       return false;
@@ -89,7 +88,7 @@ void main() async {
   await Firebase.initializeApp();
 
   // OneSignal setup
-  await OneSignal.Debug.setLogLevel(OSLogLevel.error);
+   OneSignal.Debug.setLogLevel(OSLogLevel.error);
   OneSignal.initialize('2e3b5f47-0603-448b-a864-f14fdecadbab');
   OneSignal.Notifications.requestPermission(true);
   final appDocumentDirectory = await getApplicationDocumentsDirectory();
@@ -195,7 +194,6 @@ void main() async {
           create: (context) => CentralCubit(
             adsRepo: adsRepo,
             profileDataCubit: context.read<ProfileDataCubit>(),
-            prayerRequestHelper: prayerRequestHelper,
             postHelper: postHelper,
             notificationCubit: context.read<NotificationCubit>(),
             messageCubit: context.read<MessageCubit>(),
@@ -243,7 +241,6 @@ class _MainAppState extends State<MainApp> {
     channel = WebSocketChannel.connect(
       Uri.parse('ws://bookmass.fly.dev/ws?uid=$userId'),
     );
-
     channel!.stream.listen(
       (message) {
         debugPrint('Received: $message');

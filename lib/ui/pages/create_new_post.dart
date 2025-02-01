@@ -13,7 +13,6 @@ import 'package:oratio_app/bloc/posts/post_state.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/helpers/snackbars.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
-import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 
@@ -57,9 +56,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
               item.getStringValue('leader') ==
               (profileCubit.state as ProfileDataLoaded).profile.userId)
           .toList();
-    } catch (e) {
-      
-    }
+    } catch (e) {}
     return [];
   }
 
@@ -173,18 +170,18 @@ class _CreatePostPageState extends State<CreatePostPage> {
       appBar: AppBar(
         title: Text(
           widget.postToEdit != null ? 'Edit Post' : 'Create New Post',
-          style: TextStyle(
+          style: const TextStyle(
             fontFamily: 'Montserrat',
             fontWeight: FontWeight.w600,
-            color: AppColors.primary,
+            color: Colors.black, // Changed to black
           ),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios, color: AppColors.primary),
-          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+          onPressed: () => context.pop(),
         ),
       ),
       body: Form(
@@ -215,7 +212,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      const Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
@@ -223,20 +220,10 @@ class _CreatePostPageState extends State<CreatePostPage> {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.primary,
+                              color: Colors.black, // Changed to black
                             ),
                           ),
-                          // if (_selectedImage != null)
-                          //   TextButton(
-                          //     onPressed: _pickImage,
-                          //     child: Text(
-                          //       'Change Image',
-                          //       style: TextStyle(
-                          //         color: AppColors.primary,
-                          //         fontWeight: FontWeight.w500,
-                          //       ),
-                          //     ),
-                          //   ),
+                         
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -249,7 +236,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(20),
                             border: Border.all(
-                              color: AppColors.primary.withOpacity(0.2),
+                              color: AppColors.error.withOpacity(0.2),
                               width: 2,
                             ),
                           ),
@@ -289,8 +276,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
                                             Text(
                                               'Change Image',
                                               style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 16,
+                                                color: Colors
+                                                    .black87, // Changed to a shade of black
                                                 fontWeight: FontWeight.w500,
                                               ),
                                             ),
@@ -307,20 +294,21 @@ class _CreatePostPageState extends State<CreatePostPage> {
                                       padding: const EdgeInsets.all(20),
                                       decoration: BoxDecoration(
                                         color:
-                                            AppColors.primary.withOpacity(0.1),
+                                            AppColors.accent.withOpacity(0.1),
                                         shape: BoxShape.circle,
                                       ),
                                       child: Icon(
                                         Icons.add_photo_alternate_outlined,
                                         size: 40,
-                                        color: AppColors.primary,
+                                        color: AppColors.accent,
                                       ),
                                     ),
                                     const SizedBox(height: 16),
-                                    Text(
+                                    const Text(
                                       'Tap to add your image',
                                       style: TextStyle(
-                                        color: AppColors.primary,
+                                        color: Colors
+                                            .black54, // Changed to a shade of black
                                         fontSize: 16,
                                         fontWeight: FontWeight.w500,
                                       ),
@@ -357,12 +345,12 @@ class _CreatePostPageState extends State<CreatePostPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          const Text(
                             'Post',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.primary,
+                              color: Colors.black, // Changed to black
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -372,8 +360,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
                             decoration: InputDecoration(
                               hintText:
                                   'Share your thoughts with the community...',
-                              hintStyle: TextStyle(
-                                color: Colors.grey[400],
+                              hintStyle: const TextStyle(
+                                color: Colors
+                                    .black38, // Changed to a shade of black
                                 fontSize: 14,
                               ),
                               filled: true,
@@ -412,12 +401,12 @@ class _CreatePostPageState extends State<CreatePostPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          const Text(
                             'Select Community',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.primary,
+                              color: Colors.black, // Changed to black
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -438,10 +427,11 @@ class _CreatePostPageState extends State<CreatePostPage> {
                                       vertical: 14,
                                     ),
                                   ),
-                                  hint: Text(
+                                  hint: const Text(
                                     'Choose your community',
                                     style: TextStyle(
-                                      color: Colors.grey[400],
+                                      color: Colors
+                                          .black38, // Changed to a shade of black
                                       fontSize: 14,
                                     ),
                                   ),

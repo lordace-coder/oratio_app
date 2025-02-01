@@ -1,5 +1,6 @@
 class RouteNames {
   static String homePage = 'home';
+  static String annoucementPage = 'annoucements';
   static String notifications = 'notifications';
   static String profile = 'profile';
   static String signup = 'signuppage';

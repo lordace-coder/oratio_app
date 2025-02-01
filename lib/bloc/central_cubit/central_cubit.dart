@@ -15,7 +15,6 @@ import 'package:pocketbase/pocketbase.dart';
 
 class CentralCubit extends Cubit<List> {
   final ProfileDataCubit profileDataCubit;
-  final PrayerRequestHelper prayerRequestHelper;
   final PostHelper postHelper;
   final NotificationCubit notificationCubit;
   final MessageCubit messageCubit;
@@ -27,7 +26,6 @@ class CentralCubit extends Cubit<List> {
   CentralCubit({
     required this.adsRepo,
     required this.profileDataCubit,
-    required this.prayerRequestHelper,
     required this.postHelper,
     required this.notificationCubit,
     required this.messageCubit,
@@ -80,10 +78,9 @@ class CentralCubit extends Cubit<List> {
 
   Future<List> getMoreFeeds() async {
     final posts = await postHelper.fetchPosts(loadMore: true);
-    final prayerRequests = await prayerRequestHelper.fetchPrayerRequests();
     final ads = await adsRepo.getAds();
-    final newFeeds = [...posts, ...prayerRequests, ...ads];
-    emit([...state, ...newFeeds]..shuffle());
+    final newFeeds = [...posts, ...ads]..shuffle();
+    emit([...state, ...newFeeds]);
     return newFeeds;
   }
 

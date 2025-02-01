@@ -1,22 +1,24 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
+import 'package:oratio_app/bloc/community.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shimmer/shimmer.dart' as shimmer;
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
-import 'package:oratio_app/bloc/ads_bloc/ads_cubit.dart';
 import 'package:oratio_app/bloc/posts/post_cubit.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/networkProvider/requests.dart';
 import 'package:oratio_app/services/servces.dart';
 import 'package:oratio_app/ui/bright/pages/create_community.dart';
+import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/buttons.dart';
 import 'package:oratio_app/ui/widgets/posts/prayer_community.dart';
 import 'package:pocketbase/pocketbase.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class PrayerCommunityDetail extends StatefulWidget {
   const PrayerCommunityDetail({super.key, required this.communityId});
@@ -36,18 +38,24 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
     return image;
   }
 
+  // Add a variable to store the fetched data
+  PrayerCommunity? _communityData;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: FutureBuilder(
-          future: getCommunity(context, communityId: widget.communityId),
+      body: FutureBuilder<PrayerCommunity?>(
+          future: _communityData == null
+              ? getCommunity(context, communityId: widget.communityId)
+              : Future.value(_communityData),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.done &&
                 snapshot.hasData) {
-              final data = snapshot.data!;
-              print(data.image);
-              final isMember = (data.allMembers).contains(getUser(context).id);
+              // Store the fetched data
+              _communityData = snapshot.data!;
+              final data = _communityData;
+              final isMember = (data!.allMembers).contains(getUser(context).id);
               final isLeader = data.leader.id == getUser(context).id;
               return Stack(
                 children: [
@@ -57,7 +65,7 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                       children: [
                         // Hero Section with Gradient Overlay
                         Container(
-                          height: 380,
+                          height: 180,
                           decoration: const BoxDecoration(
                             color: Colors.white,
                           ),
@@ -74,10 +82,10 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                                       AppColors.primary.withOpacity(0.9),
                                     ],
                                   ),
-                                  borderRadius: const BorderRadius.only(
-                                    bottomLeft: Radius.circular(32),
-                                    bottomRight: Radius.circular(32),
-                                  ),
+                                  // borderRadius: const BorderRadius.only(
+                                  //   bottomLeft: Radius.circular(32),
+                                  //   bottomRight: Radius.circular(32),
+                                  // ),
                                 ),
                               ),
                               // Content Overlay
@@ -99,10 +107,10 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                                       Colors.black.withOpacity(0.4),
                                     ],
                                   ),
-                                  borderRadius: const BorderRadius.only(
-                                    bottomLeft: Radius.circular(32),
-                                    bottomRight: Radius.circular(32),
-                                  ),
+                                  // borderRadius: const BorderRadius.only(
+                                  //   bottomLeft: Radius.circular(32),
+                                  //   bottomRight: Radius.circular(32),
+                                  // ),
                                 ),
                               ),
                               // Community Details
@@ -167,8 +175,8 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
 
                         // Leader Section
                         Container(
-                          margin: const EdgeInsets.all(24),
-                          padding: const EdgeInsets.all(20),
+                          margin: const EdgeInsets.all(10),
+                          padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(24),
@@ -183,8 +191,8 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                           child: Row(
                             children: [
                               Container(
-                                  width: 60,
-                                  height: 60,
+                                  width: 50,
+                                  height: 50,
                                   decoration: BoxDecoration(
                                       color: const Color(0xFF8E2DE2)
                                           .withOpacity(0.1),
@@ -228,6 +236,10 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                           ),
                         ),
 
+                        // if (isLeader)
+                        CreatePostSection(
+                          communityId: data.id,
+                        ),
                         // Description Section
                         if (data.description.isNotEmpty)
                           Container(
@@ -303,9 +315,13 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                               builder: (context, snapshot) {
                                 if (snapshot.connectionState ==
                                     ConnectionState.waiting) {
-                                  return Center(
-                                    child: CircularProgressIndicator(
-                                      color: AppColors.primary,
+                                  return SizedBox(
+                                    height: 300,
+                                    width: double.infinity,
+                                    child: shimmer.Shimmer.fromColors(
+                                      baseColor: Colors.grey,
+                                      highlightColor: Colors.white,
+                                      child: const SizedBox.shrink(),
                                     ),
                                   );
                                 }
@@ -401,5 +417,226 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
             return Container();
           }),
     );
+  }
+}
+
+class CreatePostSection extends StatefulWidget {
+  const CreatePostSection({super.key, required this.communityId});
+  final String communityId;
+  @override
+  State<CreatePostSection> createState() => _CreatePostSectionState();
+}
+
+class _CreatePostSectionState extends State<CreatePostSection> {
+  bool _dontShowAgain = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDontShowAgainPreference();
+  }
+
+  Future<void> _loadDontShowAgainPreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _dontShowAgain = prefs.getBool('announcement') ?? false;
+    });
+  }
+
+  void _updateDontShowAgainPreference(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('announcement', value);
+    if (mounted) {
+      setState(() {
+        _dontShowAgain = value;
+      });
+    }
+  }
+
+  void createPost() {
+    context.pushNamed(RouteNames.createPost);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pb = getPocketBaseFromContext(context);
+    final userModel = pb.authStore.model as RecordModel;
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                backgroundImage: CachedNetworkImageProvider(pb
+                    .getFileUrl(userModel, userModel.getStringValue('avatar'),
+                        thumb: '60 x 60')
+                    .toString()),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: createPost,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.black38),
+                      ),
+                      child: const Text(
+                        "Aa",
+                        style: TextStyle(color: Colors.black38),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              IconButton(
+                  onPressed: createPost,
+                  icon: const Icon(Icons.send, color: Colors.black38))
+            ],
+          ),
+          const Gap(10),
+          Row(
+            children: [
+              // go live button
+              TextButton(
+                onPressed: () {},
+                style:
+                    TextButton.styleFrom(backgroundColor: Colors.grey.shade50),
+                child: Row(
+                  children: [
+                    Icon(
+                      FontAwesomeIcons.tv,
+                      size: 14,
+                      color: AppColors.error,
+                    ),
+                    const Gap(8),
+                    const Text(
+                      'Go Live',
+                      style: TextStyle(color: Colors.black),
+                    )
+                  ],
+                ),
+              ),
+              TextButton(
+                  onPressed: () {
+                    Share.shareUri(Uri.https("cathsapp.ng",
+                        '/app${GoRouter.of(context).state!.fullPath!}'));
+                  },
+                  style: TextButton.styleFrom(
+                      backgroundColor: Colors.grey.shade50),
+                  child: const Row(
+                    children: [
+                      Icon(FontAwesomeIcons.share, size: 14),
+                      Gap(5),
+                      Text(
+                        'Invite',
+                        style: TextStyle(color: Colors.black),
+                      )
+                    ],
+                  )),
+              TextButton(
+                  onPressed: () async {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        bool checked = false;
+                        return StatefulBuilder(
+                          builder: (context, setState) {
+                            return AlertDialog(
+                              title: Row(
+                                children: [
+                                  Icon(
+                                    FontAwesomeIcons.microphone,
+                                    color: AppColors.green,
+                                  ),
+                                  const Gap(8),
+                                  const Text('Announcement'),
+                                ],
+                              ),
+                              content: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text(
+                                    'You are about to make an announcement to the entire community. Please ensure your message is clear and concise.',
+                                  ),
+                                  const Gap(16),
+                                  Row(
+                                    children: [
+                                      Checkbox(
+                                        value: checked,
+                                        onChanged: (bool? value) {
+                                          setState(() {
+                                            checked = value!;
+                                          });
+                                        },
+                                      ),
+                                      const Text('Don\'t show again'),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    _updateDontShowAgainPreference(checked);
+                                    _createAnnoucement();
+                                    context.pop();
+                                  },
+                                  child: const Text('Confirm'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
+                  style: TextButton.styleFrom(
+                      backgroundColor: Colors.grey.shade50),
+                  child: Row(
+                    children: [
+                      Icon(
+                        FontAwesomeIcons.microphone,
+                        size: 14,
+                        color: AppColors.green,
+                      ),
+                      const Gap(5),
+                      const Text(
+                        'Announcement',
+                        style: TextStyle(color: Colors.black),
+                      )
+                    ],
+                  ))
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
+  void _createAnnoucement() {
+    context.pushNamed(RouteNames.annoucementPage,
+        pathParameters: {'id': widget.communityId});
   }
 }

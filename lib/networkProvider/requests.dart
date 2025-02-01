@@ -6,6 +6,7 @@ import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/bloc/community.dart';
 import 'package:oratio_app/bloc/posts/post_state.dart';
 import 'package:oratio_app/helpers/snackbars.dart';
+import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 Future<List<PrayerCommunity>> getCommunities(BuildContext context,
@@ -180,12 +181,22 @@ Future<Map> getRandomBibleReading() async {
   return response.data as Map;
 }
 
-
-Future<RecordModel?> getParishGoingLive(PocketBase pb)async{
-  try{
-final data = await pb.collection('parish').getList(filter: 'isLive = true');
-return data.items.first;
-  }catch(e){
+Future<RecordModel?> getParishGoingLive(PocketBase pb) async {
+  try {
+    final data = await pb.collection('parish').getList(filter: 'isLive = true');
+    return data.items.first;
+  } catch (e) {
     return null;
+  }
+}
+
+Future<void> sendAnnoucement(BuildContext ctx, Map<String, String> data) async {
+  final pb = getPocketBaseFromContext(ctx);
+  try {
+    await pb.collection("announcement").create(body: data);
+    NotificationService.showInfo("Sent annoucement succesfully");
+  } catch (e) {
+    print("error occured sendin annoucement $e");
+    NotificationService.showError('Error occured sending annoucement');
   }
 }

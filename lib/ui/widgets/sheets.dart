@@ -35,9 +35,13 @@ class MassBookBottomSheet extends StatefulWidget {
 class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
   String? donation;
 
+  ///used to track if the user wants mass booking option or not
+  bool anonymous = false;
   final TextEditingController intention = TextEditingController();
 
   List<RecordModel> selectedUsers = [];
+  bool isDonating = false;
+  bool isBooking = false;
 
   @override
   Widget build(BuildContext context) {
@@ -85,6 +89,43 @@ class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
           ),
           const Gap(16),
           _buildUserSelection(),
+          // check for anonymous option
+          StatefulBuilder(builder: (context, rebuild) {
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    const Text("Go Anonymous"),
+                    const Gap(10),
+                    Tooltip(
+                      message:
+                          "Turn this on to hide your information during mass booking.",
+                      child: Container(
+                        padding: const EdgeInsets.all(3),
+                        decoration: BoxDecoration(
+                            color: Colors.black54,
+                            borderRadius: BorderRadius.circular(99)),
+                        child: const Icon(
+                          Icons.question_mark_rounded,
+                          size: 10,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Switch.adaptive(
+                    value: anonymous,
+                    onChanged: (val) {
+                      rebuild(() {
+                        anonymous = val;
+                      });
+                    })
+              ],
+            );
+          }),
+
           const Gap(24),
           if (donation != null) _buildSuccessMessage(),
           const Gap(20),
@@ -296,70 +337,86 @@ class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
             ),
             builder: (context, snapshot) {
               if (!snapshot.hasData) {
-                return Container();
+                return const Center(child: CircularProgressIndicator());
               }
               return SubmitButtonV1(
-                ontap: () async {
-                  try {
-                    final amt = await showTransactionModal(
-                        context,
-                        TransactionDetail("Donate",
-                            handleTransaction: (context, data) {},
-                            onChange: (val) {},
-                            icon: const Icon(FontAwesomeIcons.cashRegister),
-                            title: 'Donate',
-                            detail: 'Make a donation for the mass'));
-                    // validate amount before creating donation
-                    final parsedAmt = double.tryParse('$amt');
-                    if (parsedAmt == null) {
-                      return showError(context,
-                          message: 'Invalid amount entered');
-                    }
-                    // check for sufficient balance
-                    if (parsedAmt >
-                        double.tryParse(
-                            '${snapshot.data}'.replaceAll('₦', ''))!) {
-                      return showError(context,
-                          message:
-                              'Insufficient balance \n please fund account and try again');
-                    }
-                    if (parsedAmt < 200) {
-                      return showError(context,
-                          message: 'Donation amount cant be below ₦200');
-                    }
-                    final res = await handleDonation(pb,
-                        {'amount': parsedAmt, 'userId': pb.authStore.model.id});
-                    if (res == null) {
-                      throw Exception(['Invalid donation data']);
-                    }
-                    setState(() {
-                      donation = res['recordId'];
-                    });
-                    showSuccess(context,
-                        message: 'You have succesfully donated ₦$parsedAmt');
-                    return;
-                  } catch (e) {
-                    print(
-                        [(e as DioException).response, e.requestOptions.data]);
-                    return showError(context, message: 'Error occured $e');
-                  }
-                },
+                ontap: isDonating
+                    ? null
+                    : () async {
+                        setState(() => isDonating = true);
+                        try {
+                          final amt = await showTransactionModal(
+                              context,
+                              TransactionDetail("Donate",
+                                  handleTransaction: (context, data) {},
+                                  onChange: (val) {},
+                                  icon: const Icon(FontAwesomeIcons.cashRegister),
+                                  title: 'Donate',
+                                  detail: 'Make a donation for the mass'));
+                          // validate amount before creating donation
+                          final parsedAmt = double.tryParse('$amt');
+                          if (parsedAmt == null) {
+                            return showError(context,
+                                message: 'Invalid amount entered');
+                          }
+                          // check for sufficient balance
+                          if (parsedAmt >
+                              double.tryParse(
+                                  '${snapshot.data}'.replaceAll('₦', ''))!) {
+                            return showError(context,
+                                message:
+                                    'Insufficient balance \n please fund account and try again');
+                          }
+                          if (parsedAmt < 200) {
+                            return showError(context,
+                                message: 'Donation amount cant be below ₦200');
+                          }
+                          final res = await handleDonation(pb,
+                              {'amount': parsedAmt, 'userId': pb.authStore.model.id});
+                          if (res == null) {
+                            throw Exception(['Invalid donation data']);
+                          }
+                          setState(() {
+                            donation = res['recordId'];
+                            isDonating = false;
+                          });
+                          showSuccess(context,
+                              message: 'You have successfully donated ₦$parsedAmt');
+                          return;
+                        } catch (e) {
+                          setState(() => isDonating = false);
+                          print([(e as DioException).response, e.requestOptions.data]);
+                          return showError(context, message: 'Error occurred $e');
+                        }
+                      },
                 radius: 12,
-                backgroundcolor: AppColors.primary,
+                backgroundcolor: isDonating
+                    ? AppColors.primary.withOpacity(0.5)
+                    : AppColors.primary,
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        FontAwesomeIcons.handHoldingHeart,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                      Gap(8),
+                      if (isDonating)
+                        const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      else
+                        const Icon(
+                          FontAwesomeIcons.handHoldingHeart,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      const Gap(8),
                       Text(
-                        'Donate Now',
-                        style: TextStyle(
+                        isDonating ? 'Processing...' : 'Donate Now',
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -372,88 +429,112 @@ class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
             }),
         const Gap(12),
         SubmitButtonV1(
-          ontap: () async {
-            final userId = pb.authStore.model.id;
-            if (donation != null) {
-              // validate form fields
-              if (intention.text.isEmpty) {
-                return showError(context,
-                    message: 'Mass Intention cant be empty');
-              }
-              if (selectedUsers.isEmpty) {
-                return showError(context, message: 'Add at least one attendee');
-              }
+          ontap: (isBooking || donation == null)
+              ? null
+              : () async {
+                  setState(() => isBooking = true);
+                  try {
+                    final userId = pb.authStore.model.id;
+                    if (donation != null) {
+                      // validate form fields
+                      if (intention.text.isEmpty) {
+                        return showError(context,
+                            message: 'Mass Intention cant be empty');
+                      }
+                      if (selectedUsers.isEmpty) {
+                        return showError(context, message: 'Add at least one attendee');
+                      }
 
-              // Create booking records for each selected date
-              try {
-                for (DateTime date in widget.data.selectedDates) {
-                  // Combine date with selected times
-                  final startDateTime = DateTime(
-                    date.year,
-                    date.month,
-                    date.day,
-                    widget.data.fromTime!.hour,
-                    widget.data.fromTime!.minute,
-                  );
+                      // Create booking records for each selected date
+                      try {
+                        for (DateTime date in widget.data.selectedDates) {
+                          // Combine date with selected times
+                          final startDateTime = DateTime(
+                            date.year,
+                            date.month,
+                            date.day,
+                            widget.data.fromTime!.hour,
+                            widget.data.fromTime!.minute,
+                          );
 
-                  final endDateTime = DateTime(
-                    date.year,
-                    date.month,
-                    date.day,
-                    widget.data.finishTime!.hour,
-                    widget.data.finishTime!.minute,
-                  );
+                          final endDateTime = DateTime(
+                            date.year,
+                            date.month,
+                            date.day,
+                            widget.data.finishTime!.hour,
+                            widget.data.finishTime!.minute,
+                          );
 
-                  final res = await pb.collection("mass_booking").create(body: {
-                    "start_time": startDateTime.toIso8601String(),
-                    "end_time": endDateTime.toIso8601String(),
-                    "parish": widget.data.selectedChurch.id,
-                    "intention": intention.text.trim(),
-                    "attendees": selectedUsers.map((u) => u.id).toList(),
-                    "user": userId,
-                    "donation": donation,
-                  });
+                          final res = await pb.collection("mass_booking").create(body: {
+                            "startTime": startDateTime.toIso8601String(),
+                            "endTime": endDateTime.toIso8601String(),
+                            "parish": widget.data.selectedChurch.id,
+                            "intention": intention.text.trim(),
+                            "attendees": selectedUsers.map((u) => u.id).toList(),
+                            "user": userId,
+                            "donation": donation,
+                            "anonymous": anonymous,
+                          });
 
-                  // Store the first booking ID for success page
-                  if (date == widget.data.selectedDates.first) {
-                    showSuccess(context,
-                        message: 'Mass Booking completed successfully');
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => PaymentSuccesful(
-                          bookingData: widget.data,
-                          bookingId: res.id,
-                        ),
-                      ),
-                    );
+                          // Store the first booking ID for success page
+                          if (date == widget.data.selectedDates.first) {
+                            showSuccess(context,
+                                message: 'Mass Booking completed successfully');
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PaymentSuccesful(
+                                  bookingData: widget.data,
+                                  bookingId: res.id,
+                                ),
+                              ),
+                            );
+                          }
+                        }
+                      } catch (e) {
+                        final err = e as ClientException;
+                        print(e);
+                        showError(context,
+                            message: 'Error occurred ${err.response['message']}');
+                      }
+                    }
+                    setState(() => isBooking = false);
+                  } catch (e) {
+                    setState(() => isBooking = false);
+                    final err = e as ClientException;
+                    print(e);
+                    showError(context,
+                        message: 'Error occurred ${err.response['message']}');
                   }
-                }
-              } catch (e) {
-                final err = e as ClientException;
-                print(e);
-                showError(context,
-                    message: 'Error occurred ${err.response['message']}');
-              }
-            }
-          },
+                },
           radius: 12,
-          backgroundcolor:
-              donation == null ? AppColors.greenDisabled : AppColors.green,
+          backgroundcolor: isBooking || donation == null
+              ? AppColors.greenDisabled
+              : AppColors.green,
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 16),
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  FontAwesomeIcons.calendar,
-                  color: Colors.white,
-                  size: 16,
-                ),
-                Gap(8),
+                if (isBooking)
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                else
+                  const Icon(
+                    FontAwesomeIcons.calendar,
+                    color: Colors.white,
+                    size: 16,
+                  ),
+                const Gap(8),
                 Text(
-                  'Book Mass',
-                  style: TextStyle(
+                  isBooking ? 'Processing...' : 'Book Mass',
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,

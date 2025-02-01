@@ -129,13 +129,26 @@ class _MassDetailPageState extends State<MassDetailPage>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${printDayDetails(widget.data.getDateTime())} Mass',
+            widget.data.selectedDates.length > 1
+                ? 'Multiple Mass Bookings'
+                : '${printDayDetails(widget.data.getDateTime())} Mass',
             style: TextStyle(
               color: Colors.white.withOpacity(0.9),
               fontSize: 32,
               fontWeight: FontWeight.bold,
             ),
           ),
+          if (widget.data.selectedDates.length > 1)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                '${widget.data.selectedDates.length} dates selected',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.7),
+                  fontSize: 16,
+                ),
+              ),
+            ),
           const Gap(8),
           Row(
             children: [

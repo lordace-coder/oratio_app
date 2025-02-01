@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:oratio_app/bloc/booking_bloc/state.dart';
+import 'package:oratio_app/ui/routes/route_names.dart';
 
 class PaymentSuccesful extends StatelessWidget {
   const PaymentSuccesful({
@@ -66,7 +68,6 @@ class PaymentSuccesful extends StatelessWidget {
                         children: [
                           _buildInfoCard(),
                           const SizedBox(height: 32),
-                          _buildQRPlaceholder(),
                           const Spacer(),
                           _buildButtons(context),
                         ],
@@ -137,47 +138,12 @@ class PaymentSuccesful extends StatelessWidget {
     );
   }
 
-  Widget _buildQRPlaceholder() {
-    return Container(
-      width: 150,
-      height: 150,
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Center(
-        child: Icon(
-          Icons.qr_code_2,
-          size: 100,
-          color: Colors.grey[400],
-        ),
-      ),
-    );
-  }
-
   Widget _buildButtons(BuildContext context) {
     return Column(
       children: [
-        ElevatedButton(
-          onPressed: () {
-            // Add download ticket functionality
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.blue[700],
-            minimumSize: const Size(double.infinity, 50),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          child: const Text(
-            'Download Ticket',
-            style: TextStyle(fontSize: 16),
-          ),
-        ),
-        const SizedBox(height: 16),
         TextButton(
           onPressed: () {
-            Navigator.of(context).pop();
+            context.pushNamed(RouteNames.homePage);
           },
           child: Text(
             'Back to Home',

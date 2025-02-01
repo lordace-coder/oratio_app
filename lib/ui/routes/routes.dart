@@ -8,6 +8,7 @@ import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/ui/bright/pages/create_community.dart';
 import 'package:oratio_app/ui/bright/pages/create_event.dart';
 import 'package:oratio_app/ui/bright/pages/mass_booking_page.dart';
+import 'package:oratio_app/ui/pages/annoucement_page.dart';
 import 'package:oratio_app/ui/pages/chat_page.dart';
 import 'package:oratio_app/ui/pages/create_new_post.dart';
 import 'package:oratio_app/ui/pages/edit_profile_page.dart';
@@ -94,11 +95,7 @@ class AppRouter {
         initialLocation: initialLocation,
         redirect: (context, state) async {
           final pb = getPocketBaseFromContext(context);
-          print(
-              'router says ${state.fullPath!.contains('/auth')}');
-    
-        
-         
+          print('router says ${state.fullPath!.contains('/auth')}');
 
           return null;
         },
@@ -142,6 +139,13 @@ class AppRouter {
                   name: RouteNames.profile,
                   builder: (context, state) =>
                       const AuthListener(child: ProfilePage()),
+                ),
+                GoRoute(
+                  path: '/annoucementpage/:id',
+                  name: RouteNames.annoucementPage,
+                  builder: (context, state) => AuthListener(
+                      child: AnnoucementPage(
+                          id: state.pathParameters['id'].toString())),
                 ),
                 GoRoute(
                   path: '/auth/forgotpwpage',
