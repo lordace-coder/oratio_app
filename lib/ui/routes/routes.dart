@@ -129,6 +129,11 @@ class AppRouter {
                   builder: (context, state) => const ConnectPage(),
                 ),
                 GoRoute(
+                  path: '/contacts',
+                  name: RouteNames.contacts,
+                  builder: (context, state) => ContactsPage(),
+                ),
+                GoRoute(
                   path: '/createpost',
                   name: RouteNames.createPost,
                   builder: (context, state) => const CreatePostPage(),
@@ -146,6 +151,26 @@ class AppRouter {
                   builder: (context, state) => AuthListener(
                       child: AnnoucementPage(
                           id: state.pathParameters['id'].toString())),
+                ),
+
+                GoRoute(
+                    path: '/community-live/:id',
+                    name: RouteNames.communityLivePage,
+                    builder: (context, state) => AuthListener(
+                          child: CommunityLivePage(
+                            communityId: state.pathParameters['id'].toString(),
+                            isHost: false,
+                          ),
+                        )),
+                GoRoute(
+                  path: '/host/communit/:id',
+                  name: RouteNames.hostCommunityLivePage,
+                  builder: (context, state) => AuthListener(
+                    child: CommunityLivePage(
+                      communityId: state.pathParameters['id'].toString(),
+                      isHost: true,
+                    ),
+                  ),
                 ),
                 GoRoute(
                   path: '/auth/forgotpwpage',

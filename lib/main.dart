@@ -8,6 +8,7 @@ import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:hive/hive.dart';
+import 'package:oratio_app/models/contact_model.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/services/user_settings_service.dart';
 import 'package:oratio_app/splash.dart';
@@ -98,6 +99,7 @@ void main() async {
   Hive.registerAdapter(
     MessageModelAdapter(),
   ); // Generate this using build_runner
+  Hive.registerAdapter(ContactModelAdapter());
 
   final pref = await SharedPreferences.getInstance();
   final bibleService = BibleReadingService();
@@ -241,6 +243,7 @@ class _MainAppState extends State<MainApp> {
     channel = WebSocketChannel.connect(
       Uri.parse('ws://bookmass.fly.dev/ws?uid=$userId'),
     );
+  
     channel!.stream.listen(
       (message) {
         debugPrint('Received: $message');

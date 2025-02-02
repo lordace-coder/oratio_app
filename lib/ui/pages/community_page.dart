@@ -180,7 +180,8 @@ class _CommunityPageState extends State<CommunityPage> {
                       ),
                       child: TextField(
                         controller: _searchController,
-                        onChanged: (query) {
+                        textInputAction: TextInputAction.search,
+                        onSubmitted: (query) {
                           loadData(query: query);
                         },
                         decoration: const InputDecoration(
@@ -204,12 +205,6 @@ class _CommunityPageState extends State<CommunityPage> {
           ),
         ],
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: () {},
-      //   backgroundColor: AppColors.primary,
-      //   foregroundColor: Colors.white,
-      //   child: const Icon(FontAwesomeIcons.plus),
-      // ),
     );
   }
 

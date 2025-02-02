@@ -13,6 +13,7 @@ import 'package:oratio_app/bloc/posts/post_state.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/helpers/snackbars.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
+import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 
@@ -92,24 +93,29 @@ class _CreatePostPageState extends State<CreatePostPage> {
       try {
         final pb = context.read<PocketBaseServiceCubit>().state.pb;
         final data = _collectFormData();
-        final bytes = await File(_selectedImage!).readAsBytes();
-        final mimeType = lookupMimeType(_selectedImage!);
-        if (mimeType != 'image/jpeg' && mimeType != 'image/png') {
-          throw Exception('Invalid image type. Only JPEG and PNG are allowed.');
+        if (_selectedImage != null) {
+          final bytes = await File(_selectedImage!).readAsBytes();
+          final mimeType = lookupMimeType(_selectedImage!);
+          if (mimeType != 'image/jpeg' && mimeType != 'image/png') {
+            throw Exception(
+                'Invalid image type. Only JPEG and PNG are allowed.');
+          }
+          await pb.collection('posts').create(body: data, files: [
+            http.MultipartFile.fromBytes(
+              'image',
+              bytes as List<int>,
+              filename: _selectedImage!,
+              contentType: MediaType.parse(mimeType!),
+            )
+          ]);
+        } else {
+          await pb.collection('posts').create(body: data);
         }
 
-        await pb.collection('posts').create(body: data, files: [
-          http.MultipartFile.fromBytes(
-            'image',
-            bytes as List<int>,
-            filename: _selectedImage!,
-            contentType: MediaType.parse(mimeType!),
-          )
-        ]);
         NotificationService.showInfo('Created New Post');
 
         _clearForm();
-        context.pop();
+        context.goNamed(RouteNames.homePage);
       } catch (e) {
         showError(context, message: 'Failed to create Post: $e');
       } finally {
@@ -223,7 +229,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
                               color: Colors.black, // Changed to black
                             ),
                           ),
-                         
                         ],
                       ),
                       const SizedBox(height: 12),

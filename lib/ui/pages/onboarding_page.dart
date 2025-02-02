@@ -22,17 +22,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   final List<OnboardingContent> _contents = [
     OnboardingContent(
-      title: "Welcome to BookMass",
-      description: "An Asset for easy Mass Booking.",
+      title: "Welcome to CathsApp",
+      description: "Connect with Catholics all over the world.",
       img: "assets/images/onboarding/mass.png",
       backgroundColor: const Color(0xFFE3F2FD),
     ),
-    OnboardingContent(
-      title: "Connect with Other Belivers",
-      description: "Connect with other belivers across Africa",
-      img: "assets/images/onboarding/africa.png",
-      backgroundColor: const Color(0xFFE8F5E9),
-    ),
+ 
     OnboardingContent(
       title: "Get Started",
       description: "Find your Parish and Prayer Community today",

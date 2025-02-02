@@ -412,7 +412,7 @@ class HomeScreenState extends State<HomeScreen> {
         backgroundColor: Colors.white.withOpacity(0.95),
         foregroundColor: Theme.of(context).primaryColor,
         padding: const EdgeInsets.symmetric(vertical: 16),
-        elevation: 0,
+        elevation: 2,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
         ),

@@ -50,9 +50,10 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _refreshChats() async {
     await context.read<ChatCubit>().loadRecentChats();
   }
-  Future<void> _errorCheck()async{
-    if(context.read<ChatCubit>().state is ChatsLoaded){
-      if((context.read<ChatCubit>().state as ChatsLoaded).chats.isEmpty){
+
+  Future<void> _errorCheck() async {
+    if (context.read<ChatCubit>().state is ChatsLoaded) {
+      if ((context.read<ChatCubit>().state as ChatsLoaded).chats.isEmpty) {
         await _refreshChats();
       }
     }
@@ -62,7 +63,6 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     _errorCheck();
     return Scaffold(
-    
       body: RefreshIndicator(
         onRefresh: _refreshChats,
         child: Container(
@@ -79,7 +79,8 @@ class _ChatScreenState extends State<ChatScreen> {
             child: NestedScrollView(
               headerSliverBuilder: (context, innerBoxIsScrolled) => [
                 SliverOverlapAbsorber(
-                  handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+                  handle:
+                      NestedScrollView.sliverOverlapAbsorberHandleFor(context),
                   sliver: SliverAppBar(
                     floating: true,
                     snap: true,
@@ -104,14 +105,13 @@ class _ChatScreenState extends State<ChatScreen> {
                                       ),
                                 ),
                                 const Spacer(),
-                                _buildProfileButton(),
+                                _buildContactsButton(),
                               ],
                             ),
                           ),
                           GestureDetector(
                               onTap: () async {
-                                await context
-                                    .pushNamed(RouteNames.searchPage);
+                                await context.pushNamed(RouteNames.searchPage);
                               },
                               child: _buildSearchBar()),
                           _buildCustomTabBar(),
@@ -143,7 +143,6 @@ class _ChatScreenState extends State<ChatScreen> {
                                   : context
                                       .watch<ChatCubit>()
                                       .getMessageRequests();
-                              print(filteredChats);
                               if (filteredChats.isEmpty) {
                                 return const SliverToBoxAdapter(
                                   child: Center(
@@ -160,7 +159,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                         'current index ',
                                         filteredChats[index]
                                       ]);
-                                      return AnimationConfiguration.staggeredList(
+                                      return AnimationConfiguration
+                                          .staggeredList(
                                         position: index,
                                         duration:
                                             const Duration(milliseconds: 375),
@@ -188,7 +188,8 @@ class _ChatScreenState extends State<ChatScreen> {
                         ),
                       ),
                       SliverOverlapInjector(
-                        handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+                        handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
+                            context),
                       ),
                     ],
                   );
@@ -324,9 +325,7 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-
-
-  Widget _buildProfileButton() {
+  Widget _buildContactsButton() {
     return Material(
       color: Colors.transparent,
       child: CircleAvatar(
@@ -334,12 +333,12 @@ class _ChatScreenState extends State<ChatScreen> {
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
         child: IconButton(
           icon: const Icon(
-            FontAwesomeIcons.userPlus,
+            FontAwesomeIcons.contactBook,
             size: 18,
           ),
           onPressed: () {
             // Handle profile tap
-            context.pushNamed(RouteNames.connect);
+            context.pushNamed(RouteNames.contacts);
           },
         ),
       ),

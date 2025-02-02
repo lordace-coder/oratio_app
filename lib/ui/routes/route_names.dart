@@ -2,7 +2,10 @@ class RouteNames {
   static String homePage = 'home';
   static String annoucementPage = 'annoucements';
   static String notifications = 'notifications';
+  static String contacts = 'contacts';
   static String profile = 'profile';
+  static String communityLivePage = 'communityLivePage';
+  static String hostCommunityLivePage = 'hostCommunityLivePage';
   static String signup = 'signuppage';
   static String login = 'loginpage';
   static String onboarding = 'onboardingpage';

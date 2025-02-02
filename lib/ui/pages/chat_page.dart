@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter_contacts/contact.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart' as intl;
@@ -15,6 +16,7 @@ import 'package:oratio_app/bloc/chat_cubit/message_cubit.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/networkProvider/users.dart';
+import 'package:oratio_app/services/contact_service.dart';
 import 'package:oratio_app/services/file_downloader.dart';
 import 'package:oratio_app/ui/pages/video_display_page.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
@@ -25,6 +27,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:uuid/uuid.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key, required this.profile});
@@ -104,38 +107,92 @@ class _ChatPageState extends State<ChatPage> {
     super.dispose();
   }
 
-  void _handleAttachmentPressed() {
-    // showModalBottomSheet<void>(
-    //   context: context,
-    //   builder: (BuildContext context) => SafeArea(
-    //     child: SizedBox(
-    //       height: 144,
-    //       child: Column(
-    //         crossAxisAlignment: CrossAxisAlignment.stretch,
-    //         children: <Widget>[
-    //           TextButton(
-    //             onPressed: () {
-    //               Navigator.pop(context);
+  void _handleContactSelection() async {
+    // Request permission to access contacts
+    PermissionStatus permissionStatus = await Permission.contacts.request();
 
-    //             },
-    //             child: const Align(
-    //               alignment: AlignmentDirectional.centerStart,
-    //               child: Text('File'),
-    //             ),
-    //           ),
-    //           TextButton(
-    //             onPressed: () => Navigator.pop(context),
-    //             child: const Align(
-    //               alignment: AlignmentDirectional.centerStart,
-    //               child: Text('Cancel'),
-    //             ),
-    //           ),
-    //         ],
-    //       ),
-    //     ),
-    //   ),
-    // );
-    _handleFileSelection();
+    if (permissionStatus.isGranted) {
+      // Open contact picker
+      Contact? contact = await ContactService.openDeviceContactPicker();
+
+      if (contact != null) {
+        final contactData = {
+          'name': contact.displayName ?? 'Unknown',
+          'phone': contact.phones.isNotEmpty
+              ? contact.phones.first.number
+              : 'No phone number',
+          'email': contact.emails.isNotEmpty
+              ? contact.emails.first.address
+              : 'No email',
+        };
+
+        final message = types.CustomMessage(
+          author: _user,
+          createdAt: DateTime.now().millisecondsSinceEpoch,
+          id: const Uuid().v4(),
+          metadata: contactData,
+        );
+
+        NotificationService.showInfo('Sending contact...');
+        try {
+          contactData["metadata"] = "contact";
+          context.read<MessageCubit>().sendMessage(
+                message: jsonEncode(contactData),
+                receiverId: widget.profile.userId,
+              );
+        } catch (e) {
+          print(e);
+          NotificationService.showError('Contact send failed');
+        }
+
+        _addMessage(message);
+      }
+    } else {
+      NotificationService.showError('Permission to access contacts denied');
+    }
+  }
+
+  void _handleAttachmentPressed() {
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (BuildContext context) => SafeArea(
+        child: SizedBox(
+          height: 144,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _handleFileSelection();
+                },
+                child: const Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text('File'),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  _handleContactSelection();
+                },
+                child: const Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text('Contact'),
+                ),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text('Cancel'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _handleFileSelection() async {
@@ -256,6 +313,17 @@ class _ChatPageState extends State<ChatPage> {
     return null;
   }
 
+  String _getLastSeenTime(String? updated) {
+    if (updated == null) {
+      return 'unknown';
+    }
+    try {
+      return formatDateTimeToHoursAgo(DateTime.parse(updated));
+    } catch (e) {
+      return 'unknown';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -323,7 +391,7 @@ class _ChatPageState extends State<ChatPage> {
                   ),
                   if (widget.profile.user.getBoolValue('active') == false)
                     Text(
-                      'last seen ${formatDateTimeToHoursAgo(DateTime.parse(widget.profile.user.updated))}',
+                      'last seen ${_getLastSeenTime(widget.profile.user.updated)}',
                       style: const TextStyle(
                         fontSize: 12,
                         color: Colors.black54,

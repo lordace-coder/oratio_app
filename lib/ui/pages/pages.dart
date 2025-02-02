@@ -7,12 +7,13 @@ export 'parish_list_page.dart';
 export 'mass_booking_page.dart';
 export 'mass_detail_page.dart';
 export 'payment_succesful.dart';
-export 'introduction_page.dart';
 export 'prayer_community.dart';
 export 'profile_visitor.dart';
 export 'parish_landing.dart';
 export 'transaction_page.dart';
 export 'scan_qr_page.dart';
 export 'connect_page.dart';
+export 'community_live_page.dart';
+export 'utils/contacts_page.dart';
 // priest pages
 export 'priest/dashboard_page.dart';

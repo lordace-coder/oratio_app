@@ -31,6 +31,7 @@ class PrayerRequestHelper {
     final body = {
       "request": request,
       "urgent": urgent,
+      "user": pb.authStore.model.id.toString(),
     };
     await pb.collection('prayer_requests').create(body: body);
   }
@@ -55,7 +56,4 @@ class PrayerRequestHelper {
   Future<void> deletePrayerRequest(String id) async {
     await pb.collection('prayer_requests').delete(id);
   }
-
-
-
 }

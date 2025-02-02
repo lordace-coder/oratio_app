@@ -45,7 +45,7 @@ class PostHelper {
           filter: "community = '$communityId'",
           perPage: 20,
         );
-    print([records.items, 'ss']);
+
     return records.items.map((i) => Post.fromRecord(i, _pocketBase)).toList();
   }
 

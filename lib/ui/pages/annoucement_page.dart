@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:oratio_app/networkProvider/requests.dart';
+import 'package:oratio_app/ui/widgets/buttons.dart';
 
 class AnnoucementPage extends StatefulWidget {
   const AnnoucementPage({super.key, required this.id});
   final String id;
-  
+
   @override
   // ignore: library_private_types_in_public_api
   _AnnoucementPageState createState() => _AnnoucementPageState();
@@ -15,6 +16,24 @@ class _AnnoucementPageState extends State<AnnoucementPage> {
   final _titleController = TextEditingController();
   final _announcementController = TextEditingController();
   bool _isLoading = false;
+
+  void submit() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+      await sendAnnoucement(context, {
+        "title": _titleController.text.trim(),
+        "notification": _announcementController.text.trim(),
+        "community": widget.id,
+      });
+      _titleController.clear();
+      _announcementController.clear();
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,27 +78,8 @@ class _AnnoucementPageState extends State<AnnoucementPage> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () async {
-                        if (_formKey.currentState!.validate()) {
-                          setState(() {
-                            _isLoading = true;
-                          });
-                          await sendAnnoucement(context, {
-                            "title": _titleController.text.trim(),
-                            "notification": _announcementController.text.trim(),
-                            "community": widget.id,
-                          });
-                          _titleController.clear();
-                          _announcementController.clear();
-                          setState(() {
-                            _isLoading = false;
-                          });
-                        }
-                      },
-                      child: const Text('Submit'),
-                    ),
+                    const SizedBox(height: 50),
+                    buildGradientButton("Send Annoucement", Icons.send, submit),
                   ],
                 ),
               ),

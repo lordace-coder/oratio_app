@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
@@ -60,6 +62,9 @@ class CustomBubble extends StatelessWidget {
           messageContent =
               _buildGenericFileMessage(message as types.FileMessage);
       }
+    } else if (message is types.CustomMessage) {
+
+      messageContent = _buildContactMessage(message as types.CustomMessage);
     } else {
       return const SizedBox.shrink();
     }
@@ -76,7 +81,27 @@ class CustomBubble extends StatelessWidget {
     );
   }
 
+  bool isValidJson(String str) {
+    try {
+      json.decode(str);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   Widget _buildTextMessage(types.TextMessage message) {
+    if (isValidJson(message.text)) {
+      final json = jsonDecode(message.text) as Map<String, dynamic>;
+      if (json.containsKey('metadata') && json['metadata'] == "contact") {
+        return _buildContactMessage(types.CustomMessage(
+          author: message.author,
+          id: message.id,
+          metadata: json,
+          createdAt: message.createdAt,
+        ));
+      }
+    }
     return Container(
       decoration: BoxDecoration(
         color: isUser
@@ -190,58 +215,6 @@ class CustomBubble extends StatelessWidget {
     return AudioMessageWidget(
       audioUrl: message.uri,
     );
-    return Container(
-      decoration: BoxDecoration(
-        color: isUser
-            ? AppColors.primary
-            : const Color.fromARGB(255, 234, 234, 235),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 1),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: const Icon(Icons.play_arrow),
-            onPressed: () {
-              // Implement audio playback
-            },
-          ),
-          Container(
-            width: 150,
-            height: 30,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const ClipRRect(
-              borderRadius: BorderRadius.all(Radius.circular(20)),
-              child: LinearProgressIndicator(
-                value: 0,
-                backgroundColor: Colors.transparent,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '0:00',
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
-            ),
-          ),
-          const SizedBox(width: 8),
-          _buildUserTimestamp(message.createdAt!, isUser),
-        ],
-      ),
-    );
   }
 
   Widget _buildDocumentMessage(types.FileMessage message) {
@@ -347,6 +320,80 @@ class CustomBubble extends StatelessWidget {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 4),
+          _buildUserTimestamp(message.createdAt!, isUser),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContactMessage(types.CustomMessage message) {
+    final contact = message.metadata as Map<String, dynamic>?;
+
+    if (contact == null) {
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isUser ? AppColors.primary : const Color.fromARGB(255, 234, 234, 235),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 1),
+            ),
+          ],
+        ),
+        child: Text(
+          'Invalid contact data',
+          style: TextStyle(
+            fontSize: 16,
+            color: isUser ? Colors.white : Colors.black,
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isUser ? AppColors.primary : const Color.fromARGB(255, 234, 234, 235),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            contact['name'] ?? 'Unknown',
+            style: TextStyle(
+              fontSize: 16,
+              color: isUser ? Colors.white : Colors.black,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            contact['phone'] ?? 'No phone number',
+            style: TextStyle(
+              fontSize: 14,
+              color: isUser ? Colors.white : Colors.black,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            contact['email'] ?? 'No email',
+            style: TextStyle(
+              fontSize: 14,
+              color: isUser ? Colors.white : Colors.black,
+            ),
           ),
           const SizedBox(height: 4),
           _buildUserTimestamp(message.createdAt!, isUser),
