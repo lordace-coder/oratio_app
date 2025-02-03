@@ -3,26 +3,17 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
+import 'package:flutter_contacts/contact.dart';
+import 'package:flutter_contacts/properties/email.dart';
+import 'package:flutter_contacts/properties/name.dart';
+import 'package:flutter_contacts/properties/phone.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:oratio_app/services/contact_service.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/audio_message.dart';
 import 'package:video_player/video_player.dart';
-
-// class CustomMessageBuilder implements MessageBuilder {
-//   @override
-//   Widget build({
-//     required types.Message message,
-//     required bool isUser,
-//     required int messageWidth,
-//     required BuildContext context,
-//   }) {
-//     return CustomBubble(
-//       message: message,
-//       isUser: isUser,
-//     );
-//   }
-// }
 
 class CustomBubble extends StatelessWidget {
   final types.Message message;
@@ -63,7 +54,6 @@ class CustomBubble extends StatelessWidget {
               _buildGenericFileMessage(message as types.FileMessage);
       }
     } else if (message is types.CustomMessage) {
-
       messageContent = _buildContactMessage(message as types.CustomMessage);
     } else {
       return const SizedBox.shrink();
@@ -329,13 +319,15 @@ class CustomBubble extends StatelessWidget {
   }
 
   Widget _buildContactMessage(types.CustomMessage message) {
-    final contact = message.metadata as Map<String, dynamic>?;
+    final contact = message.metadata;
 
     if (contact == null) {
       return Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isUser ? AppColors.primary : const Color.fromARGB(255, 234, 234, 235),
+          color: isUser
+              ? AppColors.primary
+              : const Color.fromARGB(255, 234, 234, 235),
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
@@ -357,7 +349,9 @@ class CustomBubble extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isUser ? AppColors.primary : const Color.fromARGB(255, 234, 234, 235),
+        color: isUser
+            ? AppColors.primary
+            : const Color.fromARGB(255, 234, 234, 235),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -371,35 +365,87 @@ class CustomBubble extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            contact['name'] ?? 'Unknown',
-            style: TextStyle(
-              fontSize: 16,
-              color: isUser ? Colors.white : Colors.black,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            children: [
+              CircleAvatar(
+                backgroundColor: Colors.grey[300],
+                child: Icon(
+                  Icons.person,
+                  color: Colors.grey[700],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    contact['name'] ?? 'Unknown',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: isUser ? Colors.white : Colors.black,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    contact['phone'] ?? 'No phone number',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isUser ? Colors.white : Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    contact['email'] ?? 'No email',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isUser ? Colors.white : Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            contact['phone'] ?? 'No phone number',
-            style: TextStyle(
-              fontSize: 14,
-              color: isUser ? Colors.white : Colors.black,
-            ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildUserTimestamp(message.createdAt!, isUser),
+              ElevatedButton.icon(
+                onPressed: () => _saveContact(contact),
+                icon: const Icon(Icons.save),
+                label: const Text('Save'),
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: isUser ? AppColors.primary : Colors.white,
+                  backgroundColor: isUser ? Colors.white : AppColors.primary,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            contact['email'] ?? 'No email',
-            style: TextStyle(
-              fontSize: 14,
-              color: isUser ? Colors.white : Colors.black,
-            ),
-          ),
-          const SizedBox(height: 4),
-          _buildUserTimestamp(message.createdAt!, isUser),
         ],
       ),
     );
+  }
+
+  void _saveContact(Map<String, dynamic> contact) async {
+    final firstName = contact['first_name'] ?? '';
+    final lastName = contact['last_name'] ?? '';
+    final phone = contact['phone'] ?? '';
+    final email = contact['email'] ?? '';
+
+    final newContact = Contact(
+      name: Name(first: firstName, last: lastName),
+      displayName: '$firstName $lastName',
+      phones: [Phone(phone, customLabel: '$firstName $lastName')],
+      emails: [Email(email)],
+    );
+
+    try {
+      await newContact.insert();
+      NotificationService.showInfo("Contact saved successfully");
+    } catch (e) {
+      NotificationService.showError("Error saving contact");
+    }
   }
 
   Widget _buildUserTimestamp(int timestamp, bool isUser) {
@@ -414,8 +460,7 @@ class CustomBubble extends StatelessWidget {
                 ? Colors.white.withOpacity(0.5)
                 : Colors.black.withOpacity(0.5),
           ),
-        ),
-        if (isUser) ...[
+        ),        if (isUser) ...[
           const SizedBox(width: 4),
           if (isUser)
             Icon(

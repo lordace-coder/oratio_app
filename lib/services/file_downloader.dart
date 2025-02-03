@@ -112,7 +112,27 @@ class FileDownloadHandler {
     }
   }
 
-  static Future<void> downloadFile(types.FileMessage message) async {
+  static void showDownloadProgress(BuildContext context, double progress) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Downloading...'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              LinearProgressIndicator(value: progress),
+              const SizedBox(height: 20),
+              Text('${progress.toStringAsFixed(0)}%'),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  static Future<void> downloadFile(types.FileMessage message, BuildContext context) async {
     // Request storage permission
     var status = await Permission.storage.request();
     if (!status.isGranted) {
@@ -138,9 +158,13 @@ class FileDownloadHandler {
           if (total != -1) {
             double progress = (received / total) * 100;
             debugPrint('Download Progress: ${progress.toStringAsFixed(0)}%');
+            showDownloadProgress(context, progress / 100);
           }
         },
       );
+
+      // Close the progress dialog
+      Navigator.of(context).pop();
 
       // Open the file after download
       await openFile(savePath);

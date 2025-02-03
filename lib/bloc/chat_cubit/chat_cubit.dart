@@ -5,6 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/popup_notification/popup_notification.dart';
 import 'package:oratio_app/services/chat/chat_service.dart';
+import 'package:oratio_app/services/file_downloader.dart';
 import 'package:oratio_app/ui/pages/chat_page.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'dart:async';
@@ -53,9 +54,8 @@ class ChatCubit extends Cubit<ChatState> {
   // Fetch recent chats
   Future<void> loadRecentChats() async {
     try {
-      if(state is! ChatsLoaded){
-      emit(ChatLoading());
-
+      if (state is! ChatsLoaded) {
+        emit(ChatLoading());
       }
       final chats = await _chatService.getRecentChats();
       emit(ChatsLoaded(chats));
@@ -68,6 +68,7 @@ class ChatCubit extends Cubit<ChatState> {
   Future<void> sendMessage({
     required String receiverId,
     required String message,
+    BuildContext? context,
   }) async {
     final currentUserId = _pb.authStore.model.id;
 
@@ -80,10 +81,22 @@ class ChatCubit extends Cubit<ChatState> {
         "reciever": receiverId
       };
 
+      if (context != null) {
+        FileDownloadHandler.showDownloadProgress(context, 0);
+      }
+
       final record = await _pb.collection('messages').create(body: body);
+
+      if (context != null) {
+        Navigator.of(context).pop();
+      }
+
       // Refresh chat list after sending message
       await loadRecentChats();
     } catch (e) {
+      if (context != null) {
+        Navigator.of(context).pop();
+      }
       final err = e as ClientException;
       emit(ChatError('Failed to send message: ${err.originalError}'));
       rethrow;

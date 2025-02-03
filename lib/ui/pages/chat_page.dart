@@ -117,7 +117,8 @@ class _ChatPageState extends State<ChatPage> {
 
       if (contact != null) {
         final contactData = {
-          'name': contact.displayName ?? 'Unknown',
+          'first_name': contact.name.first ?? '',
+          'last_name': contact.name.last ?? '',
           'phone': contact.phones.isNotEmpty
               ? contact.phones.first.number
               : 'No phone number',
@@ -205,32 +206,102 @@ class _ChatPageState extends State<ChatPage> {
     if (result != null &&
         result.files.single.path != null &&
         result.files.single.bytes != null) {
-      final message = types.FileMessage(
-        author: _user,
-        createdAt: DateTime.now().millisecondsSinceEpoch,
-        id: const Uuid().v4(),
-        mimeType: lookupMimeType(result.files.single.path!),
-        name: result.files.single.name,
-        size: result.files.single.size,
-        uri: result.files.single.path!,
-      );
+      final filePath = result.files.single.path!;
+      final fileName = result.files.single.name;
+      final fileBytes = result.files.single.bytes!;
+      final mimeType = lookupMimeType(filePath);
 
-      NotificationService.showInfo('Uploading file...');
-      try {
-        await pb.collection('messages').create(body: <String, dynamic>{
-          "sender": _user.id,
-          "message": "{{file}}",
-          "reciever": _otherUser.id,
-        }, files: [
-          http.MultipartFile.fromBytes('file', result.files.single.bytes!,
-              filename: result.files.single.name)
-        ]);
-      } catch (e) {
-        print(e);
-        NotificationService.showError('File upload failed');
+      Widget filePreview;
+      if (mimeType != null && mimeType.startsWith('image/')) {
+        filePreview = Image.memory(fileBytes, fit: BoxFit.cover);
+      } else if (mimeType != null && mimeType.startsWith('video/')) {
+        filePreview = Icon(Icons.videocam, size: 100);
+      } else {
+        filePreview = Icon(Icons.insert_drive_file, size: 100);
       }
 
-      _addMessage(message);
+      bool? confirmSend = await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Send File'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                filePreview,
+                const SizedBox(height: 20),
+                Text(fileName),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Send'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (confirmSend == true) {
+        final message = types.FileMessage(
+          author: _user,
+          createdAt: DateTime.now().millisecondsSinceEpoch,
+          id: const Uuid().v4(),
+          mimeType: mimeType,
+          name: fileName,
+          size: result.files.single.size,
+          uri: filePath,
+        );
+
+        NotificationService.showInfo('Uploading file...');
+        try {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) {
+              return const AlertDialog(
+                title: Text('Uploading...'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    LinearProgressIndicator(),
+                    SizedBox(height: 20),
+                    Text('Please wait...'),
+                  ],
+                ),
+              );
+            },
+          );
+
+          await pb.collection('messages').create(
+            body: <String, dynamic>{
+              "sender": _user.id,
+              "message": "{{file}}",
+              "reciever": _otherUser.id,
+            },
+            files: [
+              http.MultipartFile.fromBytes('file', fileBytes,
+                  filename: fileName)
+            ],
+          );
+
+          if (mounted) {
+            Navigator.of(context, rootNavigator: true).pop();
+            _addMessage(message);
+          }
+        } catch (e) {
+          if (mounted) {
+            Navigator.of(context, rootNavigator: true).pop();
+          }
+          print(e);
+          NotificationService.showError('File upload failed');
+        }
+      }
     }
   }
 
