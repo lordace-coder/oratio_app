@@ -1,3 +1,5 @@
+import 'dart:isolate';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
@@ -28,6 +30,7 @@ import 'package:pocketbase/pocketbase.dart';
 import 'package:uuid/uuid.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key, required this.profile});
@@ -47,6 +50,12 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
+    context
+        .read<ChatCubit>()
+        .markMessagesAsRead(widget.profile.userId)
+        .then((_) {
+      context.read<ChatCubit>().loadRecentChats();
+    });
     pb = context.read<PocketBaseServiceCubit>().state.pb;
     currentUser = pb.authStore.model as RecordModel;
     _user = types.User(
@@ -59,18 +68,58 @@ class _ChatPageState extends State<ChatPage> {
         firstName: widget.profile.user.getStringValue('first_name'),
         lastName: widget.profile.user.getStringValue('last_name'));
     subscribeToMessages();
-    context
-        .read<ChatCubit>()
-        .markMessagesAsRead(widget.profile.userId)
-        .then((_) {
-      context.read<ChatCubit>().loadRecentChats();
-    });
+
+    _clearMessages();
+    _loadCachedMessages();
+
     _loadInitialMessages();
   }
 
+  void _clearMessages() {
+    setState(() {
+      _messages.clear();
+    });
+  }
+
+  Future<void> _loadCachedMessages() async {
+    final prefs = await SharedPreferences.getInstance();
+    final encodedMessages =
+        prefs.getStringList('cached_messages_${widget.profile.userId}') ?? [];
+    if (encodedMessages.isEmpty) return;
+    final cachedMessages = encodedMessages
+        .map((msg) => types.Message.fromJson(jsonDecode(msg)))
+        .toList();
+    setState(() {
+      _messages.addAll(cachedMessages);
+    });
+  }
+
+  static Future<void> _cacheMessages(List<dynamic> args) async {
+    final String userId = args[1];
+    final List<String> encodedMessages = args[0];
+    final prefs = await SharedPreferences.getInstance();
+    // final encodedMessages =
+    // _messages.map((msg) => jsonEncode(msg.toJson())).toList();
+    await prefs.setStringList('cached_messages_$userId', encodedMessages);
+    print(['cached messages', 'cached_messages_$userId', encodedMessages]);
+  }
+
+  Future<void> _handleMessageCache() async {
+    final messages = _messages.map((msg) => jsonEncode(msg.toJson())).toList();
+    final userId = widget.profile.userId;
+    await Isolate.spawn(_cacheMessages, [messages, userId]);
+  }
+
+  @override
+  void dispose() {
+    _handleMessageCache();
+    super.dispose();
+  }
+
   intl.DateFormat format = intl.DateFormat("yyyy-MM-dd HH:mm:ss.SSS'Z'");
-  void subscribeToMessages() {
-    pb.collection('messages').subscribe(
+  void subscribeToMessages() async {
+    // TODO CHANGE THIS TO USE WEBSOCKETS
+    await pb.collection('messages').subscribe(
       '*',
       (e) {
         if (e.action == 'create' && e.record != null) {
@@ -100,11 +149,6 @@ class _ChatPageState extends State<ChatPage> {
     setState(() {
       _messages.insert(0, message);
     });
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
   }
 
   void _handleContactSelection() async {
@@ -215,16 +259,16 @@ class _ChatPageState extends State<ChatPage> {
       if (mimeType != null && mimeType.startsWith('image/')) {
         filePreview = Image.memory(fileBytes, fit: BoxFit.cover);
       } else if (mimeType != null && mimeType.startsWith('video/')) {
-        filePreview = Icon(Icons.videocam, size: 100);
+        filePreview = const Icon(Icons.videocam, size: 100);
       } else {
-        filePreview = Icon(Icons.insert_drive_file, size: 100);
+        filePreview = const Icon(Icons.insert_drive_file, size: 100);
       }
 
       bool? confirmSend = await showDialog(
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text('Send File'),
+            title: const Text('Send File'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -492,103 +536,105 @@ class _ChatPageState extends State<ChatPage> {
           ),
         ),
         child: BlocConsumer<MessageCubit, MessageState>(
-            listener: (ctx, state) {},
-            builder: (context, state) {
-              final messages = state.messages.map((msg) {
-                if (msg.filePath != null && msg.filePath!.isNotEmpty) {
-                  // Handle file message
+          listener: (ctx, state) {
+            if (state.isLoading) {
+              _clearMessages();
+            }
+          },
+          builder: (context, state) {
+            if (state.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-                  return types.FileMessage(
-                    author: msg.senderId == _user.id ? _user : _otherUser,
-                    id: msg.id,
-                    name:
-                        msg.filePath!.split('/').last, // Get filename from path
-                    size: 0, // You might want to store file size in your model
-                    uri: pb.files
-                        .getUrl(
-                            RecordModel(
-                                collectionName: "messages",
-                                id: msg.id,
-                                collectionId: "nnh9nuyiwl32nsv"),
-                            msg.filePath!)
-                        .toString(),
-                    createdAt: msg.created.millisecondsSinceEpoch,
-                    status: msg.read ? types.Status.seen : types.Status.sent,
-                  );
-                } else {
-                  // Handle text message
-                  final createdAtUtc =
-                      msg.created.toUtc().millisecondsSinceEpoch;
+            final messages = state.messages.map((msg) {
+              if (msg.filePath != null && msg.filePath!.isNotEmpty) {
+                // Handle file message
+                return types.FileMessage(
+                  author: msg.senderId == _user.id ? _user : _otherUser,
+                  id: msg.id,
+                  name: msg.filePath!.split('/').last, // Get filename from path
+                  size: 0, // You might want to store file size in your model
+                  uri: pb.files
+                      .getUrl(
+                          RecordModel(
+                              collectionName: "messages",
+                              id: msg.id,
+                              collectionId: "nnh9nuyiwl32nsv"),
+                          msg.filePath!)
+                      .toString(),
+                  createdAt: msg.created.millisecondsSinceEpoch,
+                  status: msg.read ? types.Status.seen : types.Status.sent,
+                );
+              } else {
+                // Handle text message
+                final createdAtUtc = msg.created.toUtc().millisecondsSinceEpoch;
 
-                  return types.TextMessage(
-                    author: msg.senderId == _user.id ? _user : _otherUser,
-                    id: msg.id,
-                    text: msg.message,
-                    status: msg.read ? types.Status.seen : types.Status.sent,
-                    createdAt: createdAtUtc,
-                  );
-                }
-              }).toList();
+                return types.TextMessage(
+                  author: msg.senderId == _user.id ? _user : _otherUser,
+                  id: msg.id,
+                  text: msg.message,
+                  status: msg.read ? types.Status.seen : types.Status.sent,
+                  createdAt: createdAtUtc,
+                );
+              }
+            }).toList();
 
-              return Chat(
-                bubbleBuilder: (child,
-                        {required message, required nextMessageInGroup}) =>
-                    CustomBubble(
-                        message: message, isUser: message.author == _user),
-
-                messages: messages,
+            return Chat(
+              bubbleBuilder: (child,
+                      {required message, required nextMessageInGroup}) =>
+                  CustomBubble(
+                      message: message, isUser: message.author == _user),
+              messages: messages,
+              onAttachmentPressed: _handleAttachmentPressed,
+              onMessageTap: _handleMessageTap,
+              onPreviewDataFetched: _handlePreviewDataFetched,
+              onSendPressed: _handleSendPressed,
+              customBottomWidget: CustomChatInput(
+                onSendMessage: _handleSendPressed,
                 onAttachmentPressed: _handleAttachmentPressed,
-                onMessageTap: _handleMessageTap,
-                onPreviewDataFetched: _handlePreviewDataFetched,
-                onSendPressed: _handleSendPressed,
-                // showUserAvatars: true,
-                customBottomWidget: CustomChatInput(
-                  onSendMessage: _handleSendPressed,
-                  onAttachmentPressed: _handleAttachmentPressed,
+              ),
+              dateIsUtc: true,
+              dateHeaderThreshold: 7200000,
+              user: _user,
+              emojiEnlargementBehavior: EmojiEnlargementBehavior.single,
+              theme: DefaultChatTheme(
+                backgroundColor: Colors.transparent,
+                inputBackgroundColor: Theme.of(context).colorScheme.surface,
+                primaryColor: AppColors.primary,
+                secondaryColor:
+                    Theme.of(context).colorScheme.surfaceContainerHighest,
+                inputTextColor: Theme.of(context).colorScheme.onSurface,
+                inputTextCursorColor: Theme.of(context).colorScheme.primary,
+                inputTextDecoration: InputDecoration(
+                  hintStyle: TextStyle(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.5),
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                 ),
-                dateIsUtc: true,
-
-                dateHeaderThreshold: 7200000,
-                // showUserNames: true,
-                user: _user,
-                emojiEnlargementBehavior: EmojiEnlargementBehavior.single,
-                theme: DefaultChatTheme(
-                  backgroundColor: Colors.transparent,
-                  inputBackgroundColor: Theme.of(context).colorScheme.surface,
-                  primaryColor: AppColors.primary,
-                  secondaryColor:
-                      Theme.of(context).colorScheme.surfaceContainerHighest,
-                  inputTextColor: Theme.of(context).colorScheme.onSurface,
-                  inputTextCursorColor: Theme.of(context).colorScheme.primary,
-                  inputTextDecoration: InputDecoration(
-                    hintStyle: TextStyle(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withOpacity(0.5),
-                    ),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                  ),
-                  sentMessageBodyTextStyle: TextStyle(
-                    color: Theme.of(context).colorScheme.onPrimary,
-                    fontSize: 16,
-                  ),
-                  receivedMessageBodyTextStyle: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
-                    fontSize: 16,
-                  ),
-                  userAvatarNameColors: [
-                    Colors.blue,
-                    Theme.of(context).colorScheme.secondary,
-                    Theme.of(context).colorScheme.tertiary,
-                  ],
+                sentMessageBodyTextStyle: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                  fontSize: 16,
                 ),
-              );
-            }),
+                receivedMessageBodyTextStyle: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontSize: 16,
+                ),
+                userAvatarNameColors: [
+                  Colors.blue,
+                  Theme.of(context).colorScheme.secondary,
+                  Theme.of(context).colorScheme.tertiary,
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }

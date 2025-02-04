@@ -25,6 +25,8 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   List? searchResult;
+  bool showAllParishes = false;
+  bool showAllCommunities = false;
 
   void getfollowing(BuildContext context) async {
     final pb = context.read<PocketBaseServiceCubit>().state.pb;
@@ -238,22 +240,46 @@ class _ProfilePageState extends State<ProfilePage> {
                           "Parish You're Attending",
                           FontAwesomeIcons.church,
                           [
-                            ...data.parish.map((item) => _buildParishItem(
-                                    item.getStringValue('name'),
-                                    label: 'visit', onAction: () {
-                                  openParish(context, item.id);
-                                }))
+                            ...data.parish
+                                .take(showAllParishes ? data.parish.length : 3)
+                                .map((item) => _buildParishItem(
+                                        item.getStringValue('name'),
+                                        label: 'visit', onAction: () {
+                                      openParish(context, item.id);
+                                    })),
+                            if (data.parish.length > 3)
+                              _buildSeeMoreButton(
+                                showAllParishes,
+                                () {
+                                  setState(() {
+                                    showAllParishes = !showAllParishes;
+                                  });
+                                },
+                              ),
                           ],
                         ),
                         _buildSection(
                           "Communities You're In",
                           FontAwesomeIcons.church,
                           [
-                            ...data.community.map((item) => _buildParishItem(
-                                    item.getStringValue('community'),
-                                    label: 'visit', onAction: () {
-                                  openCommunity(context, item.id);
-                                }))
+                            ...data.community
+                                .take(showAllCommunities
+                                    ? data.community.length
+                                    : 3)
+                                .map((item) => _buildParishItem(
+                                        item.getStringValue('community'),
+                                        label: 'visit', onAction: () {
+                                      openCommunity(context, item.id);
+                                    })),
+                            if (data.community.length > 3)
+                              _buildSeeMoreButton(
+                                showAllCommunities,
+                                () {
+                                  setState(() {
+                                    showAllCommunities = !showAllCommunities;
+                                  });
+                                },
+                              ),
                           ],
                         ),
                         _buildSection(
@@ -547,6 +573,19 @@ class _ProfilePageState extends State<ProfilePage> {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSeeMoreButton(bool showAll, VoidCallback onTap) {
+    return TextButton(
+      onPressed: onTap,
+      child: Text(
+        showAll ? 'See Less' : 'See More',
+        style: const TextStyle(
+          color: Color(0xFF6C63FF),
+          fontWeight: FontWeight.w500,
         ),
       ),
     );

@@ -10,9 +10,13 @@ Future<Map<String, dynamic>?>? handleDonation(
 
 Future<bool> handleMassBooking(PocketBase pb, Map<String, dynamic> data) async {
   try {
-    final response = await pb.collection('mass_booking').create(body: data);
+    await pb.collection('mass_booking').create(body: data);
     return true;
   } catch (e) {
     return false;
   }
+}
+
+Future<void> handleRetreatBooking({required PocketBase pb ,required Map<String,dynamic> data})async{
+await pb.collection("retreat").create(body:data);
 }

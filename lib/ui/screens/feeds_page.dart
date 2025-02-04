@@ -36,10 +36,12 @@ class FeedsListScreenState extends State<FeedsListScreen> {
   late PocketBase pb;
   bool _isLoadingMore = false;
   bool _hasMoreFeeds = true;
-
+  int unreadNotificationCount = 0;
   @override
   void initState() {
     super.initState();
+    unreadNotificationCount =0;
+        
     _scrollController.addListener(_onScroll);
     pb = context.read<PocketBaseServiceCubit>().state.pb;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -93,20 +95,8 @@ class FeedsListScreenState extends State<FeedsListScreen> {
   Widget build(BuildContext context) {
     if (!pb.authStore.isValid) {
       pb.authStore.clear();
-
-      return const Center(
-        child: Text('Bad Error, Please Log Out and Login Again'),
-      );
     }
-    // redirect user to home page if first time
-    SharedPreferences.getInstance().then((pref) {
-      if (!AppRouter(pref: pref).opened()) {
-        context.pushNamed(RouteNames.onboarding);
-      }
-    });
-    final unreadNotificationCount =
-        context.watch<NotificationCubit>().unreadNotificationCount();
-
+unreadNotificationCount = context.watch<NotificationCubit>().unreadNotificationCount();
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
@@ -184,6 +174,7 @@ class FeedsListScreenState extends State<FeedsListScreen> {
       body: RefreshIndicator.adaptive(
         onRefresh: () async {
           await context.read<CentralCubit>().getFeeds();
+          context.read<PrayerRequestCubit>().refresh();
         },
         child: BlocBuilder<CentralCubit, List>(
           builder: (context, feeds) {
@@ -249,8 +240,6 @@ class FeedsListScreenState extends State<FeedsListScreen> {
                         final feed = feeds[index];
                         if (feed is Post) {
                           return CommunityPostCard(post: feed);
-                        } else if (feed is PrayerRequest) {
-                          return PrayerRequestCard(data: feed);
                         } else if (feed is Ad) {
                           context.read<AdsCubit>().incrementViews(feed.id);
 

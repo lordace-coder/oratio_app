@@ -20,7 +20,8 @@ class ProfileDataCubit extends Cubit<ProfileDataState> {
     try {
 // check if user is a priest
       RecordModel? myParish;
-      if (pb.authStore.isValid && (pb.authStore.model as RecordModel).getBoolValue('priest')) {
+      if (pb.authStore.isValid &&
+          (pb.authStore.model as RecordModel).getBoolValue('priest')) {
         // get parish he is leading
         final data = (await pb
                 .collection('parish')
@@ -29,7 +30,6 @@ class ProfileDataCubit extends Cubit<ProfileDataState> {
         if (data.isNotEmpty) {
           myParish = data.first;
         } else {
-          print('no parish for priest = "${pb.authStore.model.id}" ');
           try {
             NotificationService.showWarning(
                 'This account is not connected to any parish, This may cause some errors',
@@ -72,7 +72,17 @@ class ProfileDataCubit extends Cubit<ProfileDataState> {
   }
 
   Future visitProfile(String id) async {
-    emit(ProfileDataLoading());
+    //FIX FOR THE ISSUE OF ALWAYS SHOWING CIRCULAR PROGRESS INDICATOR WHEN VISITORS PROFILE REBUILD
+    // check if it has been loaded before
+    if (state is ProfileDataLoaded) {
+      // make sure guest profile isnt null
+      if (!((state as ProfileDataLoaded).guestProfile == null)) {
+        // check if the one loaded before matches the current one
+        if (!((state as ProfileDataLoaded).guestProfile!.userId == id)) {
+          emit(ProfileDataLoading());
+        }
+      }
+    }
     try {
       final profileOfOtherUser = await pb.collection('users').getOne(id);
       final profile = Profile(
@@ -108,7 +118,6 @@ class ProfileDataCubit extends Cubit<ProfileDataState> {
               community: communities.items)));
     } catch (e) {
       emit(ProfileDataError('$e'));
-      rethrow;
     }
   }
 }

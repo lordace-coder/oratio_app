@@ -126,6 +126,7 @@ class ChatCubit extends Cubit<ChatState> {
       await loadRecentChats();
     } catch (e) {
       emit(ChatError('Failed to mark messages as read: $e'));
+      rethrow;
     }
   }
 

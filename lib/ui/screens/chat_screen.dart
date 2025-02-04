@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_contacts/flutter_contacts.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/bloc/chat_cubit/chat_cubit.dart';
 import 'package:oratio_app/helpers/functions.dart';
@@ -180,6 +182,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                 ),
                               );
                             } else if (state is ChatError) {
+                              context.read<ChatCubit>().getRecentChats();
                               return SliverToBoxAdapter(
                                   child: Text(state.message));
                             }
@@ -333,12 +336,17 @@ class _ChatScreenState extends State<ChatScreen> {
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
         child: IconButton(
           icon: const Icon(
-            FontAwesomeIcons.contactBook,
+            FontAwesomeIcons.addressBook,
             size: 18,
           ),
-          onPressed: () {
+          onPressed: () async {
             // Handle profile tap
-            context.pushNamed(RouteNames.contacts);
+            if (await FlutterContacts.requestPermission()) {
+              context.pushNamed(RouteNames.contacts);
+            } else {
+              NotificationService.showError(
+                  "Permission to access contacts is needed");
+            }
           },
         ),
       ),

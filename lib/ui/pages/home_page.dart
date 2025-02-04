@@ -18,12 +18,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
-  final GlobalKey<FeedsListScreenState> _feedsListScreenKey;
-  final GlobalKey<HomeScreenState> _homeScreenKey;
 
-  _HomePageState()
-      : _feedsListScreenKey = GlobalKey<FeedsListScreenState>(),
-        _homeScreenKey = GlobalKey<HomeScreenState>();
+  _HomePageState();
 
   late final List<Widget> _pages;
 
@@ -32,24 +28,16 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     PopupNotification.initialize(context);
     _pages = [
-      FeedsListScreen(key: _feedsListScreenKey),
-      HomeScreen(key: _homeScreenKey),
+      const FeedsListScreen(),
+      const HomeScreen(),
       const ChatScreen(),
     ];
   }
 
   void _onItemTapped(int index) {
-    if (_selectedIndex == index) {
-      if (index == 0) {
-        _feedsListScreenKey.currentState?.scrollToTop();
-      } else if (index == 1) {
-        _homeScreenKey.currentState?.scrollToTop();
-      }
-    } else {
-      setState(() {
-        _selectedIndex = index;
-      });
-    }
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   @override
@@ -63,7 +51,8 @@ class _HomePageState extends State<HomePage> {
 
     if (context.watch<ChatCubit>().state is ChatsLoaded) {
       final chatsState = context.watch<ChatCubit>().state as ChatsLoaded;
-      unreadchats = chatsState.chats.fold(0, (sum, chat) => sum + chat.unreadCount);
+      unreadchats =
+          chatsState.chats.fold(0, (sum, chat) => sum + chat.unreadCount);
     }
 
     return PopScope(

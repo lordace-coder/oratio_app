@@ -10,6 +10,7 @@ import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/helpers/user.dart';
 import 'package:oratio_app/networkProvider/users.dart';
+import 'package:oratio_app/services/servces.dart';
 import 'package:oratio_app/ui/pages/chat_page.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -26,12 +27,6 @@ class _ProfileVisitorPageState extends State<ProfileVisitorPage> {
   @override
   Widget build(BuildContext context) {
     context.read<ProfileDataCubit>().visitProfile(widget.id);
-    final currentUser = context
-        .read<PocketBaseServiceCubit>()
-        .state
-        .pb
-        .authStore
-        .model as RecordModel;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
@@ -52,8 +47,9 @@ class _ProfileVisitorPageState extends State<ProfileVisitorPage> {
                     child: CircularProgressIndicator.adaptive());
               }
               final data = state.guestProfile;
-              bool isfollowing =
-                  data!.user.getListValue('followers').contains(currentUser.id);
+              bool isfollowing = data!.user
+                  .getListValue('followers')
+                  .contains(getUser(context).id);
               final communities = data.community.where((e) {
                 return e.getStringValue('leader') == data.user.id;
               }).toList();
@@ -167,7 +163,6 @@ class _ProfileVisitorPageState extends State<ProfileVisitorPage> {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    //check if users have already connected ,then allow them to chat each other
                                     isfollowing
                                         ? _buildActionButton(
                                             "Message", FontAwesomeIcons.message,

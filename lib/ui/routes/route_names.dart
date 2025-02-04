@@ -4,6 +4,7 @@ class RouteNames {
   static String notifications = 'notifications';
   static String contacts = 'contacts';
   static String profile = 'profile';
+  static String bookRetreat = 'bookRetreat';
   static String communityLivePage = 'communityLivePage';
   static String hostCommunityLivePage = 'hostCommunityLivePage';
   static String signup = 'signuppage';

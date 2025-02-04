@@ -1,5 +1,7 @@
 // message_cubit.dart
 import 'dart:async';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oratio_app/services/chat/db/chat_hive.dart';
@@ -69,7 +71,6 @@ class MessageCubit extends Cubit<MessageState> {
       emit(state.copyWith(isLoading: true));
 
       if (!pb.authStore.isValid) return;
-      final currentUserId = pb.authStore.model.id;
       final response = await pb.collection('messages').getFullList(
             sort: '-created',
             filter:
@@ -86,16 +87,37 @@ class MessageCubit extends Cubit<MessageState> {
       for (var msg in messages) {
         if (!msg.received) {
           repository.messageBox.add(msg);
-          await pb.collection("messages").update(msg.id, body: {"recieved": true});
+          await pb
+              .collection("messages")
+              .update(msg.id, body: {"recieved": true});
         }
       }
 
+      // Cache messages
+      await _cacheMessages(otherUserId, messages);
     } catch (e) {
       emit(state.copyWith(
         error: e.toString(),
         isLoading: false,
       ));
     }
+  }
+
+  Future<void> _cacheMessages(
+      String userId, List<MessageModel> messages) async {
+    final prefs = await SharedPreferences.getInstance();
+    final encodedMessages =
+        messages.map((msg) => jsonEncode(msg.toJson())).toList();
+    await prefs.setStringList('cached_messages_$userId', encodedMessages);
+  }
+
+  Future<List<MessageModel>> _getCachedMessages(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final encodedMessages =
+        prefs.getStringList('cached_messages_$userId') ?? [];
+    return encodedMessages
+        .map((msg) => MessageModel.fromJson(jsonDecode(msg)))
+        .toList();
   }
 
   Future getSavedMessages(String otherUserId) async {
@@ -108,9 +130,7 @@ class MessageCubit extends Cubit<MessageState> {
       emit(MessageState(
         messages: results,
       ));
-    } catch (e) { 
-      
-     }
+    } catch (e) {}
   }
 
   Future<void> sendMessage({
@@ -128,7 +148,9 @@ class MessageCubit extends Cubit<MessageState> {
         created: DateTime.now(),
         read: false,
       );
-
+// Update state with new message
+      final updatedMessages = [newMessage, ...state.messages];
+      emit(state.copyWith(messages: updatedMessages));
       // Save locally first
       // await repository.saveUnreceivedMessage(newMessage);
 
@@ -139,15 +161,10 @@ class MessageCubit extends Cubit<MessageState> {
           "message": newMessage.message,
           "reciever": receiverId,
         });
-        // await repository.markMessageAsReceived(newMessage.id);
       } catch (e) {
         // Message will remain in local storage if send fails
         rethrow;
       }
-
-      // Update state with new message
-      final updatedMessages = [newMessage, ...state.messages];
-      emit(state.copyWith(messages: updatedMessages));
     } catch (e) {
       emit(state.copyWith(error: e.toString()));
     }

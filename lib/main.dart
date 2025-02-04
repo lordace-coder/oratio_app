@@ -89,9 +89,12 @@ void main() async {
   await Firebase.initializeApp();
 
   // OneSignal setup
-   OneSignal.Debug.setLogLevel(OSLogLevel.error);
+  OneSignal.Debug.setLogLevel(OSLogLevel.error);
   OneSignal.initialize('2e3b5f47-0603-448b-a864-f14fdecadbab');
   OneSignal.Notifications.requestPermission(true);
+  OneSignal.Notifications.addForegroundWillDisplayListener((event) {
+    event.preventDefault(); // Prevent notification from displaying
+  });
   final appDocumentDirectory = await getApplicationDocumentsDirectory();
 
   // Initialize Hive for local storage
@@ -243,7 +246,7 @@ class _MainAppState extends State<MainApp> {
     channel = WebSocketChannel.connect(
       Uri.parse('ws://bookmass.fly.dev/ws?uid=$userId'),
     );
-  
+
     channel!.stream.listen(
       (message) {
         debugPrint('Received: $message');

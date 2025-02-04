@@ -16,6 +16,7 @@ import 'package:oratio_app/ui/pages/post_detail_page.dart';
 import 'package:oratio_app/ui/pages/priest/live_page.dart';
 import 'package:oratio_app/ui/pages/priest/parish_transactions_page.dart';
 import 'package:oratio_app/ui/pages/search_page.dart';
+import 'package:oratio_app/ui/pages/utils/book_retreat.dart';
 import 'package:oratio_app/ui/routes/priest_shell_route.dart';
 import 'package:oratio_app/ui/screens/chat_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -201,6 +202,15 @@ class AppRouter {
                   name: RouteNames.communitypage,
                   builder: (context, state) =>
                       const AuthListener(child: CommunityPage()),
+                ),
+                GoRoute(
+                  path: '/book-retreat/:id/:parishName',
+                  name: RouteNames.bookRetreat,
+                  builder: (context, state) => AuthListener(
+                      child: RetreatBookingPage(
+                    parishId: state.pathParameters['id'].toString(),
+                    parishName: state.pathParameters['parishName'].toString(),
+                  )),
                 ),
                 GoRoute(
                   path: '/parishlistpage',

@@ -117,36 +117,6 @@ class PrayerRequestGroupService {
   }
 
   /// Subscribe to real-time updates for prayer requests
-  Stream<List<UserPrayerRequestGroup>> subscribeToUpdates() async* {
-    try {
-      // Initial data
-      yield await getGroupedPrayerRequests();
-
-      // Subscribe to real-time updates
-      final controller = StreamController<List<UserPrayerRequestGroup>>();
-
-      // Initial data
-      controller.add(await getGroupedPrayerRequests());
-
-      // Subscribe to real-time updates
-      final unsubscribe =
-          await pb.collection('prayer_requests').subscribe('*', (e) async {
-        // Add new grouped data whenever there's an update
-        controller.add(await getGroupedPrayerRequests());
-      });
-
-      // Close the controller when the stream is cancelled
-      controller.onCancel = () {
-        unsubscribe();
-        controller.close();
-      };
-
-      yield* controller.stream;
-    } catch (e) {
-      print('Error in subscription: $e');
-      rethrow;
-    }
-  }
 }
 
 class PrayerRequestCubit extends Cubit<List<UserPrayerRequestGroup>> {
@@ -155,12 +125,12 @@ class PrayerRequestCubit extends Cubit<List<UserPrayerRequestGroup>> {
   PrayerRequestCubit(this.service) : super([]) {
     _init();
   }
+  void refresh() async {
+    await _init();
+  }
 
   Future<void> _init() async {
     emit(await service.getGroupedPrayerRequests());
-    service.subscribeToUpdates().listen((groups) {
-      emit(groups);
-    });
   }
 
   Future<void> addPrayerRequest(String request, bool urgent) async {

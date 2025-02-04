@@ -4,6 +4,7 @@ import 'package:oratio_app/bloc/bible_readings/bible_reading_service.dart';
 import 'package:oratio_app/bloc/bible_readings/bible_verse.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:percent_indicator/percent_indicator.dart';
+import 'package:share_plus/share_plus.dart';
 
 class BibleReadingPage extends StatefulWidget {
   const BibleReadingPage({super.key});
@@ -33,14 +34,10 @@ class _BibleReadingPageState extends State<BibleReadingPage>
       for (var verse in data) {
         verses.add(BibleVerse.fromJson(verse));
       }
-      print(verses.length);
     } catch (e) {
-      print('Error loading Bible verses: $e');
       // Handle error appropriately
     } finally {
-      setState(() {
-        loading = false;
-      });
+      setState(() => loading = false);
     }
   }
 
@@ -271,7 +268,11 @@ class _BibleReadingPageState extends State<BibleReadingPage>
                                     Row(
                                       children: [
                                         const SizedBox(width: 8),
-                                        _buildIconButton(Icons.share_outlined),
+                                        _buildIconButton(Icons.share_outlined,onTap:(){
+                                          // share current bible reading
+                                          var text  = "${verses[index].reference} /n ${verses[index].text}";
+                                          Share.share(text);
+                                        }),
                                       ],
                                     ),
                                   ],
@@ -332,17 +333,20 @@ class _BibleReadingPageState extends State<BibleReadingPage>
     );
   }
 
-  Widget _buildIconButton(IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: AppColors.inputBoxGray,
-        shape: BoxShape.circle,
-      ),
-      child: Icon(
-        icon,
-        size: 20,
-        color: AppColors.textDarkDim,
+  Widget _buildIconButton(IconData icon,{required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap:onTap,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppColors.inputBoxGray,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          icon,
+          size: 20,
+          color: AppColors.textDarkDim,
+        ),
       ),
     );
   }

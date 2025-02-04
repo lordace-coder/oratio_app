@@ -21,4 +21,9 @@ class AppColors {
   static Color success = const Color(0xFF4CAF50);
   static Color error = const Color(0xFFE53935);
   static Color pending = const Color(0xFFFF9800);
+  static LinearGradient primaryGradient = LinearGradient(
+    colors: [const Color(0xFF8E2DE2), AppColors.primary],
+    begin: Alignment.centerLeft,
+    end: Alignment.centerRight,
+  );
 }

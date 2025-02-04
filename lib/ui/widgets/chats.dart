@@ -14,6 +14,7 @@ import 'package:oratio_app/services/contact_service.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/audio_message.dart';
 import 'package:video_player/video_player.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class CustomBubble extends StatelessWidget {
   final types.Message message;
@@ -478,6 +479,18 @@ class CustomBubble extends StatelessWidget {
   String _formatTime(int timestamp) {
     final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
     return DateFormat('HH:mm').format(date);
+  }
+
+  Future<void> cacheMessages(List<types.Message> messages) async {
+    final prefs = await SharedPreferences.getInstance();
+    final encodedMessages = messages.map((msg) => jsonEncode(msg.toJson())).toList();
+    await prefs.setStringList('cached_messages', encodedMessages);
+  }
+
+  Future<List<types.Message>> getCachedMessages() async {
+    final prefs = await SharedPreferences.getInstance();
+    final encodedMessages = prefs.getStringList('cached_messages') ?? [];
+    return encodedMessages.map((msg) => types.Message.fromJson(jsonDecode(msg))).toList();
   }
 }
 

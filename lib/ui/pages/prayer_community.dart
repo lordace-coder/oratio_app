@@ -436,7 +436,7 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                                   break;
                                 case 'invite':
                                   Share.shareUri(Uri.https("cathsapp.ng",
-                                      '/app${GoRouter.of(context).state!.fullPath!}'));
+                                      '/app/communityDetailPage/${widget.communityId}'));
                                   break;
                               }
                             },
@@ -578,7 +578,7 @@ class _CreatePostSectionState extends State<CreatePostSection> {
               TextButton(
                   onPressed: () {
                     Share.shareUri(Uri.https("cathsapp.ng",
-                        '/app${GoRouter.of(context).state!.fullPath!}'));
+                        '/app/communityDetailPage/${widget.communityId}'));
                   },
                   style: TextButton.styleFrom(
                       backgroundColor: Colors.grey.shade50),

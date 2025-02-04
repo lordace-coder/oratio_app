@@ -5,6 +5,7 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/blocs.dart';
+import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/helpers/snackbars.dart';
 import 'package:oratio_app/helpers/transaction_modal.dart';
 import 'package:oratio_app/networkProvider/booking_requests.dart';
@@ -347,7 +348,6 @@ AppBar createAppBar(BuildContext context,
 void showGiveOptions(BuildContext context) async {
   final pb = context.read<PocketBaseServiceCubit>().state.pb;
   final user = pb.authStore.model as RecordModel;
-  await pb.collection("users").authRefresh();
 
   /*
   !AVAILABLE REASONS
@@ -684,7 +684,6 @@ void showGiveOptions(BuildContext context) async {
         ],
       ),
     ),
-     
   );
 }
 
@@ -739,6 +738,111 @@ Widget buildGiveOption(
             size: 16,
             color: Colors.grey.shade400,
           ),
+        ],
+      ),
+    ),
+  );
+}
+
+void showDoMoreOptions(BuildContext context,
+    {bool showOfferingOption = false}) async {
+  final pb = context.read<PocketBaseServiceCubit>().state.pb;
+  final user = pb.authStore.model as RecordModel;
+
+  /*
+  !AVAILABLE REASONS
+  offering
+  tithe
+  seed
+   */
+  await showModalBottomSheet(
+    context: context,
+    showDragHandle: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    ),
+    builder: (context) => Padding(
+      padding: const EdgeInsets.all(10.0),
+      child: ListView(
+        shrinkWrap: true,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Do More',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              IconButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+                },
+                icon: const Icon(FontAwesomeIcons.xmark),
+              ),
+            ],
+          ),
+          const Gap(10),
+          buildGiveOption(
+            context,
+            icon: FontAwesomeIcons.church,
+            label: 'Book Retreat',
+            description: '',
+            onTap: () async {
+              // Handle book retreat
+              String? parishId = await showChurchSelect(context);
+              await context.read<ProfileDataCubit>().getMyProfile();
+              // allow user select desired parish
+              if (parishId != null) {
+                final profileState = context.read<ProfileDataCubit>().state;
+                // get parish details from profile
+                if (profileState is ProfileDataLoaded) {
+                  final selectedParish =
+                      (profileState).profile.parish.firstWhere((item) {
+                    return item.id == parishId;
+                  });
+                  context.pushNamed(RouteNames.bookRetreat, pathParameters: {
+                    "id": parishId,
+                    "parishName": selectedParish.getStringValue("name"),
+                  });
+                }
+                Navigator.of(context).pop();
+              } else {
+                NotificationService.showWarning(
+                    "Parish for the retreat has to be selected first");
+                Navigator.of(context).pop();
+              }
+            },
+          ),
+          const Gap(16),
+          buildGiveOption(context,
+              icon: FontAwesomeIcons.search,
+              label: 'Seek Counselors',
+              description: '', onTap: () async {
+            // Create a BuildContext that we can safely dispose later
+          }),
+          const Gap(16),
+          buildGiveOption(
+            context,
+            icon: FontAwesomeIcons.userMd,
+            label: 'Book Appointment',
+            description: 'Create an appointment with a Spiritual director.',
+            onTap: () async {},
+          ),
+          if (showOfferingOption) ...[
+            const Gap(16),
+            buildGiveOption(
+              context,
+              icon: FontAwesomeIcons.seedling,
+              label: 'Give Offering',
+              description: 'Give unto the lord.',
+              onTap: () async {
+                Navigator.of(context).pop();
+                showGiveOptions(context);
+              },
+            )
+          ]
         ],
       ),
     ),

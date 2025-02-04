@@ -4,7 +4,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/bloc/blocs.dart';
-import 'package:oratio_app/bloc/chat_cubit/chat_cubit.dart';
 import 'package:oratio_app/bloc/transactions_cubit/state.dart';
 import 'package:oratio_app/bloc/transactions_cubit/transaction_cubit.dart';
 import 'package:oratio_app/helpers/functions.dart';
@@ -49,12 +48,14 @@ class HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    context
-        .read<PocketBaseServiceCubit>()
-        .state
-        .pb
-        .collection('users')
-        .authRefresh();
+    Future.microtask(() async {
+      await context
+          .read<PocketBaseServiceCubit>()
+          .state
+          .pb
+          .collection('users')
+          .authRefresh();
+    });
     final user = context.read<PocketBaseServiceCubit>().state.pb.authStore.model
         as RecordModel;
     bool isPriest = user.getBoolValue('priest');
@@ -245,11 +246,33 @@ class HomeScreenState extends State<HomeScreen> {
                               onTap: () =>
                                   context.pushNamed(RouteNames.parishpage),
                             ),
-                            _buildSacredAction(
-                              icon: FontAwesomeIcons.handHoldingHeart,
-                              label: 'Give',
-                              onTap: () => showGiveOptions(context),
-                            ),
+                            if (isPriest)
+                              _buildSacredAction(
+                                  icon: FontAwesomeIcons.ellipsisVertical,
+                                  label: 'Do More',
+                                  onTap: () {
+                                    // TODO SHOW DO MORE
+                                    // list option to give offerings here as well ass the other do more options which include retreat,counselling,and appointment with spiritual director
+                                    showDoMoreOptions(context,
+                                        showOfferingOption: true);
+                                  })
+                            else
+                              _buildSacredAction(
+                                icon: FontAwesomeIcons.handHoldingHeart,
+                                label: 'Give',
+                                onTap: () => showGiveOptions(context),
+                              ),
+                            if (!isPriest)
+                              _buildSacredAction(
+                                  icon: FontAwesomeIcons.ellipsisVertical,
+                                  label: 'Do More',
+                                  onTap: () {
+                                    // TODO SHOW DO MORE
+                                    //  options which include retreat,counselling,and appointment with spiritual director
+                                    showDoMoreOptions(
+                                      context,
+                                    );
+                                  }),
                           ],
                         ),
                       ],
