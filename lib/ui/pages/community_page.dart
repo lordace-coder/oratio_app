@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -325,7 +326,7 @@ class _CommunityPageState extends State<CommunityPage> {
                   borderRadius: BorderRadius.circular(12),
                   image: community.image != null
                       ? DecorationImage(
-                          image: NetworkImage(community.image!),
+                          image: CachedNetworkImageProvider(community.image!),
                           fit: BoxFit.cover,
                           onError: (error, stack) {
                             debugPrint('error occured loading image $error');

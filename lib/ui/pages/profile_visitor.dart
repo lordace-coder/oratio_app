@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -119,8 +120,10 @@ class _ProfileVisitorPageState extends State<ProfileVisitorPage> {
                                                     state.guestProfile!.user) ==
                                             null
                                         ? null
-                                        : NetworkImage(getProfilePic(context,
-                                            user: state.guestProfile!.user)!),
+                                        : CachedNetworkImageProvider(
+                                            getProfilePic(context,
+                                                user:
+                                                    state.guestProfile!.user)!),
                                     child: getProfilePic(context,
                                                 user:
                                                     state.guestProfile!.user) ==

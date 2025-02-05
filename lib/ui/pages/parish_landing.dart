@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
@@ -80,7 +81,7 @@ class _ParishLandingPageState extends State<ParishLandingPage> {
                                       colorFilter: ColorFilter.mode(
                                           Colors.black.withOpacity(.5),
                                           BlendMode.darken),
-                                      image: NetworkImage(pb
+                                      image: CachedNetworkImageProvider(pb
                                           .getFileUrl(data,
                                               data.getStringValue('image'))
                                           .toString()),
@@ -176,7 +177,7 @@ class _ParishLandingPageState extends State<ParishLandingPage> {
                                       const Color(0xFF8E2DE2).withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(20),
                                   image: DecorationImage(
-                                      image: NetworkImage(pb
+                                      image: CachedNetworkImageProvider(pb
                                           .getFileUrl(
                                               data.expand['priest']!.first,
                                               data.expand['priest']!.first

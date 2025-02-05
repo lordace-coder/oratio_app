@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -144,7 +145,7 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
             leading: CircleAvatar(
               radius: 24,
               backgroundImage: widget.post.getAvatar(context) != null
-                  ? NetworkImage(widget.post.getAvatar(context)!)
+                  ? CachedNetworkImageProvider(widget.post.getAvatar(context)!)
                   : null,
               backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
               child: widget.post.getAvatar(context) != null
@@ -244,7 +245,7 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
                   borderRadius: BorderRadius.circular(12),
                   color: Theme.of(context).primaryColor.withOpacity(0.1),
                   image: DecorationImage(
-                    image: NetworkImage(widget.post.image!),
+                    image: CachedNetworkImageProvider(widget.post.image!),
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -455,7 +456,7 @@ class _PrayerRequestCardState extends State<PrayerRequestCard> {
               backgroundImage:
                   getProfilePic(context, user: _prayerRequest!.user) == null
                       ? null
-                      : NetworkImage(
+                      : CachedNetworkImageProvider(
                           getProfilePic(context, user: _prayerRequest!.user)!),
               backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
               child: getProfilePic(context, user: _prayerRequest!.user) == null

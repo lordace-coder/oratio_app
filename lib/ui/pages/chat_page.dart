@@ -1,5 +1,6 @@
 import 'dart:isolate';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_chat_ui/flutter_chat_ui.dart';
@@ -87,7 +88,16 @@ class _ChatPageState extends State<ChatPage> {
         prefs.getStringList('cached_messages_${widget.profile.userId}') ?? [];
     if (encodedMessages.isEmpty) return;
     final cachedMessages = encodedMessages
-        .map((msg) => types.Message.fromJson(jsonDecode(msg)))
+        .map((msg) {
+          try {
+            return types.Message.fromJson(
+                jsonDecode(msg) as Map<String, dynamic>);
+          } catch (e) {
+            print('Error decoding message: $e');
+            return null;
+          }
+        })
+        .whereType<types.Message>()
         .toList();
     setState(() {
       _messages.addAll(cachedMessages);
@@ -97,9 +107,7 @@ class _ChatPageState extends State<ChatPage> {
   static Future<void> _cacheMessages(List<dynamic> args) async {
     final String userId = args[1];
     final List<String> encodedMessages = args[0];
-    final prefs = await SharedPreferences.getInstance();
-    // final encodedMessages =
-    // _messages.map((msg) => jsonEncode(msg.toJson())).toList();
+    final prefs = args[2];
     await prefs.setStringList('cached_messages_$userId', encodedMessages);
     print(['cached messages', 'cached_messages_$userId', encodedMessages]);
   }
@@ -107,7 +115,8 @@ class _ChatPageState extends State<ChatPage> {
   Future<void> _handleMessageCache() async {
     final messages = _messages.map((msg) => jsonEncode(msg.toJson())).toList();
     final userId = widget.profile.userId;
-    await Isolate.spawn(_cacheMessages, [messages, userId]);
+    final pref = await SharedPreferences.getInstance();
+    await Isolate.spawn(_cacheMessages, [messages, userId, pref]);
   }
 
   @override
@@ -459,7 +468,7 @@ class _ChatPageState extends State<ChatPage> {
                   CircleAvatar(
                     radius: 20,
                     backgroundImage: getAvatarUrl() != null
-                        ? NetworkImage(getAvatarUrl()!)
+                        ? CachedNetworkImageProvider(getAvatarUrl()!)
                         : null,
                     backgroundColor: Theme.of(context).colorScheme.primary,
                     child: getAvatarUrl() != null

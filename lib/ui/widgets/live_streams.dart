@@ -60,7 +60,7 @@
 //               backgroundImage:
 //                   getProfilePic(context, user:user) == null
 //                       ? null
-//                       : NetworkImage(
+//                       : CachedNetworkImageProvider(
 //                           getProfilePic(context, user:user)!),
 //             child: index == 0
 //                 ? const Icon(Icons.add)

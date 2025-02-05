@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
@@ -285,7 +286,7 @@ class _StoryAvatar extends StatelessWidget {
                 ? null
                 : getProfilePic(context, user: user) == null
                     ? null
-                    : NetworkImage(getProfilePic(context, user: user)!),
+                    : CachedNetworkImageProvider(getProfilePic(context, user: user)!),
             child: index == 0
                 ? const Icon(Icons.add)
                 : user.getStringValue('avatar').isEmpty

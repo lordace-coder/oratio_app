@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -190,7 +191,7 @@ class _PrayerCommentBottomSheetState extends State<PrayerCommentBottomSheet> {
                               user: pb.authStore.model as RecordModel) ==
                           null
                       ? null
-                      : NetworkImage(getProfilePic(context,
+                      : CachedNetworkImageProvider(getProfilePic(context,
                           user: pb.authStore.model as RecordModel)!),
                 ),
                 const SizedBox(width: 12),
@@ -416,7 +417,7 @@ class _CommentBottomSheetState extends State<CommentBottomSheet> {
                               user: pb.authStore.model as RecordModel) ==
                           null
                       ? null
-                      : NetworkImage(getProfilePic(context,
+                      : CachedNetworkImageProvider(getProfilePic(context,
                           user: pb.authStore.model as RecordModel)!),
                   child: getProfilePic(context,
                               user: pb.authStore.model as RecordModel) ==
@@ -496,7 +497,8 @@ class CommentItem extends StatelessWidget {
             },
             child: CircleAvatar(
               radius: 20,
-              backgroundImage: img == null ? null : NetworkImage(img),
+              backgroundImage:
+                  img == null ? null : CachedNetworkImageProvider(img),
               child: img == null ? const Icon(FontAwesomeIcons.user) : null,
             ),
           ),
@@ -574,7 +576,6 @@ void showCommentSheet(BuildContext context, Post post) {
     builder: (context) => CommentBottomSheet(
       post: post,
     ),
-     
   );
 }
 
@@ -586,7 +587,6 @@ void showPrayerCommentSheet(BuildContext context, PrayerRequest post) {
     builder: (context) => PrayerCommentBottomSheet(
       post: post,
     ),
-     
   );
 }
 
@@ -716,7 +716,6 @@ Future<String?> showPrayerCommentOptions(BuildContext context) {
         ),
       ),
     ),
-     
   );
 }
 

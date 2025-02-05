@@ -302,7 +302,6 @@ class _MainAppState extends State<MainApp> {
   Future<void> initDeepLinks() async {
     _appLinks = AppLinks();
     _appLinks.getLatestLinkString().then((val) {
-      print('latest link is $val');
     });
     // Handle links
     _linkSubscription = _appLinks.stringLinkStream.listen((uri) {

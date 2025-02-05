@@ -1,6 +1,7 @@
 // message_cubit.dart
 import 'dart:async';
 import 'dart:convert';
+import 'dart:isolate';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -66,6 +67,20 @@ class MessageCubit extends Cubit<MessageState> {
     pb.collection('messages').unsubscribe();
   }
 
+  static Future<void> _recieveMessages(List args) async {
+    final messages = args.first as List<MessageModel>;
+    final repository = args[1] as MessageRepository;
+    final pb = args[2] as PocketBase;
+    for (var msg in messages) {
+      if (!msg.received) {
+        repository.messageBox.add(msg);
+        await pb
+            .collection("messages")
+            .update(msg.id, body: {"received": true});
+      }
+    }
+  }
+
   Future<void> loadMessages(String otherUserId) async {
     try {
       emit(state.copyWith(isLoading: true));
@@ -74,7 +89,7 @@ class MessageCubit extends Cubit<MessageState> {
       final response = await pb.collection('messages').getFullList(
             sort: '-created',
             filter:
-                'reciever.id = "$otherUserId" || sender.id = "$otherUserId"',
+                '(reciever = "$otherUserId" && sender = "${pb.authStore.model.id}") || (reciever = "${pb.authStore.model.id}" && sender = "$otherUserId")',
           );
       final messages =
           response.map((item) => MessageModel.fromPocketBase(item)).toList();
@@ -83,15 +98,8 @@ class MessageCubit extends Cubit<MessageState> {
         messages: messages,
         isLoading: false,
       ));
-
-      for (var msg in messages) {
-        if (!msg.received) {
-          repository.messageBox.add(msg);
-          await pb
-              .collection("messages")
-              .update(msg.id, body: {"recieved": true});
-        }
-      }
+      // make code run in an isolate
+      Isolate.spawn(_recieveMessages, [messages, repository, pb]);
 
       // Cache messages
       await _cacheMessages(otherUserId, messages);
@@ -148,7 +156,7 @@ class MessageCubit extends Cubit<MessageState> {
         created: DateTime.now(),
         read: false,
       );
-// Update state with new message
+      // Update state with new message
       final updatedMessages = [newMessage, ...state.messages];
       emit(state.copyWith(messages: updatedMessages));
       // Save locally first

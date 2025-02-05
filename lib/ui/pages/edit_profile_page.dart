@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
@@ -165,8 +166,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                 color: Colors.grey[200],
                                 image: getAvatar(context) != null
                                     ? DecorationImage(
-                                        image:
-                                            NetworkImage(getAvatar(context)!),
+                                        image: CachedNetworkImageProvider(
+                                            getAvatar(context)!),
                                         fit: BoxFit.cover,
                                       )
                                     : null),

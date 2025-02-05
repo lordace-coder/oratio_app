@@ -119,7 +119,8 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                                     image: data.image == null
                                         ? null
                                         : DecorationImage(
-                                            image: NetworkImage(data.image!),
+                                            image: CachedNetworkImageProvider(
+                                                data.image!),
                                             colorFilter: ColorFilter.mode(
                                                 Colors.black.withOpacity(0.5),
                                                 BlendMode.darken),
@@ -225,7 +226,7 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                                           borderRadius:
                                               BorderRadius.circular(20),
                                           image: DecorationImage(
-                                              image: NetworkImage(
+                                              image: CachedNetworkImageProvider(
                                                 getAvaterUrl(data.leader),
                                               ),
                                               fit: BoxFit.cover)),

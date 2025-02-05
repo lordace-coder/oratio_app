@@ -8,6 +8,7 @@ import 'package:oratio_app/helpers/transaction_modal.dart';
 import 'package:oratio_app/networkProvider/booking_requests.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/networkProvider/requests.dart';
+import 'package:oratio_app/networkProvider/users.dart';
 import 'package:oratio_app/services/servces.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
@@ -32,8 +33,6 @@ class _RetreatBookingPageState extends State<RetreatBookingPage> {
   String? donationId;
 
   // Dummy data for parish name and leader's name
-  final String parishName = "St. Peter's Church";
-  final String parishLeaderName = "Rev. John Doe";
 
   Future<void> selectDates() async {
     DateTime now = DateTime.now();
@@ -279,7 +278,7 @@ class _RetreatBookingPageState extends State<RetreatBookingPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            parishName,
+            widget.parishName,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -289,8 +288,8 @@ class _RetreatBookingPageState extends State<RetreatBookingPage> {
             try {
               final req = await pb
                   .collection("parish")
-                  .getOne(widget.parishId, fields: "name");
-              return req.getStringValue("name");
+                  .getOne(widget.parishId, expand: "priest");
+              return getFullName(req.expand['priest']!.first);
             } catch (e) {}
             return '';
           }(), builder: (context, snapshot) {
@@ -300,7 +299,7 @@ class _RetreatBookingPageState extends State<RetreatBookingPage> {
               return Container();
             }
             return Text(
-              'Leader: $parishLeaderName',
+              'Leader: ${snapshot.data}',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: Colors.grey[700],
                   ),

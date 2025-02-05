@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -95,7 +96,7 @@ class _SettingsPageState extends State<SettingsPage> {
                         child: CircleAvatar(
                           radius: 32,
                           backgroundImage: getAvatar(context) != null
-                              ? NetworkImage(getAvatar(context)!)
+                              ? CachedNetworkImageProvider(getAvatar(context)!)
                               : null,
                         ),
                       ),

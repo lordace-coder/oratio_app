@@ -12,6 +12,7 @@ import 'package:oratio_app/networkProvider/booking_requests.dart';
 import 'package:oratio_app/networkProvider/requests.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
+import 'package:oratio_app/ui/widgets/book_counselling.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class ChurchListTile extends StatelessWidget {
@@ -819,8 +820,15 @@ void showDoMoreOptions(BuildContext context,
           buildGiveOption(context,
               icon: FontAwesomeIcons.search,
               label: 'Seek Counselors',
-              description: '', onTap: () async {
+              description: '', onTap: () {
             // Create a BuildContext that we can safely dispose later
+            print("called");
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (context) => const CounselorSelectionModal(),
+            );
           }),
           const Gap(16),
           buildGiveOption(
@@ -828,7 +836,9 @@ void showDoMoreOptions(BuildContext context,
             icon: FontAwesomeIcons.userMd,
             label: 'Book Appointment',
             description: 'Create an appointment with a Spiritual director.',
-            onTap: () async {},
+            onTap: () async {
+              context.pushNamed(RouteNames.bookAppointment);
+            },
           ),
           if (showOfferingOption) ...[
             const Gap(16),

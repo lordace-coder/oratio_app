@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:confirm_dialog/confirm_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -288,7 +289,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                           CircleAvatar(
                             radius: 24,
                             backgroundImage: avatarUrl != null
-                                ? NetworkImage(avatarUrl)
+                                ? CachedNetworkImageProvider(avatarUrl)
                                 : null,
                             backgroundColor:
                                 Theme.of(context).primaryColor.withOpacity(0.1),
@@ -408,7 +409,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                             color:
                                 Theme.of(context).primaryColor.withOpacity(0.1),
                             image: DecorationImage(
-                              image: NetworkImage(
+                              image: CachedNetworkImageProvider(
                                 getAvatarUrl(
                                   context,
                                   record: data!,
@@ -550,7 +551,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                                 user: pb.authStore.model as RecordModel) ==
                             null
                         ? null
-                        : NetworkImage(getProfilePic(context,
+                        : CachedNetworkImageProvider(getProfilePic(context,
                             user: pb.authStore.model as RecordModel)!),
                     child: getProfilePic(context,
                                 user: pb.authStore.model as RecordModel) ==

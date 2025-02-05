@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -140,9 +141,10 @@ class _ProfilePageState extends State<ProfilePage> {
                                                       as RecordModel) ==
                                               null
                                           ? null
-                                          : NetworkImage(getProfilePic(context,
-                                              user: pb.authStore.model
-                                                  as RecordModel)!),
+                                          : CachedNetworkImageProvider(
+                                              getProfilePic(context,
+                                                  user: pb.authStore.model
+                                                      as RecordModel)!),
                                       child: getProfilePic(context,
                                                   user: pb.authStore.model
                                                       as RecordModel) ==

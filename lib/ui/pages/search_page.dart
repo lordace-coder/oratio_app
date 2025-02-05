@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
@@ -225,7 +226,7 @@ class ChatCard extends StatelessWidget {
               backgroundColor: Colors.grey[200],
               backgroundImage:
                   profilePicture != null && profilePicture!.isNotEmpty
-                      ? NetworkImage(profilePicture!)
+                      ? CachedNetworkImageProvider(profilePicture!)
                       : null,
               child: profilePicture == null
                   ? Text(

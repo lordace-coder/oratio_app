@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -203,7 +204,6 @@ class _PrayerCommunityCreationPageState
     }
   }
 
-
   Map<String, dynamic> _collectFormData() {
     return {
       'community': _communityNameController.text.trim(),
@@ -380,7 +380,7 @@ class _PrayerCommunityCreationPageState
                             leading: CircleAvatar(
                               backgroundImage:
                                   leader.getStringValue("avatar").isNotEmpty
-                                      ? NetworkImage(pb
+                                      ? CachedNetworkImageProvider(pb
                                           .getFileUrl(leader,
                                               leader.getStringValue("avatar"))
                                           .toString())
@@ -422,7 +422,7 @@ class _PrayerCommunityCreationPageState
                         CircleAvatar(
                           backgroundImage:
                               _selectedLeader?.getStringValue('avatar') != null
-                                  ? NetworkImage(pb
+                                  ? CachedNetworkImageProvider(pb
                                       .getFileUrl(
                                           _selectedLeader!,
                                           _selectedLeader!
