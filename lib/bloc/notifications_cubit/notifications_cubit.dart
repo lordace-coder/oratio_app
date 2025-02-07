@@ -6,7 +6,10 @@ part 'notifications_state.dart';
 class NotificationCubit extends Cubit<NotificationState> {
   final PocketBase _pocketBase;
   int _unreadCount = 0;
-  NotificationCubit(this._pocketBase) : super(NotificationInitial());
+  final Dio dio;
+  NotificationCubit(this._pocketBase) : super(NotificationInitial()){
+    this.dio = Dio(BaseOptions(baseUrl:_pocketBase.baseUrl,headers:{}));
+  }
 
   Future<void> fetchNotifications() async {
     try {
@@ -23,9 +26,7 @@ class NotificationCubit extends Cubit<NotificationState> {
   Future<void> deleteAllNotifications() async {
     try {
       emit(const NotificationLoaded([]));
-      for (var i in (state as NotificationLoaded).notifications) {
-        await _pocketBase.collection('notifications').delete(i.id);
-      }
+    final req = dio.delete("/notifications/deleteAll")
     } catch (e) {
       emit(NotificationError(e.toString()));
     }
