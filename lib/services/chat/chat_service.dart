@@ -1,5 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
+import 'dart:isolate';
 
 import 'package:pocketbase/pocketbase.dart';
 
@@ -13,111 +14,80 @@ class ChatService {
     try {
       if (!pb.authStore.isValid) return [];
       final currentUserId = (pb.authStore.model as RecordModel).id;
-      final messages = await pb.collection('messages').getList(
+      final recentChats = await pb.collection('recent_chats').getList(
             page: 1,
             perPage: 50,
-            filter:
-                'sender.id = "$currentUserId" || reciever.id = "$currentUserId"',
-            expand: 'sender,reciever',
+            filter: 'members ~ "$currentUserId"',
+            expand: 'members,sender',
             sort: '-created',
           );
 
-      final chatMap = <String, ChatPreview>{};
+      final Map<String, ChatPreview> chatMap = {};
 
-      for (final RecordModel message in messages.items) {
-        // Determine the other participant
-        final bool isSender = message.expand['sender']![0].id == currentUserId;
+      return recentChats.items.map<ChatPreview>((chat) {
+        final bool isSender = chat.expand['sender']![0].id == currentUserId;
         final RecordModel otherParticipant = isSender
-            ? message.expand['reciever']![0]
-            : message.expand['sender']![0];
+            ? chat.expand['members']!
+                .firstWhere((member) => member.id != currentUserId)
+            : chat.expand['sender']![0];
         final String otherParticipantId = otherParticipant.id;
 
-        // Create profile for other participant
         final Profile profile = Profile(
           user: otherParticipant,
           userId: otherParticipantId,
-          parish: [], // You'll need to fetch this from your actual data
+          parish: [],
           contact: otherParticipant.getStringValue('phone_number'),
-          community: [], // You'll need to fetch this from your actual data
+          community: [],
         );
 
-        String msg = message.getStringValue('message');
+        String msg = chat.getStringValue('message');
         if (msg == '{{file}}') {
-          msg = message.getStringValue('file');
+          msg = chat.getStringValue('file');
         }
-        // Format message preview with "You:" prefix if current user is sender
         String messagePreview = isSender ? 'You: $msg' : msg;
 
-        bool active = false;
-        String? lastSeen;
-        if (isSender) {
-          active =
-              message.expand['reciever']?.first.getBoolValue('active') == null
-                  ? false
-                  : message.expand['reciever']!.first.getBoolValue('active');
-          lastSeen =
-              message.expand['reciever']?.first.getStringValue('last_seen');
-          if (lastSeen != null) {
-            if (lastSeen.isEmpty) {
-              lastSeen = null;
-            }
-          }
-        } else {
-          active =
-              message.expand['sender']?.first.getBoolValue('active') == null
-                  ? false
-                  : message.expand['sender']!.first.getBoolValue('active');
-          lastSeen =
-              message.expand['sender']?.first.getStringValue('last_seen');
-          if (lastSeen != null) {
-            if (lastSeen.isEmpty) {
-              lastSeen = null;
-            }
-          }
+        bool active = otherParticipant.getBoolValue('active') ?? false;
+        String? lastSeen = otherParticipant.getStringValue('last_seen');
+        if (lastSeen.isEmpty ?? true) {
+          lastSeen = null;
         }
-        // Create or update chat preview
+
         if (!chatMap.containsKey(otherParticipantId)) {
           chatMap[otherParticipantId] = ChatPreview(
             participant: otherParticipantId,
             unreadCount: 0,
             preview: _truncateMessage(messagePreview),
-            lastMessageAt: DateTime.parse(message.created),
+            lastMessageAt: DateTime.parse(chat.created).toLocal(),
             profile: profile,
-            read: isSender ? message.getBoolValue('read') : false,
+            read: isSender ? chat.getBoolValue('read') : false,
             isSender: isSender,
             active: active,
           );
         }
 
-        // Update unread count
-        if (!message.getBoolValue('read') && !isSender) {
+        if (chat.getBoolValue('read') && !isSender) {
           chatMap[otherParticipantId]!.unreadCount++;
         }
 
-        // Update most recent message preview
         if (chatMap[otherParticipantId]!
             .lastMessageAt
-            .isBefore(DateTime.parse(message.created))) {
+            .isBefore(DateTime.parse(chat.updated).toLocal())) {
           chatMap[otherParticipantId] = chatMap[otherParticipantId]!.copyWith(
             preview: _truncateMessage(messagePreview),
-            lastMessageAt: DateTime.parse(message.created),
+            lastMessageAt: DateTime.parse(chat.created).toLocal(),
           );
         }
-      }
-
-      // Convert map to sorted list
-      return chatMap.values.toList()
-        ..sort((a, b) => b.lastMessageAt.compareTo(a.lastMessageAt));
+        return chatMap[otherParticipantId]!;
+      }).toList();
     } catch (e) {
       print('Error fetching recent chats: $e');
       return [];
     }
   }
 
-  String _truncateMessage(String message, {int maxLength = 50}) {
-    return message.length > maxLength
-        ? '${message.substring(0, maxLength)}...'
-        : message;
+  String _truncateMessage(String message) {
+    // Implement the message truncation logic here
+    return message.length > 50 ? '${message.substring(0, 50)}...' : message;
   }
 }
 
@@ -143,15 +113,16 @@ class ChatPreview {
     required this.isSender,
   });
 
-  ChatPreview copyWith(
-      {String? participant,
-      int? unreadCount,
-      bool active = false,
-      String? preview,
-      DateTime? lastMessageAt,
-      Profile? profile,
-      bool? read,
-      bool? isSender}) {
+  ChatPreview copyWith({
+    String? participant,
+    int? unreadCount,
+    bool active = false,
+    String? preview,
+    DateTime? lastMessageAt,
+    Profile? profile,
+    bool? read,
+    bool? isSender,
+  }) {
     return ChatPreview(
       participant: participant ?? this.participant,
       unreadCount: unreadCount ?? this.unreadCount,

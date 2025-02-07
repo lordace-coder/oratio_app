@@ -104,19 +104,12 @@ class _ChatPageState extends State<ChatPage> {
     });
   }
 
-  static Future<void> _cacheMessages(List<dynamic> args) async {
-    final String userId = args[1];
-    final List<String> encodedMessages = args[0];
-    final prefs = args[2];
-    await prefs.setStringList('cached_messages_$userId', encodedMessages);
-    print(['cached messages', 'cached_messages_$userId', encodedMessages]);
-  }
-
   Future<void> _handleMessageCache() async {
     final messages = _messages.map((msg) => jsonEncode(msg.toJson())).toList();
     final userId = widget.profile.userId;
-    final pref = await SharedPreferences.getInstance();
-    await Isolate.spawn(_cacheMessages, [messages, userId, pref]);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('cached_messages_$userId', messages);
+    print(['cached messages', 'cached_messages_$userId', messages]);
   }
 
   @override

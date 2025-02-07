@@ -1,14 +1,24 @@
+import 'dart:async';
+import 'dart:isolate';
+
 import 'package:bloc/bloc.dart';
+import 'package:flutter/foundation.dart';
 import 'package:oratio_app/popup_notification/popup_notification.dart';
 import 'package:pocketbase/pocketbase.dart';
+import 'package:dio/dio.dart';
 part 'notifications_state.dart';
+
+enum NotificationAction { read, delete }
 
 class NotificationCubit extends Cubit<NotificationState> {
   final PocketBase _pocketBase;
   int _unreadCount = 0;
-  final Dio dio;
-  NotificationCubit(this._pocketBase) : super(NotificationInitial()){
-    this.dio = Dio(BaseOptions(baseUrl:_pocketBase.baseUrl,headers:{}));
+  late Dio dio;
+  NotificationCubit(this._pocketBase) : super(NotificationInitial()) {
+    dio = Dio(BaseOptions(
+        baseUrl: _pocketBase.baseUrl,
+        headers: {"Authorization": "Bearer ${_pocketBase.authStore.token}"},
+        contentType: 'application/json'));
   }
 
   Future<void> fetchNotifications() async {
@@ -26,7 +36,7 @@ class NotificationCubit extends Cubit<NotificationState> {
   Future<void> deleteAllNotifications() async {
     try {
       emit(const NotificationLoaded([]));
-    final req = dio.delete("/notifications/deleteAll")
+      handleNotificationAction(NotificationAction.delete);
     } catch (e) {
       emit(NotificationError(e.toString()));
     }
@@ -44,16 +54,32 @@ class NotificationCubit extends Cubit<NotificationState> {
     }
   }
 
-  Future<void> markAsRead(String id) async {
+  static void deleteNotifications(List args) async {
+    final dio = args[0];
     try {
-      await _pocketBase
-          .collection('notifications')
-          .update(id, body: {'read': true});
-      final updatedNotification =
-          await _pocketBase.collection('notifications').getOne(id);
-      emit(NotificationUpdated(updatedNotification));
+      await dio.delete("/notifications/deleteAll");
     } catch (e) {
-      emit(NotificationError(e.toString()));
+      print("error e");
+    }
+  }
+
+  static void handleReadNotifications(List args) async {
+    final dio = args[0];
+    try {
+      await dio.get("/notifications/markAsRead");
+    } catch (e) {
+      print("error e");
+    }
+  }
+
+  void handleNotificationAction(NotificationAction action) async {
+    switch (action) {
+      case NotificationAction.delete:
+        await Isolate.spawn(deleteNotifications, [dio]);
+        break;
+      case NotificationAction.read:
+        await Isolate.spawn(handleReadNotifications, [dio]);
+      default:
     }
   }
 

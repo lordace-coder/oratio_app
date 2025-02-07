@@ -11,8 +11,28 @@ import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/church_widgets.dart';
 import 'package:pocketbase/pocketbase.dart';
 
-class NotificationPage extends StatelessWidget {
+class NotificationPage extends StatefulWidget {
   const NotificationPage({super.key});
+
+  @override
+  State<NotificationPage> createState() => _NotificationPageState();
+}
+
+class _NotificationPageState extends State<NotificationPage> {
+  @override
+  void initState() {
+    super.initState();
+    if (context.read<NotificationCubit>().state is NotificationLoaded) {
+      if ((context.read<NotificationCubit>().state as NotificationLoaded)
+          .notifications
+          .isEmpty) {
+        return;
+      }
+      context
+          .read<NotificationCubit>()
+          .handleNotificationAction(NotificationAction.read);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/bloc/chat_cubit/chat_cubit.dart';
+import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/popup_notification/popup_notification.dart';
+import 'package:oratio_app/services/app_update_service.dart';
 import 'package:oratio_app/ui/screens/chat_screen.dart';
 import 'package:oratio_app/ui/screens/feeds_page.dart';
 import 'package:oratio_app/ui/pages/home_screen.dart';
@@ -26,6 +27,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    AppUpdateService(getPocketBaseFromContext(context)).checkForUpdate(context);
     PopupNotification.initialize(context);
     _pages = [
       const FeedsListScreen(),
@@ -82,10 +84,9 @@ class _HomePageState extends State<HomePage> {
                 label: 'Check Up'),
           ],
           currentIndex: _selectedIndex,
-          selectedItemColor:
-              AppColors.primary, // Change the selected item color
-          unselectedItemColor: Colors.grey, // Change the unselected item color
-          backgroundColor: Colors.white, // Change the background color
+          selectedItemColor: AppColors.primary,
+          unselectedItemColor: Colors.grey,
+          backgroundColor: Colors.white,
           onTap: _onItemTapped,
         ),
       ),

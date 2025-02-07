@@ -37,6 +37,7 @@ import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:oratio_app/bloc/central_cubit/central_cubit.dart';
+import 'package:oratio_app/bloc/meta_data_cubit.dart';
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -204,6 +205,9 @@ void main() async {
             chatCubit: context.read<ChatCubit>(),
             pb: pb!,
           ),
+        ),
+        BlocProvider(
+          create: (context) => MetaDataCubit({}),
         ),
       ],
       child: MainApp(appRouter: appRouter),

@@ -58,8 +58,10 @@ class ChatCubit extends Cubit<ChatState> {
         emit(ChatLoading());
       }
       final chats = await _chatService.getRecentChats();
+      print([chats, 'cats']);
       emit(ChatsLoaded(chats));
     } catch (e) {
+      print(e);
       emit(ChatError('Failed to load chats: $e'));
     }
   }
@@ -90,9 +92,6 @@ class ChatCubit extends Cubit<ChatState> {
       if (context != null) {
         Navigator.of(context).pop();
       }
-
-      // Refresh chat list after sending message
-      await loadRecentChats();
     } catch (e) {
       if (context != null) {
         Navigator.of(context).pop();
@@ -123,7 +122,6 @@ class ChatCubit extends Cubit<ChatState> {
       }
 
       // Refresh chat list
-      await loadRecentChats();
     } catch (e) {
       emit(ChatError('Failed to mark messages as read: $e'));
       rethrow;
@@ -135,6 +133,8 @@ class ChatCubit extends Cubit<ChatState> {
     if (!_pb.authStore.isValid) return;
     final currentUserId = (_pb.authStore.model as RecordModel).id;
     _pb.collection('messages').subscribe('*', (e) {
+      loadRecentChats();
+
       if (e.action == 'create' && e.record != null) {
         final message = e.record!;
         if (message.getStringValue('sender') != currentUserId) {
@@ -143,8 +143,6 @@ class ChatCubit extends Cubit<ChatState> {
             msg = 'sent you a file';
           }
         }
-
-        loadRecentChats();
       }
     },
         filter: 'sender = "$currentUserId" || reciever = "$currentUserId"',
