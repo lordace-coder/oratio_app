@@ -12,6 +12,7 @@ class PrayerCommunity {
   List allMembers;
   RecordModel leader;
   String? image;
+  bool? isClosed;
   PrayerCommunity({
     required this.id,
     required this.community,
@@ -20,6 +21,7 @@ class PrayerCommunity {
     required this.allMembers,
     required this.leader,
     this.image,
+    this.isClosed,
   });
 
   PrayerCommunity copyWith({
@@ -58,7 +60,8 @@ class PrayerCommunity {
         description: map['description'] as String,
         members: map['members'] as int,
         allMembers: map['allMembers'] as List,
-        leader: RecordModel.fromJson(map['leader']));
+        leader: RecordModel.fromJson(map['leader']),
+        isClosed: map['isClosed']);
   }
 
   String toJson() => json.encode(toMap());

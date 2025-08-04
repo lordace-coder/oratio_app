@@ -41,9 +41,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
   Future<List<RecordModel>> getUserCommunities() async {
     final pb = getPocketBaseFromContext(context);
-    final communities = await pb
-        .collection('prayer_community')
-        .getList(filter: 'leader = "${pb.authStore.model.id}"');
+    final communities = await pb.collection('prayer_community').getList(
+        filter: 'isClosed = false && members ~ "${pb.authStore.model.id}" ');
     return communities.items;
   }
 

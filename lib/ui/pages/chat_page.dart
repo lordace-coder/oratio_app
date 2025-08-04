@@ -519,12 +519,6 @@ class _ChatPageState extends State<ChatPage> {
             ],
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.more_vert),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: Container(
         decoration: BoxDecoration(

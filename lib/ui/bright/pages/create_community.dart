@@ -46,6 +46,7 @@ class _PrayerCommunityCreationPageState
   RecordModel? _selectedLeader;
   bool _showLeaderSearch = true;
   RecordModel? community;
+  bool _isClosed = false;
 
   void getCommunity() async {}
 
@@ -209,6 +210,7 @@ class _PrayerCommunityCreationPageState
       'community': _communityNameController.text.trim(),
       'description': _descriptionController.text.trim(),
       'leader': _selectedLeader?.id,
+      'isClosed': _isClosed
       // 'leaderChurch': _selectedLeader?['church'],
     };
   }
@@ -489,6 +491,33 @@ class _PrayerCommunityCreationPageState
                   hint: 'Describe your community',
                   icon: Icons.description_outlined,
                   maxLines: 3,
+                ),
+                const SizedBox(height: 20),
+                // isClosed Toggle
+                Row(
+                  children: [
+                    Switch(
+                      value: _isClosed,
+                      onChanged: (val) {
+                        setState(() {
+                          _isClosed = val;
+                        });
+                      },
+                      activeColor: AppColors.primary,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        _isClosed
+                            ? 'Community is closed (only admins can post)'
+                            : 'Community is open (members can post)',
+                        style: TextStyle(
+                          color: AppColors.textDarkDim,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 20),
 

@@ -37,7 +37,7 @@ android {
     
     signingConfigs {
         release {
-            keyAlias 'my-release-key'
+            keyAlias 'my-key-alias'
             keyPassword 'lordace12'
             storeFile file('my-release-key.keystore')
             storePassword 'lordace12'
@@ -58,6 +58,7 @@ android {
             debuggable false
             minifyEnabled true
             shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
 }

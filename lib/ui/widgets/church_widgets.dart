@@ -840,19 +840,6 @@ void showDoMoreOptions(BuildContext context,
               context.pushNamed(RouteNames.bookAppointment);
             },
           ),
-          if (showOfferingOption) ...[
-            const Gap(16),
-            buildGiveOption(
-              context,
-              icon: FontAwesomeIcons.seedling,
-              label: 'Give Offering',
-              description: 'Give unto the lord.',
-              onTap: () async {
-                Navigator.of(context).pop();
-                showGiveOptions(context);
-              },
-            )
-          ]
         ],
       ),
     ),

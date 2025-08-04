@@ -88,6 +88,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     floating: true,
                     snap: true,
                     elevation: 0,
+                    automaticallyImplyLeading: false,
                     backgroundColor: Colors.transparent,
                     expandedHeight:
                         170, // Increased height to accommodate tab bar
@@ -578,16 +579,6 @@ class _ChatItemState extends State<ChatItem>
                                   fontSize: 12,
                                 ),
                               ),
-                            )
-                          else if (widget.chatPreview.unreadCount == 0 &&
-                              widget.chatPreview.isSender!)
-                            Icon(
-                              widget.chatPreview.read == null ||
-                                      !widget.chatPreview.read!
-                                  ? Icons.done
-                                  : Icons.done_all,
-                              color: Colors.black.withOpacity(0.5),
-                              size: 20,
                             )
                         ],
                       ),

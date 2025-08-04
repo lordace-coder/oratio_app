@@ -75,7 +75,7 @@ class ContactsPage extends StatelessWidget {
                           ),
                         );
                       } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return const Center(child: Text("No contacts found"));
+                        return const SizedBox();
                       } else {
                         final contactsOnApp = snapshot.data!;
                         return Column(
@@ -105,13 +105,6 @@ class ContactsPage extends StatelessWidget {
                       }
                     },
                   ),
-                  const Padding(
-                    padding: EdgeInsets.only(left: 10.0),
-                    child: Text(
-                      "Invite",
-                      style: TextStyle(fontSize: 18),
-                    ),
-                  ),
                   FutureBuilder<List<Map<String, String>>?>(
                     future: _contactService.getContacts(),
                     builder: (context, snapshot) {
@@ -133,21 +126,7 @@ class ContactsPage extends StatelessWidget {
                       } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                         return const Center(child: Text("No contacts found"));
                       } else {
-                        final contacts = snapshot.data!;
-                        return Column(
-                          children: contacts.map((contact) {
-                            return ListTile(
-                              title: Text(contact['name']!),
-                              subtitle: Text(contact['phone']!),
-                              trailing: ElevatedButton(
-                                onPressed: () {
-                                  // Implement invite functionality here
-                                },
-                                child: const Text("Invite"),
-                              ),
-                            );
-                          }).toList(),
-                        );
+                        return SizedBox();
                       }
                     },
                   ),

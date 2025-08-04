@@ -63,7 +63,7 @@ class _SignupPageState extends State<SignupPage> {
     try {
       final pb = context.read<PocketBaseServiceCubit>().state.pb;
       Map<String, dynamic> data = {
-        "username": usernameController.text.trim(),
+        "username": usernameController.text.trim().replaceAll(' ', ''),
         "email": emailController.text.trim(),
         "password": passwordController.text.trim(),
         "passwordConfirm": confirmPassword.text.trim(),

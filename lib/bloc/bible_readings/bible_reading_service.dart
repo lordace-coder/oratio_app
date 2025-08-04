@@ -27,7 +27,6 @@ class BibleReadingService {
     return List<Map<dynamic, dynamic>>.from(readings);
   }
 
-
 // Add this method to your BibleReadingService class
   Future<String> getLastUpdateTimeAgo() async {
     final box = await _openBox();
@@ -57,10 +56,18 @@ class BibleReadingService {
       return 'Just now';
     }
   }
-  // Check if readings need to be updated (older than 7 days)
+
+  // Check if readings need to be updated (older than 1 day)
   Future<bool> needsUpdate() async {
     final box = await _openBox();
-    return (await getReadings()).isEmpty;
+    final readings = await getReadings();
+    if (readings.isEmpty) return true;
+    final timestamp = box.get(timestampKey);
+    if (timestamp == null) return true;
+    final lastUpdate = DateTime.parse(timestamp);
+    final now = DateTime.now();
+    final difference = now.difference(lastUpdate);
+    return difference.inDays >= 1;
   }
 
   // Update readings if needed

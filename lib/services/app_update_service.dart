@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-const AppVersion = 1.0;
+const AppVersion = 4.0;
 
 class AppUpdateService {
   final PocketBase pb;
@@ -124,7 +124,8 @@ class ForceUpdateDialog extends StatelessWidget {
               ElevatedButton(
                 onPressed: () async {
                   if (await canLaunchUrl(Uri.parse(url))) {
-                    launchUrl(Uri.parse(url));
+                    launchUrl(Uri.parse(url),
+                        mode: LaunchMode.externalApplication);
                   }
                 },
                 style: ElevatedButton.styleFrom(

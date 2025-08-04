@@ -14,6 +14,7 @@ class TextFieldd extends StatefulWidget {
       this.labelTextStyle,
       this.inputTextStyle,
       this.decoration,
+      this.onChange,
       this.bg});
   final String labeltext;
   final String hintText;
@@ -24,6 +25,7 @@ class TextFieldd extends StatefulWidget {
   final TextStyle? inputTextStyle;
   final InputDecoration? decoration;
   final Color? bg;
+  final Function(String)? onChange;
   @override
   State<TextFieldd> createState() => _TextFielddState();
 }
@@ -50,6 +52,8 @@ class _TextFielddState extends State<TextFieldd> {
                 color: AppColors.dimGray,
                 borderRadius: BorderRadius.circular(5)),
             child: TextField(
+              onChanged: widget.onChange,
+
               keyboardType: widget.inputType,
               obscureText: widget.isPassword ? isvisible : false,
               style: widget.inputTextStyle ??

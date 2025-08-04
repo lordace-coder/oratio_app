@@ -53,83 +53,280 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
   final List<MassBooking> _massBookings = [];
   RecordModel? myParish;
 
+  // Add tracking for debugging
+  void _trackError(String location, dynamic error, [StackTrace? stackTrace]) {
+    print('🔴 ERROR at $location: $error');
+    if (stackTrace != null) {
+      print('Stack trace: $stackTrace');
+    }
+  }
+
+  void _trackInfo(String location, String message) {
+    print('ℹ️ INFO at $location: $message');
+  }
+
+  void _trackData(String location, dynamic data) {
+    print('📊 DATA at $location: $data');
+  }
+
   @override
   void initState() {
     super.initState();
-    loadChurchForPriest();
-    _fetchMassBookings();
+    _trackInfo('initState', 'Initializing BookedMassesPage');
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    try {
+      await loadChurchForPriest();
+      await _fetchMassBookings();
+    } catch (e, stackTrace) {
+      _trackError('_initializeData', e, stackTrace);
+      setState(() {
+        _error = 'Failed to initialize data. Please try again.';
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> loadChurchForPriest() async {
-    final pb = getPocketBaseFromContext(context);
-    final userId = pb.authStore.model.id;
+    _trackInfo('loadChurchForPriest', 'Starting to load church for priest');
+
     try {
+      final pb = getPocketBaseFromContext(context);
+      final userId = pb.authStore.model?.id;
+
+      if (userId == null) {
+        throw Exception('User ID not found in auth store');
+      }
+
+      _trackData('loadChurchForPriest', 'User ID: $userId');
+
+      // Check the exact filter syntax - this might be the issue
       final record = await pb.collection('parish').getFirstListItem(
-            'priest = "$userId"',
+            'priest="$userId"', // Removed spaces around the = sign
           );
+
+      _trackData('loadChurchForPriest', 'Parish record found');
+
       setState(() {
         myParish = record;
       });
-    } catch (e) {
-      print('Error fetching parish: $e');
+
+      // Handle profile loading separately to avoid cascade failures
+      try {
+        final profile = context.read<ProfileDataCubit>();
+        await profile.getMyProfile();
+        _trackInfo(
+            'loadChurchForPriest', 'Successfully loaded church and profile');
+      } catch (profileError) {
+        _trackError('loadChurchForPriest',
+            'Profile loading failed but continuing: $profileError');
+        // Continue execution even if profile fails
+      }
+    } catch (e, stackTrace) {
+      _trackError('loadChurchForPriest', e, stackTrace);
+
+      // Since other pages work, this is likely a request-specific issue
+      if (e.toString().contains('ClientException')) {
+        throw Exception('Request failed. Check filter syntax or field names.');
+      }
+
+      rethrow;
     }
-    final profile = context.read<ProfileDataCubit>();
-    await profile.getMyProfile();
   }
 
   Future<void> _fetchMassBookings() async {
+    _trackInfo('_fetchMassBookings', 'Starting to fetch mass bookings');
+
     try {
       setState(() {
         _isLoading = true;
         _error = null;
       });
+
       if (myParish == null) {
+        _trackInfo('_fetchMassBookings', 'Parish not loaded, loading first');
         await loadChurchForPriest();
       }
 
+      if (myParish == null) {
+        throw Exception('No parish found for current priest');
+      }
+
       final pb = getPocketBaseFromContext(context);
+      _trackData('_fetchMassBookings', 'Parish ID: ${myParish!.id}');
+
+      // Keep your original request structure with corrected filter syntax
       final data = await pb.collection('mass_booking').getList(
-          filter: 'parish ="${myParish!.id}"',
-          expand: 'user, donation , parish');
-      // Simulate network delay
+            filter: 'parish="${myParish!.id}"', // Removed spaces around = sign
+            expand: 'user,donation,parish', // Removed spaces after commas
+          );
 
-      final List<MassBooking> bookings = data.items.map((z) {
-        var i = z.data;
-        MassStatus status = MassStatus.pending;
+      _trackData(
+          '_fetchMassBookings', 'Raw data items count: ${data.items.length}');
 
-        if (i['confirmed'] == true) {
-          status = MassStatus.accepted;
-        } else if (i['confirmed'] == false && i['used_callback'] == true) {
-          status = MassStatus.rejected;
+      final List<MassBooking> bookings = [];
+
+      for (int index = 0; index < data.items.length; index++) {
+        try {
+          final item = data.items[index];
+          _trackData(
+              '_fetchMassBookings', 'Processing item $index: ${item.id}');
+
+          final booking = _createMassBookingFromRecord(item);
+          bookings.add(booking);
+          _trackInfo('_fetchMassBookings',
+              'Successfully processed booking: ${booking.id}');
+        } catch (e, stackTrace) {
+          _trackError('_fetchMassBookings', 'Error processing item $index: $e',
+              stackTrace);
+          // Continue processing other items instead of failing completely
+          continue;
         }
-        return MassBooking(
-          id: z.id,
-          parish: z.expand['parish']!.first.getStringValue('name'),
-          time: DateTime.parse(z.getStringValue('time')),
-          intention: i['intention'],
-          attendees: [i['attendees']],
-          bookedBy: getFullName(z.expand['user']!.first),
-          donationAmount: z.expand['donation']!.first.getDoubleValue('amount'),
-          massType: i['mass_type'] as String?, // Make nullable
-          status: status,
-        );
-      }).toList();
+      }
 
       setState(() {
         _massBookings.clear();
         _massBookings.addAll(bookings);
         _isLoading = false;
       });
-    } catch (e) {
+
+      _trackInfo('_fetchMassBookings',
+          'Successfully fetched ${bookings.length} mass bookings');
+    } catch (e, stackTrace) {
+      _trackError('_fetchMassBookings', e, stackTrace);
+
+      String errorMessage = 'Failed to load mass bookings. Please try again.';
+
+      // Provide specific error messages for common network issues
+      if (e.toString().contains('Failed host lookup') ||
+          e.toString().contains('SocketException')) {
+        errorMessage =
+            'No internet connection. Please check your network and try again.';
+      } else if (e.toString().contains('ClientException')) {
+        errorMessage = 'Server connection failed. Please try again later.';
+      } else if (e.toString().contains('No parish found')) {
+        errorMessage =
+            'No parish assigned to your account. Please contact administrator.';
+      }
+
       setState(() {
-        _error = 'Failed to load mass bookings. Please try again.';
+        _error = errorMessage;
         _isLoading = false;
       });
+    }
+  }
+
+  MassBooking _createMassBookingFromRecord(RecordModel record) {
+    try {
+      final data = record.data;
+      _trackData(
+          '_createMassBookingFromRecord', 'Record data: ${data.toString()}');
+
+      // Safe extraction with type checking and null safety
+      MassStatus status = MassStatus.pending;
+      final confirmed = data['confirmed'];
+      final usedCallback = data['used_callback'];
+
+      if (confirmed == true) {
+        status = MassStatus.accepted;
+      } else if (confirmed == false && usedCallback == true) {
+        status = MassStatus.rejected;
+      }
+
+      // Extract parish name safely
+      String parishName = 'Unknown Parish';
+      try {
+        final parishExpand = record.expand?['parish'];
+        if (parishExpand != null && parishExpand.isNotEmpty) {
+          parishName = parishExpand.first.getStringValue('name');
+        }
+      } catch (e) {
+        _trackError(
+            '_createMassBookingFromRecord', 'Error extracting parish name: $e');
+      }
+
+      // Extract user name safely
+      String bookedByName = 'Unknown User';
+      try {
+        final userExpand = record.expand?['user'];
+        if (userExpand != null && userExpand.isNotEmpty) {
+          bookedByName = getFullName(userExpand.first);
+        }
+      } catch (e) {
+        _trackError(
+            '_createMassBookingFromRecord', 'Error extracting user name: $e');
+      }
+
+      // Extract donation amount safely
+      double donationAmount = 0.0;
+      try {
+        final donationExpand = record.expand?['donation'];
+        if (donationExpand != null && donationExpand.isNotEmpty) {
+          donationAmount = donationExpand.first.getDoubleValue('amount');
+        }
+      } catch (e) {
+        _trackError('_createMassBookingFromRecord',
+            'Error extracting donation amount: $e');
+      }
+
+      // Extract attendees safely
+      List<String> attendees = [];
+      try {
+        final attendeesData = data['attendees'];
+        if (attendeesData != null) {
+          if (attendeesData is String) {
+            attendees = [attendeesData];
+          } else if (attendeesData is List) {
+            attendees = attendeesData.map((e) => e.toString()).toList();
+          }
+        }
+      } catch (e) {
+        _trackError(
+            '_createMassBookingFromRecord', 'Error extracting attendees: $e');
+        attendees = ['Unknown'];
+      }
+
+      // Extract time safely - for now using current time, but you should parse the actual time
+      DateTime massTime = DateTime.now();
+      try {
+        final timeData =
+            data['time'] ?? data['scheduled_time'] ?? data['date_time'];
+        if (timeData != null) {
+          if (timeData is String) {
+            massTime = DateTime.tryParse(timeData) ?? DateTime.now();
+          }
+        }
+      } catch (e) {
+        _trackError(
+            '_createMassBookingFromRecord', 'Error extracting time: $e');
+      }
+
+      final booking = MassBooking(
+        id: record.id,
+        parish: parishName,
+        time: massTime,
+        intention: data['intention']?.toString() ?? 'No intention specified',
+        attendees: attendees,
+        bookedBy: bookedByName,
+        donationAmount: donationAmount,
+        massType: data['mass_type']?.toString(),
+        status: status,
+      );
+
+      _trackData(
+          '_createMassBookingFromRecord', 'Created booking: ${booking.id}');
+      return booking;
+    } catch (e, stackTrace) {
+      _trackError('_createMassBookingFromRecord', e, stackTrace);
       rethrow;
     }
   }
 
   void _showMassDetailsModal(MassBooking mass) {
+    _trackInfo('_showMassDetailsModal', 'Showing details for mass: ${mass.id}');
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -149,6 +346,7 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
         height: MediaQuery.of(context).size.height * 0.85,
         child: Column(
           children: [
+            // Enhanced header with gradient
             Container(
               padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
               decoration: BoxDecoration(
@@ -237,7 +435,7 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
                   const SizedBox(height: 20),
                   _buildDetailSection(
                     'Mass Type',
-                    mass.displayMassType, // Use the getter instead of direct access
+                    mass.displayMassType,
                     Icons.category_outlined,
                   ),
                   const SizedBox(height: 20),
@@ -255,56 +453,103 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
                   const SizedBox(height: 25),
                   _buildAttendeesSection(mass.attendees),
                   const SizedBox(height: 30),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () =>
-                              _updateMassStatus(mass, MassStatus.accepted),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.success,
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
+                  if (mass.status == MassStatus.pending) ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () =>
+                                _updateMassStatus(mass, MassStatus.accepted),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.success,
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              elevation: 2,
                             ),
-                            elevation: 0,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.check, color: Colors.white),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Accept',
+                                  style: GoogleFonts.nunito(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                          child: Text(
-                            'Accept',
+                        ),
+                        const SizedBox(width: 15),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () =>
+                                _updateMassStatus(mass, MassStatus.rejected),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 15),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                                side: BorderSide(color: AppColors.error),
+                              ),
+                              elevation: 2,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.close, color: AppColors.error),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Reject',
+                                  style: GoogleFonts.nunito(
+                                    color: AppColors.error,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(mass.status).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(15),
+                        border: Border.all(color: _getStatusColor(mass.status)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            mass.status == MassStatus.accepted
+                                ? Icons.check_circle
+                                : Icons.cancel,
+                            color: _getStatusColor(mass.status),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            mass.status == MassStatus.accepted
+                                ? 'Already Accepted'
+                                : 'Already Rejected',
                             style: GoogleFonts.nunito(
-                              color: Colors.white,
+                              color: _getStatusColor(mass.status),
                               fontWeight: FontWeight.w700,
                               fontSize: 16,
                             ),
                           ),
-                        ),
+                        ],
                       ),
-                      const SizedBox(width: 15),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () =>
-                              _updateMassStatus(mass, MassStatus.rejected),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                              side: BorderSide(color: AppColors.error),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: Text(
-                            'Reject',
-                            style: GoogleFonts.nunito(
-                              color: AppColors.error,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 16,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -314,10 +559,22 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
     );
   }
 
+  Color _getStatusColor(MassStatus status) {
+    switch (status) {
+      case MassStatus.pending:
+        return AppColors.pending;
+      case MassStatus.accepted:
+        return AppColors.success;
+      case MassStatus.rejected:
+        return AppColors.error;
+    }
+  }
+
   Widget _buildDetailSection(String title, String content, IconData icon) {
     if (title == 'Mass Type' && content.isEmpty) {
       content = DEFAULT_MASS_TYPE;
     }
+
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
@@ -419,46 +676,27 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
     );
   }
 
-  void _updateMassStatus(MassBooking mass, MassStatus status) async {
+  Future<void> _updateMassStatus(MassBooking mass, MassStatus status) async {
+    _trackInfo('_updateMassStatus', 'Updating mass ${mass.id} to $status');
+
     try {
       if (status == MassStatus.accepted) {
         await acceptMassRequest(context, mass.id);
       } else {
         await declineMassRequest(context, mass.id);
       }
-      NotificationService.showSuccess('Booking updated successfully');
-    } catch (e) {
-      return NotificationService.showError('Failed to update status');
-    }
-    setState(() {
-      mass.status = status;
-    });
-    Navigator.pop(context);
-  }
 
-  Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '$label: ',
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: Colors.deepPurple,
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 16),
-            ),
-          ),
-        ],
-      ),
-    );
+      setState(() {
+        mass.status = status;
+      });
+
+      Navigator.pop(context);
+      NotificationService.showSuccess('Booking updated successfully');
+      _trackInfo('_updateMassStatus', 'Successfully updated mass status');
+    } catch (e, stackTrace) {
+      _trackError('_updateMassStatus', e, stackTrace);
+      NotificationService.showError('Failed to update status');
+    }
   }
 
   Widget _buildLoadingCard() {
@@ -534,34 +772,75 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
 
   Widget _buildErrorView() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.error_outline, size: 48, color: AppColors.error),
-          const SizedBox(height: 16),
-          Text(
-            _error ?? 'An error occurred',
-            style: GoogleFonts.nunito(color: Colors.grey[600]),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: _fetchMassBookings,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.error.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Icon(
+                _error?.contains('internet') == true ||
+                        _error?.contains('network') == true
+                    ? Icons.wifi_off
+                    : _error?.contains('Server') == true
+                        ? Icons.cloud_off
+                        : Icons.error_outline,
+                size: 48,
+                color: AppColors.error,
               ),
             ),
-            child: Text(
-              'Retry',
+            const SizedBox(height: 16),
+            Text(
+              _error ?? 'An error occurred',
               style: GoogleFonts.nunito(
-                color: Colors.white,
+                color: Colors.grey[600],
+                fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
+              textAlign: TextAlign.center,
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            if (_error?.contains('internet') == true ||
+                _error?.contains('network') == true)
+              Text(
+                'Make sure you have an active internet connection',
+                style: GoogleFonts.nunito(
+                  color: Colors.grey[500],
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () async {
+                // Add a small delay to prevent rapid retries
+                await Future.delayed(const Duration(milliseconds: 500));
+                _fetchMassBookings();
+              },
+              icon: const Icon(Icons.refresh, color: Colors.white),
+              label: Text(
+                'Retry',
+                style: GoogleFonts.nunito(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -574,8 +853,7 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
       backgroundColor: AppColors.appBg,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        iconTheme:
-            const IconThemeData(color: Colors.white), // Makes back button white
+        iconTheme: const IconThemeData(color: Colors.white),
         title: Column(
           children: [
             Text(
@@ -619,6 +897,7 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
             icon: const Icon(Icons.filter_list_rounded),
             onPressed: () {
               // Add filter functionality here
+              _trackInfo('build', 'Filter button pressed');
             },
           ),
           const SizedBox(width: 8),
@@ -664,6 +943,17 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
                             onTap: () => _showMassDetailsModal(mass),
                             child: Container(
                               padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                gradient: LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    Colors.white,
+                                    Colors.grey.shade50,
+                                  ],
+                                ),
+                              ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -691,6 +981,7 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
                                           style: GoogleFonts.nunito(
                                             color: Colors.grey[600],
                                             fontSize: 14,
+                                            fontWeight: FontWeight.w600,
                                           ),
                                         ),
                                       ),
@@ -714,6 +1005,7 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
                                     style: GoogleFonts.nunito(
                                       fontSize: 16,
                                       color: Colors.black87,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                   const SizedBox(height: 16),
@@ -730,12 +1022,28 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
                                         ),
                                       ),
                                       const Spacer(),
-                                      Text(
-                                        '₦${mass.donationAmount.toStringAsFixed(2)}',
-                                        style: GoogleFonts.nunito(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w800,
-                                          color: AppColors.accent,
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color:
+                                              AppColors.accent.withOpacity(0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(20),
+                                          border: Border.all(
+                                            color: AppColors.accent
+                                                .withOpacity(0.3),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          '₦${mass.donationAmount.toStringAsFixed(2)}',
+                                          style: GoogleFonts.nunito(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w800,
+                                            color: AppColors.accent,
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -757,19 +1065,23 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
   Widget _buildStatusBadge(MassStatus status) {
     Color color;
     String text;
+    IconData icon;
 
     switch (status) {
       case MassStatus.pending:
         color = AppColors.pending;
         text = 'Pending';
+        icon = Icons.schedule;
         break;
       case MassStatus.accepted:
         color = AppColors.success;
         text = 'Accepted';
+        icon = Icons.check_circle;
         break;
       case MassStatus.rejected:
         color = AppColors.error;
         text = 'Rejected';
+        icon = Icons.cancel;
         break;
     }
 
@@ -780,13 +1092,20 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color, width: 1),
       ),
-      child: Text(
-        text,
-        style: GoogleFonts.nunito(
-          color: color,
-          fontWeight: FontWeight.w600,
-          fontSize: 12,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: GoogleFonts.nunito(
+              color: color,
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -107,9 +107,10 @@ class NotificationCubit extends Cubit<NotificationState> {
     if (_unreadCount != 0) return _unreadCount;
     if (state is NotificationLoaded) {
       // count unread notifications
+      List<RecordModel> d = (state as NotificationLoaded).notifications;
       return (state as NotificationLoaded)
           .notifications
-          .where((notification) => notification.getBoolValue('read'))
+          .where((notification) => !notification.getBoolValue('read'))
           .length;
     }
     return _unreadCount;
@@ -117,7 +118,6 @@ class NotificationCubit extends Cubit<NotificationState> {
 
   @override
   Future<void> close() {
-    // TODO: implement close
     _pocketBase.collection('notifications').unsubscribe('*');
     return super.close();
   }

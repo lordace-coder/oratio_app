@@ -13,6 +13,7 @@ import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/church_widgets.dart';
 import 'package:oratio_app/ui/widgets/home.dart';
 import 'package:pocketbase/pocketbase.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -35,6 +36,18 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   @override
+  void initState() {
+    Future.microtask(() async {
+      await context
+          .read<PocketBaseServiceCubit>()
+          .state
+          .pb
+          .collection('users')
+          .authRefresh();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
     final isSmallScreen = screenSize.width < 360;
@@ -48,14 +61,6 @@ class HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    Future.microtask(() async {
-      await context
-          .read<PocketBaseServiceCubit>()
-          .state
-          .pb
-          .collection('users')
-          .authRefresh();
-    });
     final user = context.read<PocketBaseServiceCubit>().state.pb.authStore.model
         as RecordModel;
     bool isPriest = user.getBoolValue('priest');
@@ -93,7 +98,7 @@ class HomeScreenState extends State<HomeScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Wallet',
+                          'Menu',
                           style: Theme.of(context)
                               .textTheme
                               .headlineMedium
@@ -237,8 +242,14 @@ class HomeScreenState extends State<HomeScreen> {
                               _buildSacredAction(
                                 icon: FontAwesomeIcons.desktop,
                                 label: 'Dashboard',
-                                onTap: () =>
-                                    context.pushNamed(RouteNames.dashboard),
+                                onTap: () async => {
+                                  if (await canLaunchUrl(Uri.parse(
+                                      "https://cathsapp.ng/priest?token=${pb.authStore.token}")))
+                                    {
+                                      launchUrl(Uri.parse(
+                                          "https://cathsapp.ng/priest?token=${pb.authStore.token}"))
+                                    }
+                                },
                               ),
                             _buildSacredAction(
                               icon: FontAwesomeIcons.church,
@@ -251,17 +262,9 @@ class HomeScreenState extends State<HomeScreen> {
                                   icon: FontAwesomeIcons.ellipsisVertical,
                                   label: 'Do More',
                                   onTap: () {
-                                    // TODO SHOW DO MORE
-                                    // list option to give offerings here as well ass the other do more options which include retreat,counselling,and appointment with spiritual director
                                     showDoMoreOptions(context,
                                         showOfferingOption: true);
-                                  })
-                            else
-                              _buildSacredAction(
-                                icon: FontAwesomeIcons.handHoldingHeart,
-                                label: 'Give',
-                                onTap: () => showGiveOptions(context),
-                              ),
+                                  }),
                             if (!isPriest)
                               _buildSacredAction(
                                   icon: FontAwesomeIcons.ellipsisVertical,

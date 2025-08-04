@@ -347,12 +347,13 @@ class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
                         try {
                           final amt = await showTransactionModal(
                               context,
-                              TransactionDetail("Donate",
+                              TransactionDetail("Send",
                                   handleTransaction: (context, data) {},
                                   onChange: (val) {},
-                                  icon: const Icon(FontAwesomeIcons.cashRegister),
-                                  title: 'Donate',
-                                  detail: 'Make a donation for the mass'));
+                                  icon:
+                                      const Icon(FontAwesomeIcons.cashRegister),
+                                  title: 'Stipends',
+                                  detail: ''));
                           // validate amount before creating donation
                           final parsedAmt = double.tryParse('$amt');
                           if (parsedAmt == null) {
@@ -371,8 +372,10 @@ class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
                             return showError(context,
                                 message: 'Donation amount cant be below ₦200');
                           }
-                          final res = await handleDonation(pb,
-                              {'amount': parsedAmt, 'userId': pb.authStore.model.id});
+                          final res = await handleDonation(pb, {
+                            'amount': parsedAmt,
+                            'userId': pb.authStore.model.id
+                          });
                           if (res == null) {
                             throw Exception(['Invalid donation data']);
                           }
@@ -381,12 +384,17 @@ class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
                             isDonating = false;
                           });
                           showSuccess(context,
-                              message: 'You have successfully donated ₦$parsedAmt');
+                              message:
+                                  'You have successfully donated ₦$parsedAmt');
                           return;
                         } catch (e) {
                           setState(() => isDonating = false);
-                          print([(e as DioException).response, e.requestOptions.data]);
-                          return showError(context, message: 'Error occurred $e');
+                          print([
+                            (e as DioException).response,
+                            e.requestOptions.data
+                          ]);
+                          return showError(context,
+                              message: 'Error occurred $e');
                         }
                       },
                 radius: 12,
@@ -415,7 +423,7 @@ class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
                         ),
                       const Gap(8),
                       Text(
-                        isDonating ? 'Processing...' : 'Donate Now',
+                        isDonating ? 'Processing...' : 'Stypends',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 16,
@@ -442,7 +450,8 @@ class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
                             message: 'Mass Intention cant be empty');
                       }
                       if (selectedUsers.isEmpty) {
-                        return showError(context, message: 'Add at least one attendee');
+                        return showError(context,
+                            message: 'Add at least one attendee');
                       }
 
                       // Create booking records for each selected date
@@ -465,12 +474,14 @@ class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
                             widget.data.finishTime!.minute,
                           );
 
-                          final res = await pb.collection("mass_booking").create(body: {
+                          final res =
+                              await pb.collection("mass_booking").create(body: {
                             "startTime": startDateTime.toIso8601String(),
                             "endTime": endDateTime.toIso8601String(),
                             "parish": widget.data.selectedChurch.id,
                             "intention": intention.text.trim(),
-                            "attendees": selectedUsers.map((u) => u.id).toList(),
+                            "attendees":
+                                selectedUsers.map((u) => u.id).toList(),
                             "user": userId,
                             "donation": donation,
                             "anonymous": anonymous,
@@ -495,7 +506,8 @@ class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
                         final err = e as ClientException;
                         print(e);
                         showError(context,
-                            message: 'Error occurred ${err.response['message']}');
+                            message:
+                                'Error occurred ${err.response['message']}');
                       }
                     }
                     setState(() => isBooking = false);

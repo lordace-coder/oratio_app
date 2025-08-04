@@ -73,8 +73,8 @@ class _HomePageState extends State<HomePage> {
           items: [
             const BottomNavigationBarItem(
                 icon: Icon(FontAwesomeIcons.rss), label: 'Feeds'),
-            const BottomNavigationBarItem(
-                icon: Icon(FontAwesomeIcons.wallet), label: 'Wallet'),
+            BottomNavigationBarItem(
+                icon: Icon(FontAwesomeIcons.bars), label: 'Menu'),
             BottomNavigationBarItem(
                 icon: Badge(
                     isLabelVisible: unreadchats > 0,

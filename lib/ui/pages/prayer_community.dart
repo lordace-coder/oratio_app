@@ -266,10 +266,11 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                             ),
                           ),
 
-                          if (isLeader)
-                            CreatePostSection(
-                              communityId: data.id,
-                            ),
+                          CreatePostSection(
+                            communityId: data.id,
+                            isLeader: isLeader,
+                          ),
+
                           // Description Section
                           if (data.description.isNotEmpty)
                             Container(
@@ -462,8 +463,10 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
 }
 
 class CreatePostSection extends StatefulWidget {
-  const CreatePostSection({super.key, required this.communityId});
+  const CreatePostSection(
+      {super.key, required this.communityId, required this.isLeader});
   final String communityId;
+  final bool isLeader;
   @override
   State<CreatePostSection> createState() => _CreatePostSectionState();
 }
@@ -553,29 +556,6 @@ class _CreatePostSectionState extends State<CreatePostSection> {
           const Gap(10),
           Row(
             children: [
-              // go live button
-              TextButton(
-                onPressed: () {
-                  context.pushNamed(RouteNames.hostCommunityLivePage,
-                      pathParameters: {"id": widget.communityId});
-                },
-                style:
-                    TextButton.styleFrom(backgroundColor: Colors.grey.shade50),
-                child: Row(
-                  children: [
-                    Icon(
-                      FontAwesomeIcons.tv,
-                      size: 14,
-                      color: AppColors.error,
-                    ),
-                    const Gap(8),
-                    const Text(
-                      'Go Live',
-                      style: TextStyle(color: Colors.black),
-                    )
-                  ],
-                ),
-              ),
               TextButton(
                   onPressed: () {
                     Share.shareUri(Uri.https("cathsapp.ng",
@@ -593,85 +573,86 @@ class _CreatePostSectionState extends State<CreatePostSection> {
                       )
                     ],
                   )),
-              TextButton(
-                  onPressed: () async {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        bool checked = false;
-                        return StatefulBuilder(
-                          builder: (context, setState) {
-                            return AlertDialog(
-                              title: Row(
-                                children: [
-                                  Icon(
-                                    FontAwesomeIcons.microphone,
-                                    color: AppColors.green,
-                                  ),
-                                  const Gap(8),
-                                  const Text('Announcement'),
-                                ],
-                              ),
-                              content: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Text(
-                                    'You are about to make an announcement to the entire community. Please ensure your message is clear and concise.',
-                                  ),
-                                  const Gap(16),
-                                  Row(
-                                    children: [
-                                      Checkbox(
-                                        value: checked,
-                                        onChanged: (bool? value) {
-                                          setState(() {
-                                            checked = value!;
-                                          });
-                                        },
-                                      ),
-                                      const Text('Don\'t show again'),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                  child: const Text('Cancel'),
+              if (widget.isLeader)
+                TextButton(
+                    onPressed: () async {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          bool checked = false;
+                          return StatefulBuilder(
+                            builder: (context, setState) {
+                              return AlertDialog(
+                                title: Row(
+                                  children: [
+                                    Icon(
+                                      FontAwesomeIcons.microphone,
+                                      color: AppColors.green,
+                                    ),
+                                    const Gap(8),
+                                    const Text('Announcement'),
+                                  ],
                                 ),
-                                TextButton(
-                                  onPressed: () {
-                                    _updateDontShowAgainPreference(checked);
-                                    _createAnnoucement();
-                                    Navigator.pop(context);
-                                  },
-                                  child: const Text('Confirm'),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Text(
+                                      'You are about to make an announcement to the entire community. Please ensure your message is clear and concise.',
+                                    ),
+                                    const Gap(16),
+                                    Row(
+                                      children: [
+                                        Checkbox(
+                                          value: checked,
+                                          onChanged: (bool? value) {
+                                            setState(() {
+                                              checked = value!;
+                                            });
+                                          },
+                                        ),
+                                        const Text('Don\'t show again'),
+                                      ],
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            );
-                          },
-                        );
-                      },
-                    );
-                  },
-                  style: TextButton.styleFrom(
-                      backgroundColor: Colors.grey.shade50),
-                  child: Row(
-                    children: [
-                      Icon(
-                        FontAwesomeIcons.microphone,
-                        size: 14,
-                        color: AppColors.green,
-                      ),
-                      const Gap(5),
-                      const Text(
-                        'Announcement',
-                        style: TextStyle(color: Colors.black),
-                      )
-                    ],
-                  ))
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      _updateDontShowAgainPreference(checked);
+                                      _createAnnoucement();
+                                      Navigator.pop(context);
+                                    },
+                                    child: const Text('Confirm'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                      );
+                    },
+                    style: TextButton.styleFrom(
+                        backgroundColor: Colors.grey.shade50),
+                    child: Row(
+                      children: [
+                        Icon(
+                          FontAwesomeIcons.microphone,
+                          size: 14,
+                          color: AppColors.green,
+                        ),
+                        const Gap(5),
+                        const Text(
+                          'Announcement',
+                          style: TextStyle(color: Colors.black),
+                        )
+                      ],
+                    ))
             ],
           )
         ],
