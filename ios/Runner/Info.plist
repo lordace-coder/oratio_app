@@ -51,6 +51,9 @@
 		<false/>
 		<key>NSCameraUsageDescription</key>
 		<string>This app needs camera access to scan QR codes</string>
+		<key>NSContactsUsageDescription</key>
+<string>This app needs access to your contacts to help you connect with friends</string>
+
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>This app needs photos access to get QR code from photo library</string>
 		<!-- iOS Permissions - Add to ios/Runner/Info.plist inside the <dict> tag -->
