@@ -1,7 +1,7 @@
 name: oratio_app
 description: "An app for booking mass, Making donations and getting closer to God"
 publish_to: "none"
-version: 0.1.0
+version: 0.1.0+4
 
 environment:
   sdk: ^3.5.2
