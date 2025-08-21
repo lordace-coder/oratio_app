@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:go_router/go_router.dart';
+import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/networkProvider/users.dart';
@@ -25,6 +26,7 @@ class _ConnectPageState extends State<ConnectPage>
   final ScrollController _scrollController = ScrollController();
   String _selectedFilter = 'All';
   bool _isScrolled = false;
+  bool _isLoading = false;
   List<RecordModel>? _users;
   int page = 1;
   String? search;
@@ -49,10 +51,34 @@ class _ConnectPageState extends State<ConnectPage>
   }
 
   void _onScroll() {
+    if (_scrollController.position.pixels ==
+        _scrollController.position.maxScrollExtent) {
+      // PAGE HAS REACHED THE END FETCH MORE USERS
+
+      getNextPage();
+    }
     if (_scrollController.offset > 0 && !_isScrolled) {
       setState(() => _isScrolled = true);
     } else if (_scrollController.offset <= 0 && _isScrolled) {
       setState(() => _isScrolled = false);
+    }
+  }
+
+  Future getNextPage() async {
+    if (_isLoading) {
+      return;
+    }
+    _isLoading = true;
+    page = page + 1;
+    try {
+      final nextPg = await listUsers(context, page: page);
+      setState(() {
+        _users = [...?_users, ...nextPg];
+      });
+    } catch (e) {
+      NotificationService.showWarning("Error Network Issue");
+    } finally {
+      _isLoading = false;
     }
   }
 
