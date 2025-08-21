@@ -155,47 +155,42 @@ class _ChatPageState extends State<ChatPage> {
 
   void _handleContactSelection() async {
     // Request permission to access contacts
-    PermissionStatus permissionStatus = await Permission.contacts.request();
 
-    if (permissionStatus.isGranted) {
-      // Open contact picker
-      Contact? contact = await ContactService.openDeviceContactPicker();
+    // Open contact picker
+    Contact? contact = await ContactService.openDeviceContactPicker();
 
-      if (contact != null) {
-        final contactData = {
-          'first_name': contact.name.first ?? '',
-          'last_name': contact.name.last ?? '',
-          'phone': contact.phones.isNotEmpty
-              ? contact.phones.first.number
-              : 'No phone number',
-          'email': contact.emails.isNotEmpty
-              ? contact.emails.first.address
-              : 'No email',
-        };
+    if (contact != null) {
+      final contactData = {
+        'first_name': contact.name.first ?? '',
+        'last_name': contact.name.last ?? '',
+        'phone': contact.phones.isNotEmpty
+            ? contact.phones.first.number
+            : 'No phone number',
+        'email': contact.emails.isNotEmpty
+            ? contact.emails.first.address
+            : 'No email',
+      };
 
-        final message = types.CustomMessage(
-          author: _user,
-          createdAt: DateTime.now().millisecondsSinceEpoch,
-          id: const Uuid().v4(),
-          metadata: contactData,
-        );
+      final message = types.CustomMessage(
+        author: _user,
+        createdAt: DateTime.now().millisecondsSinceEpoch,
+        id: const Uuid().v4(),
+        metadata: contactData,
+      );
 
-        NotificationService.showInfo('Sending contact...');
-        try {
-          contactData["metadata"] = "contact";
-          context.read<MessageCubit>().sendMessage(
-                message: jsonEncode(contactData),
-                receiverId: widget.profile.userId,
-              );
-        } catch (e) {
-          print(e);
-          NotificationService.showError('Contact send failed');
-        }
-
-        _addMessage(message);
+      NotificationService.showInfo('Sending contact...');
+      try {
+        contactData["metadata"] = "contact";
+        context.read<MessageCubit>().sendMessage(
+              message: jsonEncode(contactData),
+              receiverId: widget.profile.userId,
+            );
+      } catch (e) {
+        print(e);
+        NotificationService.showError('Contact send failed');
       }
-    } else {
-      NotificationService.showError('Permission to access contacts denied');
+
+      _addMessage(message);
     }
   }
 

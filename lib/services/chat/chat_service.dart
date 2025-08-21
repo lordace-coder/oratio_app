@@ -41,8 +41,19 @@ class ChatService {
         );
 
         String msg = chat.getStringValue('message');
+
         if (msg == '{{file}}') {
           msg = chat.getStringValue('file');
+        } else {
+          // HANDLE META MESAGES (like contacts sent etc)
+          try {
+            if (jsonDecode(msg) is Map) {
+              final metaMessage = jsonDecode(msg) as Map;
+              if (metaMessage['metadata'] == 'contact') {
+                msg = "Contact Info : ${metaMessage['first_name']}";
+              }
+            }
+          } catch (e) {}
         }
         String messagePreview = isSender ? 'You: $msg' : msg;
 

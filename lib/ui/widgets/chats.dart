@@ -380,7 +380,7 @@ class CustomBubble extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    contact['name'] ?? 'Unknown',
+                    contact['name'] ?? contact['first_name'] ?? 'Unknown',
                     style: TextStyle(
                       fontSize: 16,
                       color: isUser ? Colors.white : Colors.black,
@@ -396,13 +396,14 @@ class CustomBubble extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    contact['email'] ?? 'No email',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: isUser ? Colors.white : Colors.black,
+                  if (contact['email'].toString().isNotEmpty)
+                    Text(
+                      contact['email'] ?? 'No email',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isUser ? Colors.white : Colors.black,
+                      ),
                     ),
-                  ),
                 ],
               ),
             ],
@@ -461,7 +462,8 @@ class CustomBubble extends StatelessWidget {
                 ? Colors.white.withOpacity(0.5)
                 : Colors.black.withOpacity(0.5),
           ),
-        ),        if (isUser) ...[
+        ),
+        if (isUser) ...[
           const SizedBox(width: 4),
           if (isUser)
             Icon(
@@ -483,14 +485,17 @@ class CustomBubble extends StatelessWidget {
 
   Future<void> cacheMessages(List<types.Message> messages) async {
     final prefs = await SharedPreferences.getInstance();
-    final encodedMessages = messages.map((msg) => jsonEncode(msg.toJson())).toList();
+    final encodedMessages =
+        messages.map((msg) => jsonEncode(msg.toJson())).toList();
     await prefs.setStringList('cached_messages', encodedMessages);
   }
 
   Future<List<types.Message>> getCachedMessages() async {
     final prefs = await SharedPreferences.getInstance();
     final encodedMessages = prefs.getStringList('cached_messages') ?? [];
-    return encodedMessages.map((msg) => types.Message.fromJson(jsonDecode(msg))).toList();
+    return encodedMessages
+        .map((msg) => types.Message.fromJson(jsonDecode(msg)))
+        .toList();
   }
 }
 

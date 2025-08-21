@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -69,7 +70,7 @@ class ConnectivityCubit extends Cubit<bool> {
   Future<bool> _checkInternetConnection() async {
     try {
       final result = await InternetAddress.lookup('cathsapp.ng');
-      print([result.isNotEmpty ,result[0].rawAddress.isNotEmpty]);
+      print([result.isNotEmpty, result[0].rawAddress.isNotEmpty]);
       return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
     } catch (_) {
       return false;
@@ -88,6 +89,9 @@ void main() async {
   HttpOverrides.global = MyHttpOverrides();
 
   await Firebase.initializeApp();
+  // for ios status bar display
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+      overlays: [SystemUiOverlay.top, SystemUiOverlay.bottom]);
 
   // OneSignal setup
   OneSignal.Debug.setLogLevel(OSLogLevel.error);
@@ -305,12 +309,14 @@ class _MainAppState extends State<MainApp> {
 
   Future<void> initDeepLinks() async {
     _appLinks = AppLinks();
-    _appLinks.getLatestLinkString().then((val) {
-    });
+    _appLinks.getLatestLinkString().then((val) {});
     // Handle links
+    String editedUrl = '';
     _linkSubscription = _appLinks.stringLinkStream.listen((uri) {
       debugPrint('onAppLink: $uri');
-      openAppLink(uri.replaceFirst('https://www.cathsapp.ng/app', ''));
+      editedUrl = uri.replaceFirst('https://www.cathsapp.ng/app', '');
+      editedUrl = uri.replaceFirst('https://cathsapp.ng/app', '');
+      openAppLink(editedUrl);
     });
   }
 

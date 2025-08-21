@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:oratio_app/bloc/bible_readings/bible_reading_service.dart';
 import 'package:oratio_app/bloc/bible_readings/bible_verse.dart';
+import 'package:oratio_app/ui/bright/pages/create_community.dart';
+import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:percent_indicator/percent_indicator.dart';
-import 'package:share_plus/share_plus.dart';
 
 class BibleReadingPage extends StatefulWidget {
   const BibleReadingPage({super.key});
@@ -268,10 +270,16 @@ class _BibleReadingPageState extends State<BibleReadingPage>
                                     Row(
                                       children: [
                                         const SizedBox(width: 8),
-                                        _buildIconButton(Icons.share_outlined,onTap:(){
+                                        _buildIconButton(Icons.share_outlined,
+                                            onTap: () {
                                           // share current bible reading
-                                          var text  = "${verses[index].reference} /n ${verses[index].text}";
-                                          Share.share(text);
+                                          final params = {
+                                            "heading": verses[index].reference,
+                                            "verse": verses[index].text
+                                          };
+                                          context.pushNamed(
+                                              RouteNames.shareBiblePassage,
+                                              extra: params);
                                         }),
                                       ],
                                     ),
@@ -333,9 +341,9 @@ class _BibleReadingPageState extends State<BibleReadingPage>
     );
   }
 
-  Widget _buildIconButton(IconData icon,{required VoidCallback onTap}) {
+  Widget _buildIconButton(IconData icon, {required VoidCallback onTap}) {
     return GestureDetector(
-      onTap:onTap,
+      onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(

@@ -16,6 +16,7 @@ import 'package:oratio_app/ui/pages/post_detail_page.dart';
 import 'package:oratio_app/ui/pages/priest/live_page.dart';
 import 'package:oratio_app/ui/pages/priest/parish_transactions_page.dart';
 import 'package:oratio_app/ui/pages/search_page.dart';
+import 'package:oratio_app/ui/pages/share_bible_passage.dart';
 import 'package:oratio_app/ui/pages/utils/book_appointment.dart';
 import 'package:oratio_app/ui/pages/utils/book_retreat.dart';
 import 'package:oratio_app/ui/routes/priest_shell_route.dart';
@@ -223,6 +224,16 @@ class AppRouter {
                   path: '/parishlistpage',
                   name: RouteNames.parishpage,
                   builder: (context, state) => const ParishListPage(),
+                ),
+                GoRoute(
+                  path: '/share-passage',
+                  name: RouteNames.shareBiblePassage,
+                  builder: (context, state) {
+                    return ShareBiblePassage(
+                      heading: (state.extra as Map)['heading'],
+                      verse: (state.extra as Map)['verse'],
+                    );
+                  },
                 ),
                 GoRoute(
                   path: '/auth/onboarding',

@@ -301,21 +301,6 @@ class _ParishLandingPageState extends State<ParishLandingPage> {
                               ),
                             ),
                           ),
-                          IconButton(
-                            onPressed: () {},
-                            icon: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(
-                                FontAwesomeIcons.ellipsisVertical,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                            ),
-                          ),
                         ],
                       ),
                     ),

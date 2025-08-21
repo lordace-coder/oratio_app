@@ -13,6 +13,8 @@ class ContactsPage extends StatelessWidget {
   ContactsPage({super.key});
   final TextEditingController _searchController = TextEditingController();
 
+
+
   final ContactService _contactService = ContactService();
 
   Future<void> _retryFetchContacts(BuildContext context) async {

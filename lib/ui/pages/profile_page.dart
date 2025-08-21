@@ -14,6 +14,7 @@ import 'package:oratio_app/networkProvider/users.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
+import 'package:share_plus/share_plus.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({
@@ -96,23 +97,50 @@ class _ProfilePageState extends State<ProfilePage> {
                           Positioned(
                             top: 16,
                             left: 16,
-                            child: Container(
-                              width: 35,
-                              height: 35,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: IconButton(
-                                onPressed: () => context.pop(),
-                                icon: const Icon(
-                                  FontAwesomeIcons.chevronLeft,
-                                  color: Colors.white,
-                                  size: 18,
+                            right: 16,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Container(
+                                  width: 35,
+                                  height: 35,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: IconButton(
+                                    onPressed: () => context.pop(),
+                                    icon: const Icon(
+                                      FontAwesomeIcons.chevronLeft,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                PopupMenuButton(
+                                  itemBuilder: (context) {
+                                    return [
+                                      PopupMenuItem(
+                                          onTap: () {
+                                            Share.share(
+                                                "Follow me up on CathsApp https://cathsapp.ng/app/profilevisitor/${pb.authStore.model.id}");
+                                          },
+                                          child: const Row(
+                                            children: [
+                                              Icon(Icons.share),
+                                              Gap(5),
+                                              Text("Share")
+                                            ],
+                                          ))
+                                    ];
+                                  },
+                                  color: Colors.white,
+                                  iconColor: Colors.white,
+                                )
+                              ],
                             ),
                           ),
+
                           // Profile Info
                           Center(
                             child: Column(

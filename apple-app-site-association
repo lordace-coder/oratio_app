@@ -1,0 +1,12 @@
+{
+    "applinks":{
+        "details":[
+            {
+                "appId":"TEAMID.com.acemedia.cathsapp",
+                "paths":[
+                    "/app/*"
+                ]
+            }
+        ]
+    }
+}
