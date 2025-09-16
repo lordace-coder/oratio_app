@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/helpers/functions.dart';
+import 'package:oratio_app/helpers/url_launcher.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/networkProvider/users.dart';
 import 'package:oratio_app/services/user_settings_service.dart';
@@ -328,14 +329,18 @@ class _SettingsPageState extends State<SettingsPage> {
         title: 'Terms and Conditions',
         subtitle: 'Read our terms and conditions',
         iconGradient: [Colors.red[400]!, Colors.orange[400]!],
-        onTap: openTermsAndConditions,
+        onTap: () {
+          openTermsUrl(context);
+        },
       ),
       _SettingsItem(
         icon: Icons.privacy_tip_outlined,
         title: 'App Privacy Policy',
         subtitle: 'Read our privacy policy',
         iconGradient: [Colors.green[400]!, Colors.teal[400]!],
-        onTap: openPrivacyPolicy,
+        onTap: () {
+          openPolicyUrl(context);
+        },
       ),
     ];
 

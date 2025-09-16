@@ -31,6 +31,10 @@ class _LoginPageState extends State<LoginPage> {
     return true;
   }
 
+  // TODO check if user has already logged in on device and suggest email so that user just needs his password
+  // TODO ALSO ALLOW USER TO TURN OF THIS FEATURE FROM SETTINGS
+  
+
   Future<void> _handleLogin(BuildContext context) async {
     if (isValid(context)) {
       try {
@@ -228,7 +232,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     GestureDetector(
-                      onTap: () async {},
+                      onTap: () => openPolicyUrl(context),
                       child: Text(
                         "Privacy Policy",
                         style: TextStyle(

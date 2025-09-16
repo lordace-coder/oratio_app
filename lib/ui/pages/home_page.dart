@@ -7,7 +7,7 @@ import 'package:oratio_app/popup_notification/popup_notification.dart';
 import 'package:oratio_app/services/app_update_service.dart';
 import 'package:oratio_app/ui/screens/chat_screen.dart';
 import 'package:oratio_app/ui/screens/feeds_page.dart';
-import 'package:oratio_app/ui/pages/home_screen.dart';
+import 'package:oratio_app/ui/screens/home_screen.dart';
 import 'package:oratio_app/ui/themes.dart';
 
 class HomePage extends StatefulWidget {
@@ -73,7 +73,7 @@ class _HomePageState extends State<HomePage> {
           items: [
             const BottomNavigationBarItem(
                 icon: Icon(FontAwesomeIcons.rss), label: 'Feeds'),
-            BottomNavigationBarItem(
+            const BottomNavigationBarItem(
                 icon: Icon(FontAwesomeIcons.bars), label: 'Menu'),
             BottomNavigationBarItem(
                 icon: Badge(
