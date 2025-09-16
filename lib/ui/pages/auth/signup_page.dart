@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
+import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/helpers/snackbars.dart';
 import 'package:oratio_app/helpers/url_launcher.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
@@ -383,7 +384,9 @@ class _SignupPageState extends State<SignupPage> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: () async {},
+                    onTap: () async {
+                      openPolicyUrl(context);
+                    },
                     child: Text(
                       "Privacy Policy",
                       style: TextStyle(

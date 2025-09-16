@@ -452,24 +452,6 @@ void openParish(BuildContext context, String id) {
   context.pushNamed(RouteNames.parishlanding, pathParameters: {'id': id});
 }
 
-void openTermsAndConditions() async {
-  var url = Uri.parse('https://oratioapp.com/terms-and-conditions');
-  // TODO FIX THIS WITH CORRECT URL
-  if (await canLaunchUrl(url)) {
-    launchUrl(url);
-  }
-}
-
-void openPrivacyPolicy() async {
-  var url = Uri.parse('https://oratioapp.com/policy');
-
-  // TODO FIX THIS WITH CORRECT URL
-  if (await canLaunchUrl(url)) {
-    launchUrl(
-      url,
-    );
-  }
-}
 
 
 

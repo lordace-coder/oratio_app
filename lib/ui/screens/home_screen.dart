@@ -247,7 +247,7 @@ class HomeScreenState extends State<HomeScreen> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Recent Offerings',
+                              'Pending Payments',
                               style: Theme.of(context)
                                   .textTheme
                                   .titleMedium
