@@ -32,9 +32,7 @@ class NotificationUpdated extends NotificationState {
 class NotificationError extends NotificationState {
   final String error;
 
-  NotificationError(this.error) {
-    print("notification error $error");
-  }
+  NotificationError(this.error) {}
 
   @override
   List<Object> get props => [error];

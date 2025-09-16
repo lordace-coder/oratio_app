@@ -100,7 +100,6 @@ Future<List<RecordModel>> getParishList(
   try {
     final results =
         await pb.collection('parish').getList(page: page, perPage: 60);
-    print(results);
     return results.items;
   } catch (e) {
     print(e);
@@ -142,7 +141,6 @@ Future<List<RecordModel>> findParish(BuildContext context,
   try {
     final results = await pb.collection('parish').getList(
         perPage: 60, filter: 'name ~ "$search" || location ~ "$search"  ');
-    print(results);
     return results.items;
   } catch (e) {
     print(e);

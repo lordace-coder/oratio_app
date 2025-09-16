@@ -112,103 +112,6 @@ class HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-                // Balance Section
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding:
-                        EdgeInsets.symmetric(horizontal: horizontalPadding),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Balance',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyLarge
-                                  ?.copyWith(
-                                    color: Colors.black.withOpacity(0.9),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                            ),
-                            GestureDetector(
-                              onTap: () =>
-                                  setState(() => showBalance = !showBalance),
-                              child: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Icon(
-                                  showBalance
-                                      ? FontAwesomeIcons.eye
-                                      : FontAwesomeIcons.eyeSlash,
-                                  color: Colors.black,
-                                  size: 16,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const Gap(16),
-                        FutureBuilder<String>(
-                            initialData: bal,
-                            future: getUserBalance(
-                                user.id,
-                                context
-                                    .read<PocketBaseServiceCubit>()
-                                    .state
-                                    .pb),
-                            builder: (context, snapshot) {
-                              if (snapshot.hasData) {
-                                bal = snapshot.data!;
-                                return Text(
-                                  showBalance
-                                      ? '${snapshot.data}'
-                                      : '• • • • • •',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .headlineMedium
-                                      ?.copyWith(
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                );
-                              }
-                              return Container();
-                            }),
-                        const Gap(24),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _buildActionButton(
-                                icon: FontAwesomeIcons.plus,
-                                label: 'Fund Account',
-                                onTap: () async {
-                                  await collectPayment(context);
-                                  setState(() {});
-                                },
-                              ),
-                            ),
-                            const Gap(12),
-                            Expanded(
-                              child: _buildActionButton(
-                                icon: FontAwesomeIcons.clockRotateLeft,
-                                label: 'Transaction History',
-                                onTap: () => context
-                                    .pushNamed(RouteNames.transactionsPage),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
                 // Sacred Actions Grid
                 SliverToBoxAdapter(
                   child: Padding(
@@ -217,14 +120,6 @@ class HomeScreenState extends State<HomeScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Services',
-                          style:
-                              Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                        ),
-                        const Gap(16),
                         GridView.count(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),

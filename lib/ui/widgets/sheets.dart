@@ -6,12 +6,11 @@ import 'package:gap/gap.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/bloc/booking_bloc/state.dart';
 import 'package:oratio_app/helpers/snackbars.dart';
-import 'package:oratio_app/helpers/transaction_modal.dart';
-import 'package:oratio_app/networkProvider/booking_requests.dart';
 import 'package:oratio_app/networkProvider/requests.dart';
 import 'package:oratio_app/ui/pages/pages.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/inputs.dart';
+import 'package:oratio_app/ui/widgets/payment_proof.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class MassBookBottomSheet extends StatefulWidget {
@@ -33,7 +32,7 @@ class MassBookBottomSheet extends StatefulWidget {
 }
 
 class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
-  String? donation;
+  RecordModel? payment_proof;
 
   ///used to track if the user wants mass booking option or not
   bool anonymous = false;
@@ -96,21 +95,25 @@ class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
               children: [
                 Row(
                   children: [
-                    const Text("Go Anonymous"),
-                    const Gap(10),
                     Tooltip(
                       message:
                           "Turn this on to hide your information during mass booking.",
-                      child: Container(
-                        padding: const EdgeInsets.all(3),
-                        decoration: BoxDecoration(
-                            color: Colors.black54,
-                            borderRadius: BorderRadius.circular(99)),
-                        child: const Icon(
-                          Icons.question_mark_rounded,
-                          size: 10,
-                          color: Colors.white,
-                        ),
+                      child: Row(
+                        children: [
+                          const Text("Go Anonymous"),
+                          const Gap(10),
+                          Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                                color: Colors.black54,
+                                borderRadius: BorderRadius.circular(99)),
+                            child: const Icon(
+                              Icons.question_mark_rounded,
+                              size: 10,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -127,7 +130,7 @@ class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
           }),
 
           const Gap(24),
-          if (donation != null) _buildSuccessMessage(),
+          if (payment_proof != null) _buildSuccessMessage(),
           const Gap(20),
           _buildActionButtons(context),
         ],
@@ -345,47 +348,17 @@ class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
                     : () async {
                         setState(() => isDonating = true);
                         try {
-                          final amt = await showTransactionModal(
-                              context,
-                              TransactionDetail("Send",
-                                  handleTransaction: (context, data) {},
-                                  onChange: (val) {},
-                                  icon:
-                                      const Icon(FontAwesomeIcons.cashRegister),
-                                  title: 'Stipends',
-                                  detail: ''));
-                          // validate amount before creating donation
-                          final parsedAmt = double.tryParse('$amt');
-                          if (parsedAmt == null) {
-                            return showError(context,
-                                message: 'Invalid amount entered');
-                          }
-                          // check for sufficient balance
-                          if (parsedAmt >
-                              double.tryParse(
-                                  '${snapshot.data}'.replaceAll('₦', ''))!) {
-                            return showError(context,
+                          final RecordModel? payment =
+                              await getPaymentProof(context);
+                          if (payment == null) {
+                            setState(() => isDonating = false);
+                          } else {
+                            showSuccess(context,
                                 message:
-                                    'Insufficient balance \n please fund account and try again');
+                                    'Proof of payment submitted succesfully');
+                            payment_proof = payment;
+                            setState(() => isDonating = false);
                           }
-                          if (parsedAmt < 200) {
-                            return showError(context,
-                                message: 'Donation amount cant be below ₦200');
-                          }
-                          final res = await handleDonation(pb, {
-                            'amount': parsedAmt,
-                            'userId': pb.authStore.model.id
-                          });
-                          if (res == null) {
-                            throw Exception(['Invalid donation data']);
-                          }
-                          setState(() {
-                            donation = res['recordId'];
-                            isDonating = false;
-                          });
-                          showSuccess(context,
-                              message:
-                                  'You have successfully donated ₦$parsedAmt');
                           return;
                         } catch (e) {
                           setState(() => isDonating = false);
@@ -437,21 +410,20 @@ class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
             }),
         const Gap(12),
         SubmitButtonV1(
-          ontap: (isBooking || donation == null)
+          ontap: (isBooking || payment_proof == null)
               ? null
               : () async {
                   setState(() => isBooking = true);
                   try {
                     final userId = pb.authStore.model.id;
-                    if (donation != null) {
+                    if (payment_proof != null) {
                       // validate form fields
                       if (intention.text.isEmpty) {
+                        setState(() {
+                          isBooking = false;
+                        });
                         return showError(context,
                             message: 'Mass Intention cant be empty');
-                      }
-                      if (selectedUsers.isEmpty) {
-                        return showError(context,
-                            message: 'Add at least one attendee');
                       }
 
                       // Create booking records for each selected date
@@ -483,7 +455,7 @@ class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
                             "attendees":
                                 selectedUsers.map((u) => u.id).toList(),
                             "user": userId,
-                            "donation": donation,
+                            "payment": payment_proof?.id,
                             "anonymous": anonymous,
                           });
 
@@ -520,7 +492,7 @@ class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
                   }
                 },
           radius: 12,
-          backgroundcolor: isBooking || donation == null
+          backgroundcolor: isBooking || payment_proof == null
               ? AppColors.greenDisabled
               : AppColors.green,
           child: Container(
@@ -565,9 +537,9 @@ class UserSelectionDialog extends StatefulWidget {
   final List<RecordModel> selectedUsers;
 
   const UserSelectionDialog({
-    Key? key,
+    super.key,
     required this.selectedUsers,
-  }) : super(key: key);
+  });
 
   @override
   State<UserSelectionDialog> createState() => _UserSelectionDialogState();

@@ -58,7 +58,6 @@ class ChatCubit extends Cubit<ChatState> {
         emit(ChatLoading());
       }
       final chats = await _chatService.getRecentChats();
-      print([chats, 'cats']);
       emit(ChatsLoaded(chats));
     } catch (e) {
       print(e);

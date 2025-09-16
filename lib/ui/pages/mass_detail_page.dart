@@ -191,18 +191,7 @@ class _MassDetailPageState extends State<MassDetailPage>
             widget.data.getMassTimeRange(context),
             widget.data.getMassDuration(),
           ),
-          // const Divider(color: Colors.white24, height: 24),
-          // _buildInfoRow(
-          //   FontAwesomeIcons.calendarDay,
-          //   'Every Sunday',
-          //   'Regular Mass Schedule',
-          // ),
-          // const Divider(color: Colors.white24, height: 24),
-          // _buildInfoRow(
-          //   FontAwesomeIcons.users,
-          //   '200 Capacity',
-          //   '120 Registered Today',
-          // ),
+        
         ],
       ),
     );
