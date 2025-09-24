@@ -35,7 +35,7 @@ class _ParishTransactionPageState extends State<ParishTransactionPage> {
 
   Future<void> _downloadTransactions() async {
     try {
-      final transactions = context.read<TransactionCubit>().state.transactions;
+      final transactions = context.read<TransactionCubit>().state.disputes;
       final pdf = pw.Document();
 
       pdf.addPage(
@@ -50,7 +50,7 @@ class _ParishTransactionPageState extends State<ParishTransactionPage> {
                 pw.SizedBox(height: 20),
                 ...transactions.map((transaction) {
                   return pw.Text(
-                    '${transaction.title}: \$${transaction.amount} (${transaction.type.toString().split('.').last})',
+                    '${transaction.account_name}: \$${transaction.amount}',
                     style: const pw.TextStyle(fontSize: 16),
                   );
                 }),
@@ -193,17 +193,7 @@ class _ParishTransactionPageState extends State<ParishTransactionPage> {
                     child: Text('Failed to load transactions: ${state.error}'));
               }
 
-              final moneyIn = state.transactions
-                  .where((transaction) =>
-                      transaction.type == TransactionType.recieved)
-                  .fold(0.0,
-                      (sum, transaction) => sum + (transaction.amount ?? 0.0));
-
-              final moneyOut = state.transactions
-                  .where(
-                      (transaction) => transaction.type == TransactionType.sent)
-                  .fold(0.0,
-                      (sum, transaction) => sum + (transaction.amount ?? 0.0));
+            
 
               return ListView(
                 controller: _controller,
@@ -269,30 +259,7 @@ class _ParishTransactionPageState extends State<ParishTransactionPage> {
                           ],
                         ),
                         const Gap(20),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _SummaryCard(
-                                label: 'Money In',
-                                amount: currencyFormatter.format(moneyIn),
-                                icon: Icons.arrow_downward_rounded,
-                                iconColor: Colors.green[700]!,
-                                backgroundColor: Colors.green[50]!,
-                              ),
-                            ),
-                            const Gap(12),
-                            Expanded(
-                              child: _SummaryCard(
-                                label: 'Money Out',
-                                amount: currencyFormatter.format(moneyOut),
-                                icon: Icons.arrow_upward_rounded,
-                                iconColor: Colors.red[700]!,
-                                backgroundColor: Colors.red[50]!,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                    ],
                     ),
                   ),
                   const Gap(16),
@@ -303,7 +270,7 @@ class _ParishTransactionPageState extends State<ParishTransactionPage> {
                         ),
                   ),
                   const Gap(12),
-                  ...state.transactions.map((transaction) {
+                  ...state.disputes.map((transaction) {
                     return Container(
                       margin: const EdgeInsets.only(bottom: 8),
                       child: TransactionItem(transaction: transaction),

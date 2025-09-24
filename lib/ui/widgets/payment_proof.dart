@@ -157,6 +157,7 @@ class _PaymentProofModalState extends State<PaymentProofModal>
         'bank_name': selectedAccount?.bankName,
         'account_name': selectedAccount?.accountName,
         'currency': selectedAccount?.currency,
+        "user": pb.authStore.model.id
       };
 
       final List<http.MultipartFile> files = [];

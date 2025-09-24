@@ -11,7 +11,6 @@ Future<void> followUser(BuildContext context,
       'followers+': [pb.authStore.model.id]
     });
   } catch (e) {
-    // TODO show error here
     print('error following user $e');
   }
 }
@@ -39,5 +38,3 @@ bool isFollowing(String id, List followers) {
 String getFullName(RecordModel user) {
   return '${user.getStringValue('first_name')} ${user.getStringValue('last_name')}';
 }
-// TODO ADD FUNCTIONALITY TO SEARCH AND FILTER JUST PRIESTS AND JUST USERS
-

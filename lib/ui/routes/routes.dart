@@ -14,7 +14,6 @@ import 'package:oratio_app/ui/pages/create_new_post.dart';
 import 'package:oratio_app/ui/pages/edit_profile_page.dart';
 import 'package:oratio_app/ui/pages/post_detail_page.dart';
 import 'package:oratio_app/ui/pages/priest/live_page.dart';
-import 'package:oratio_app/ui/pages/priest/parish_transactions_page.dart';
 import 'package:oratio_app/ui/pages/search_page.dart';
 import 'package:oratio_app/ui/pages/share_bible_passage.dart';
 import 'package:oratio_app/ui/pages/utils/book_appointment.dart';
@@ -327,22 +326,7 @@ class AppRouter {
             builder: (context, state, child) => PriestShellRoute(child: child),
             routes: [
               // priest routes
-              GoRoute(
-                  path: '/priest/dashboard',
-                  name: RouteNames.dashboard,
-                  pageBuilder: (context, state) {
-                    return CustomTransitionPage(
-                      transitionDuration: const Duration(seconds: 1),
-                      transitionsBuilder:
-                          (context, animation, secondaryAnimation, child) {
-                        return FadeTransition(
-                          opacity: animation,
-                          child: const DashboardPage(),
-                        );
-                      },
-                      child: const DashboardPage(),
-                    );
-                  }),
+
               GoRoute(
                 path: '/priest/${RouteNames.massRequests}',
                 name: RouteNames.massRequests,
@@ -353,11 +337,7 @@ class AppRouter {
                 name: RouteNames.createEvent,
                 builder: (context, state) => const CreateEventPage(),
               ),
-              GoRoute(
-                path: '/priest/${RouteNames.parishTransactions}',
-                name: RouteNames.parishTransactions,
-                builder: (context, state) => const ParishTransactionsPage(),
-              ),
+
               GoRoute(
                 path: '/priest/${RouteNames.createCommunityPage}',
                 name: RouteNames.createCommunityPage,

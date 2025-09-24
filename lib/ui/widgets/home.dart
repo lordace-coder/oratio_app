@@ -51,7 +51,7 @@ class DashboardButton extends StatelessWidget {
 }
 
 class TransactionItem extends StatelessWidget {
-  final Transaction transaction;
+  final PaymentDispute transaction;
 
   const TransactionItem({super.key, required this.transaction});
 
@@ -61,39 +61,46 @@ class TransactionItem extends StatelessWidget {
       onTap: () {
         // context.pushNamed(RouteNames.transactionDetails, extra: transaction);
       },
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              offset: const Offset(0, 4),
+              blurRadius: 12,
+            ),
+          ],
+          border: Border.all(color: Colors.grey[100]!),
+        ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: _getTransactionColor(transaction.type).withOpacity(.3),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                _getTransactionIcon(transaction.type),
-                color: _getTransactionColor(transaction.type),
-                size: 20,
-              ),
-            ),
+            _buildStatusIcon(),
             const Gap(16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    transaction.title,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                    'Payment to ${transaction.account_name}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[800],
+                    ),
                   ),
+                  const Gap(4),
                   Text(
-                    transaction.transaction,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.grey.shade600,
-                        ),
+                    formatDateTimeToHoursAgo(transaction.created),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[500],
+                    ),
                   ),
+                  const Gap(8),
+                  _buildStatusBadge(),
                 ],
               ),
             ),
@@ -101,16 +108,18 @@ class TransactionItem extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '${transaction.type == TransactionType.recieved ? '+' : '-'} ₦${transaction.amount?.toStringAsFixed(2) ?? '0.00'}',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  '₦${transaction.amount.toStringAsFixed(2)}',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.grey[800],
+                  ),
                 ),
-                Text(
-                  formatDateTimeToHoursAgo(transaction.created),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey.shade600,
-                      ),
+                const Gap(4),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 12,
+                  color: Colors.grey[400],
                 ),
               ],
             ),
@@ -120,29 +129,42 @@ class TransactionItem extends StatelessWidget {
     );
   }
 
-  IconData _getTransactionIcon(TransactionType type) {
-    switch (type) {
-      case TransactionType.recieved:
-        return FontAwesomeIcons.arrowDown;
-      case TransactionType.sent:
-        return FontAwesomeIcons.arrowUp;
-      case TransactionType.transferred:
-        return FontAwesomeIcons.exchangeAlt;
-      default:
-        return FontAwesomeIcons.question;
-    }
+  Widget _buildStatusIcon() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: transaction.confirmed ? Colors.green[50] : Colors.orange[50],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(
+        transaction.confirmed
+            ? Icons.check_circle_outline
+            : Icons.schedule_outlined,
+        color: transaction.confirmed ? Colors.green[600] : Colors.orange[600],
+        size: 20,
+      ),
+    );
   }
 
-  Color _getTransactionColor(TransactionType type) {
-    switch (type) {
-      case TransactionType.recieved:
-        return Colors.green;
-      case TransactionType.sent:
-        return Colors.red;
-      case TransactionType.transferred:
-        return Colors.blue;
-      default:
-        return Colors.grey;
-    }
+  Widget _buildStatusBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: transaction.confirmed ? Colors.green[50] : Colors.orange[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color:
+              transaction.confirmed ? Colors.green[200]! : Colors.orange[200]!,
+        ),
+      ),
+      child: Text(
+        transaction.confirmed ? 'Confirmed' : 'Pending',
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: transaction.confirmed ? Colors.green[700] : Colors.orange[700],
+        ),
+      ),
+    );
   }
 }

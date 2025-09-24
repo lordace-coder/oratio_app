@@ -292,7 +292,7 @@ class HomeScreenState extends State<HomeScreen> {
                                   ),
                                 ),
                                 child: Column(
-                                  children: state.transactions
+                                  children: state.disputes
                                       .map((transaction) => TransactionItem(
                                           transaction: transaction))
                                       .take(3)

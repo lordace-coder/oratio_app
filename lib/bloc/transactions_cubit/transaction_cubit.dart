@@ -12,27 +12,21 @@ class TransactionCubit extends Cubit<TransactionState> {
 
   Future<void> fetchTransactions() async {
     try {
-      if (state.transactions.isEmpty) {
+      if (state.disputes.isEmpty) {
         emit(state.copyWith(status: TransactionStatus.loading));
       }
 
-      final now = DateTime.now();
-      final startOfMonth = DateTime(now.year, now.month, 1);
-      final endOfMonth = DateTime(now.year, now.month + 1, 0);
-
       final records =
-          await pocketBase.collection('transaction_history').getFullList(
+          await pocketBase.collection('payment_disputes').getFullList(
                 sort: '-created',
-                filter:
-                    'created >= "${DateFormat('yyyy-MM-dd').format(startOfMonth)}" && created <= "${DateFormat('yyyy-MM-dd').format(endOfMonth)}" ',
               );
 
       final transactions = records
-          .map((record) => Transaction.fromJson(record.toJson()))
+          .map((record) => PaymentDispute.fromMap(record.toJson()))
           .toList();
 
       emit(state.copyWith(
-        transactions: transactions,
+        disputes: transactions,
         status: TransactionStatus.success,
       ));
     } catch (e) {
@@ -44,9 +38,9 @@ class TransactionCubit extends Cubit<TransactionState> {
     }
   }
 
-Future<void> fetchParishTransactions() async {
+  Future<void> fetchParishTransactions() async {
     try {
-      if (state.transactions.isEmpty) {
+      if (state.disputes.isEmpty) {
         emit(state.copyWith(status: TransactionStatus.loading));
       }
 
@@ -62,11 +56,11 @@ Future<void> fetchParishTransactions() async {
               );
 
       final transactions = records
-          .map((record) => Transaction.fromJson(record.toJson()))
+          .map((record) => PaymentDispute.fromMap(record.toJson()))
           .toList();
 
       emit(state.copyWith(
-        transactions: transactions,
+        disputes: transactions,
         status: TransactionStatus.success,
       ));
     } catch (e) {
@@ -77,11 +71,4 @@ Future<void> fetchParishTransactions() async {
       rethrow;
     }
   }
-
-
-
-
-
-
-
 }

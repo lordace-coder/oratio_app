@@ -16,4 +16,3 @@ export 'connect_page.dart';
 export 'community_live_page.dart';
 export 'utils/contacts_page.dart';
 // priest pages
-export 'priest/dashboard_page.dart';

@@ -1,9 +1,11 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:oratio_app/helpers/snackbars.dart';
 import 'package:oratio_app/helpers/transaction_modal.dart';
 import 'package:oratio_app/networkProvider/booking_requests.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
@@ -14,6 +16,7 @@ import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/buttons.dart';
 import 'package:oratio_app/ui/widgets/church_widgets.dart';
+import 'package:oratio_app/ui/widgets/payment_proof.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class RetreatBookingPage extends StatefulWidget {
@@ -31,7 +34,8 @@ class _RetreatBookingPageState extends State<RetreatBookingPage> {
   TimeOfDay? finishTime;
   final _descriptionController = TextEditingController();
   String? donationId;
-
+  bool isDonating = false;
+  RecordModel? paymentProof;
   // Dummy data for parish name and leader's name
 
   Future<void> selectDates() async {
@@ -114,21 +118,25 @@ class _RetreatBookingPageState extends State<RetreatBookingPage> {
                     final pb = getPocketBaseFromContext(context);
                     final user = pb.authStore.model as RecordModel;
 
-                    final amt = await showTransactionModal(
-                      context,
-                      TransactionDetail("Give",
-                          handleTransaction: (context, data) {},
-                          onChange: (val) {},
-                          icon: const Icon(FontAwesomeIcons.cashRegister),
-                          title: 'Donation',
-                          detail: 'Donation For the Retreat'),
-                    );
-
-                    if (amt == null) {
-                      return NotificationService.showError(
-                        'Cancelled Transaction',
-                        duration: Durations.extralong4,
-                      );
+                    try {
+                      final RecordModel? payment =
+                          await getPaymentProof(context);
+                      if (payment == null) {
+                        setState(() => isDonating = false);
+                      } else {
+                        showSuccess(context,
+                            message: 'Proof of payment submitted succesfully');
+                        paymentProof = payment;
+                        setState(() => isDonating = false);
+                      }
+                      return;
+                    } catch (e) {
+                      setState(() => isDonating = false);
+                      print([
+                        (e as DioException).response,
+                        e.requestOptions.data
+                      ]);
+                      showError(context, message: 'Error occurred $e');
                     }
 
                     // Show loading modal
@@ -154,47 +162,14 @@ class _RetreatBookingPageState extends State<RetreatBookingPage> {
                         );
                       },
                     );
-
-                    // Process the transaction
-                    final parsedAmt = int.tryParse(amt);
-                    if (parsedAmt == null) {
-                      if (dialogContext != null) Navigator.pop(dialogContext!);
-                      return NotificationService.showError(
-                          'Invalid amount parsed');
-                    }
-
-                    if (parsedAmt >
-                        double.tryParse((await getUserBalance(user.id, pb))
-                            .replaceAll('₦', ''))!) {
-                      if (dialogContext != null) Navigator.pop(dialogContext!);
-                      return NotificationService.showError(
-                          'Insufficient balance \n please fund account and try again');
-                    }
-
-                    final donation = await handleDonation(pb,
-                        {'amount': parsedAmt, 'userId': pb.authStore.model.id});
-                    if (donation == null) {
-                      Navigator.pop(dialogContext!);
-                      NotificationService.showError(
-                          "Something went wrong ,Please contact customer service for a refund");
-
-                      return;
-                    }
-                    setState(() {
-                      donationId = donation["recordId"];
-                    });
-                    print([donation, 'donation']);
-                    Navigator.pop(dialogContext!);
-                    NotificationService.showSuccess(
-                        "Donation Sent succesfully");
                   }),
                 const Gap(20),
                 AnimatedOpacity(
                   duration: Durations.medium1,
-                  opacity: donationId == null ? 0.3 : 1,
+                  opacity: paymentProof == null ? 0.3 : 1,
                   child: buildGradientButton(
                       "Complete Booking", FontAwesomeIcons.atom, () async {
-                    if (donationId == null) {
+                    if (paymentProof == null) {
                       return NotificationService.showInfo(
                           "Please make a donation for the retreat first");
                     }
@@ -226,15 +201,23 @@ class _RetreatBookingPageState extends State<RetreatBookingPage> {
                       // handle submission here
                       final pb = getPocketBaseFromContext(context);
                       try {
+                        print(paymentProof?.id);
+
+                        if (paymentProof == null) {
+                          showError(context,
+                              message: 'pleae reupload payment proof');
+                          return;
+                        }
                         await handleRetreatBooking(pb: pb, data: {
-                          'donation': donationId,
+                          'payment': paymentProof?.id,
                           "user": getUser(context).id,
                           "startTime": selectedDates[0].toIso8601String(),
                           "endTime": selectedDates[1].toIso8601String(),
                           "description": _descriptionController.text.trim()
                         });
                         NotificationService.showSuccess(
-                            "Retreat Booking completed. You will get a feedback with more details later on.");
+                            "Retreat Booking completed. You will get a feedback with more details later on.",
+                            duration: const Duration(seconds: 5));
                         if (dialogContext != null) {
                           Navigator.of(dialogContext!).pop();
                         }
@@ -246,6 +229,7 @@ class _RetreatBookingPageState extends State<RetreatBookingPage> {
                         NotificationService.showError(
                             "An error occurred while booking retreat");
                         print(['error occurred $e']);
+                        rethrow;
                       }
                     }
                   }),

@@ -333,60 +333,53 @@ class _MainAppState extends State<MainApp> {
     return MaterialApp.router(
       debugShowCheckedModeBanner: false,
       title: 'Book Mass',
-      builder: (context, child) => AppLock(
-        builder: (context, arg) => ScaffoldMessenger(
-          child: BlocListener<ConnectivityCubit, bool>(
-            listener: (context, hasConnection) {
-              if (hasConnection) {
-                try {
-                  context.read<ChatCubit>().loadRecentChats();
-                  context.read<NotificationCubit>().fetchNotifications();
-                  context.read<NotificationCubit>().realtimeConnection();
-                } catch (e) {}
-              } else {
-                NotificationService.showError('No internet connection');
-              }
-            },
-            child: BlocBuilder<ConnectivityCubit, bool>(
-              builder: (context, hasConnection) {
-                if (!hasConnection) {
-                  return Scaffold(
-                    body: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.wifi_off,
-                              size: 48, color: AppColors.primary),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'No Internet Connection',
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 8),
-                          TextButton(
-                            onPressed: () {
-                              context
-                                  .read<ConnectivityCubit>()
-                                  .monitorConnection();
-                            },
-                            child: const Text('Retry'),
-                          ),
-                        ],
-                      ),
+      builder: (context, child) => ScaffoldMessenger(
+        child: BlocListener<ConnectivityCubit, bool>(
+          listener: (context, hasConnection) {
+            if (hasConnection) {
+              try {
+                context.read<ChatCubit>().loadRecentChats();
+                context.read<NotificationCubit>().fetchNotifications();
+                context.read<NotificationCubit>().realtimeConnection();
+              } catch (e) {}
+            } else {
+              NotificationService.showError('No internet connection');
+            }
+          },
+          child: BlocBuilder<ConnectivityCubit, bool>(
+            builder: (context, hasConnection) {
+              if (!hasConnection) {
+                return Scaffold(
+                  body: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.wifi_off,
+                            size: 48, color: AppColors.primary),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'No Internet Connection',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        TextButton(
+                          onPressed: () {
+                            context
+                                .read<ConnectivityCubit>()
+                                .monitorConnection();
+                          },
+                          child: const Text('Retry'),
+                        ),
+                      ],
                     ),
-                  );
-                }
-                return child!;
-              },
-            ),
+                  ),
+                );
+              }
+              return child!;
+            },
           ),
         ),
-        lockScreenBuilder: (context) => const LockScreen(),
-        backgroundLockLatency: const Duration(seconds: 9),
-        initiallyEnabled:
-            UserSettings(widget.appRouter.pref).appSettings.secureMode &&
-                widget.appRouter.opened(),
       ),
       color: AppColors.primary,
       routerConfig: widget.appRouter.appRouter(),

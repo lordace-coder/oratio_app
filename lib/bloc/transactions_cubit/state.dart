@@ -1,65 +1,113 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
+
 // transaction_model.dart
 
-enum TransactionType { sent, recieved, transferred }
-
-class Transaction {
+class PaymentDispute {
   final String id;
-  final String transaction;
-  final String title;
-  final bool read;
-  final bool successful;
-  final double? amount;
-  final TransactionType type;
+  final bool confirmed;
+  final String proof;
+  final int amount;
+  final String transaction_ref;
+  final String bank_name;
+  final String account_name;
   final DateTime created;
-
-  const Transaction({
+  PaymentDispute({
     required this.id,
-    required this.transaction,
-    required this.title,
-    required this.read,
-    required this.successful,
-    this.amount,
-    required this.type,
+    required this.confirmed,
+    required this.proof,
+    required this.amount,
+    required this.transaction_ref,
+    required this.bank_name,
+    required this.account_name,
     required this.created,
   });
 
-  factory Transaction.fromJson(Map<String, dynamic> json) {
-    return Transaction(
-      id: json['id'],
-      transaction: json['transaction'],
-      title: json['title'],
-      read: json['read'] ?? false,
-      successful: json['successful'] ?? false,
-      amount: json['amount']?.toDouble(),
-      type: getTransactionType(json['type'] as String),
-      created: DateTime.parse(json['created']),
+  PaymentDispute copyWith({
+    String? id,
+    bool? confirmed,
+    String? proof,
+    int? amount,
+    String? transaction_ref,
+    String? bank_name,
+    String? account_name,
+    DateTime? created,
+  }) {
+    return PaymentDispute(
+      id: id ?? this.id,
+      confirmed: confirmed ?? this.confirmed,
+      proof: proof ?? this.proof,
+      amount: amount ?? this.amount,
+      transaction_ref: transaction_ref ?? this.transaction_ref,
+      bank_name: bank_name ?? this.bank_name,
+      account_name: account_name ?? this.account_name,
+      created: created ?? this.created,
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
+  Map<String, dynamic> toMap() {
+    return <String, dynamic>{
       'id': id,
-      'transaction': transaction,
-      'title': title,
-      'read': read,
-      'successful': successful,
+      'confirmed': confirmed,
+      'proof': proof,
       'amount': amount,
-      'type': type.toString().split('.').last,
-      'created': created.toIso8601String(),
+      'transaction_ref': transaction_ref,
+      'bank_name': bank_name,
+      'account_name': account_name,
+      'created': created.millisecondsSinceEpoch,
     };
   }
 
-  static TransactionType getTransactionType(String type) {
-    switch (type) {
-      case 'sent':
-        return TransactionType.sent;
-      case 'recieved':
-        return TransactionType.recieved;
-      case 'transferred':
-        return TransactionType.transferred;
-      default:
-        throw ArgumentError('Invalid transaction type: $type');
-    }
+  factory PaymentDispute.fromMap(Map<String, dynamic> map) {
+    debugPrint("map data $map");
+    return PaymentDispute(
+      id: map['id'] as String,
+      confirmed: map['confirmed'] as bool,
+      proof: map['proof'] as String,
+      amount: map['amount'] as int,
+      transaction_ref: map['transaction_ref'] as String,
+      bank_name: map['bank_name'] as String,
+      account_name: map['account_name'] as String,
+      created: DateTime.parse(map['created'] as String),
+    );
+  }
+
+  String toJson() => json.encode(toMap());
+
+  factory PaymentDispute.fromJson(String source) =>
+      PaymentDispute.fromMap(json.decode(source) as Map<String, dynamic>);
+
+  @override
+  String toString() {
+    return 'PaymentDispute(id: $id, confirmed: $confirmed, proof: $proof, amount: $amount, transaction_ref: $transaction_ref, bank_name: $bank_name, account_name: $account_name, created: $created)';
+  }
+
+  @override
+  bool operator ==(covariant PaymentDispute other) {
+    if (identical(this, other)) return true;
+
+    return other.id == id &&
+        other.confirmed == confirmed &&
+        other.proof == proof &&
+        other.amount == amount &&
+        other.transaction_ref == transaction_ref &&
+        other.bank_name == bank_name &&
+        other.account_name == account_name &&
+        other.created == created;
+  }
+
+  @override
+  int get hashCode {
+    return id.hashCode ^
+        confirmed.hashCode ^
+        proof.hashCode ^
+        amount.hashCode ^
+        transaction_ref.hashCode ^
+        bank_name.hashCode ^
+        account_name.hashCode ^
+        created.hashCode;
   }
 }
 
@@ -68,23 +116,23 @@ class Transaction {
 enum TransactionStatus { initial, loading, success, failure }
 
 class TransactionState {
-  final List<Transaction> transactions;
+  final List<PaymentDispute> disputes;
   final TransactionStatus status;
   final String? error;
 
   const TransactionState({
-    this.transactions = const [],
+    this.disputes = const [],
     this.status = TransactionStatus.initial,
     this.error,
   });
 
   TransactionState copyWith({
-    List<Transaction>? transactions,
+    List<PaymentDispute>? disputes,
     TransactionStatus? status,
     String? error,
   }) {
     return TransactionState(
-      transactions: transactions ?? this.transactions,
+      disputes: disputes ?? this.disputes,
       status: status ?? this.status,
       error: error ?? this.error,
     );
@@ -95,11 +143,11 @@ class TransactionState {
     if (identical(this, other)) return true;
 
     return other is TransactionState &&
-        other.transactions == transactions &&
+        other.disputes == disputes &&
         other.status == status &&
         other.error == error;
   }
 
   @override
-  int get hashCode => transactions.hashCode ^ status.hashCode ^ error.hashCode;
+  int get hashCode => disputes.hashCode ^ status.hashCode ^ error.hashCode;
 }

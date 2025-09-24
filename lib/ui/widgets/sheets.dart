@@ -333,81 +333,66 @@ class _MassBookBottomSheetState extends State<MassBookBottomSheet> {
     final pb = context.read<PocketBaseServiceCubit>().state.pb;
     return Column(
       children: [
-        FutureBuilder<String>(
-            future: getUserBalance(
-              pb.authStore.model.id,
-              pb,
-            ),
-            builder: (context, snapshot) {
-              if (!snapshot.hasData) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              return SubmitButtonV1(
-                ontap: isDonating
-                    ? null
-                    : () async {
-                        setState(() => isDonating = true);
-                        try {
-                          final RecordModel? payment =
-                              await getPaymentProof(context);
-                          if (payment == null) {
-                            setState(() => isDonating = false);
-                          } else {
-                            showSuccess(context,
-                                message:
-                                    'Proof of payment submitted succesfully');
-                            payment_proof = payment;
-                            setState(() => isDonating = false);
-                          }
-                          return;
-                        } catch (e) {
-                          setState(() => isDonating = false);
-                          print([
-                            (e as DioException).response,
-                            e.requestOptions.data
-                          ]);
-                          return showError(context,
-                              message: 'Error occurred $e');
-                        }
-                      },
-                radius: 12,
-                backgroundcolor: isDonating
-                    ? AppColors.primary.withOpacity(0.5)
-                    : AppColors.primary,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      if (isDonating)
-                        const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      else
-                        const Icon(
-                          FontAwesomeIcons.handHoldingHeart,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                      const Gap(8),
-                      Text(
-                        isDonating ? 'Processing...' : 'Stypends',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+        SubmitButtonV1(
+          ontap: isDonating
+              ? null
+              : () async {
+                  setState(() => isDonating = true);
+                  try {
+                    final RecordModel? payment = await getPaymentProof(context);
+                    if (payment == null) {
+                      setState(() => isDonating = false);
+                    } else {
+                      showSuccess(context,
+                          message: 'Proof of payment submitted succesfully');
+                      payment_proof = payment;
+                      setState(() => isDonating = false);
+                    }
+                    return;
+                  } catch (e) {
+                    setState(() => isDonating = false);
+                    print(
+                        [(e as DioException).response, e.requestOptions.data]);
+                    return showError(context, message: 'Error occurred $e');
+                  }
+                },
+          radius: 12,
+          backgroundcolor: isDonating
+              ? AppColors.primary.withOpacity(0.5)
+              : AppColors.primary,
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (isDonating)
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                else
+                  const Icon(
+                    FontAwesomeIcons.handHoldingHeart,
+                    color: Colors.white,
+                    size: 16,
+                  ),
+                const Gap(8),
+                Text(
+                  isDonating ? 'Processing...' : 'Stypends',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-              );
-            }),
+              ],
+            ),
+          ),
+        ),
         const Gap(12),
         SubmitButtonV1(
           ontap: (isBooking || payment_proof == null)
