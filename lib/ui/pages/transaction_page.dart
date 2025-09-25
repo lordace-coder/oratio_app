@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:oratio_app/bloc/transactions_cubit/state.dart';
 import 'package:oratio_app/bloc/transactions_cubit/transaction_cubit.dart';
 import 'package:oratio_app/ui/themes.dart';
-import 'package:oratio_app/ui/widgets/home.dart';
 
 class TransactionPage extends StatefulWidget {
   const TransactionPage({super.key});
@@ -19,7 +18,9 @@ class _TransactionPageState extends State<TransactionPage>
   final currencyFormatter = NumberFormat("#,##0.00", "en_US");
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-  String selectedFilter = 'All';
+  late TabController _tabController;
+
+  final List<String> _tabs = ['Payment Disputes', 'Mass Bookings', 'Retreats'];
 
   _onScroll() {
     if (_controller.offset >= _controller.position.maxScrollExtent) {
@@ -35,6 +36,8 @@ class _TransactionPageState extends State<TransactionPage>
   void initState() {
     super.initState();
     _controller.addListener(_onScroll);
+    _tabController = TabController(length: _tabs.length, vsync: this);
+
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -53,6 +56,7 @@ class _TransactionPageState extends State<TransactionPage>
   void dispose() {
     _controller.dispose();
     _animationController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -61,35 +65,47 @@ class _TransactionPageState extends State<TransactionPage>
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
-        child: CustomScrollView(
+        child: NestedScrollView(
           controller: _controller,
-          slivers: [
-            _buildSliverAppBar(context),
-            SliverToBoxAdapter(
-              child: RefreshIndicator(
-                onRefresh: _refreshTransactions,
-                child: BlocBuilder<TransactionCubit, TransactionState>(
-                  builder: (context, state) {
-                    if (state.status == TransactionStatus.loading) {
-                      return _buildLoadingState();
-                    } else if (state.status == TransactionStatus.failure) {
-                      return _buildErrorState(state.error ?? 'Unknown error');
-                    }
+          headerSliverBuilder: (context, innerBoxIsScrolled) {
+            return [
+              _buildSliverAppBar(context),
+              _buildSliverTabBar(),
+            ];
+          },
+          body: RefreshIndicator(
+            onRefresh: _refreshTransactions,
+            child: BlocBuilder<TransactionCubit, TransactionState>(
+              builder: (context, state) {
+                if (state.status == TransactionStatus.loading) {
+                  return _buildLoadingState();
+                } else if (state.status == TransactionStatus.failure) {
+                  return _buildErrorState(state.error ?? 'Unknown error');
+                }
 
-                    return FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: Column(
-                        children: [
-                          _buildFilterSection(),
-                          _buildTransactionsSection(state),
-                        ],
+                return FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      RefreshIndicator(
+                        onRefresh: _refreshTransactions,
+                        child: PaymentDisputesList(disputes: state.disputes),
                       ),
-                    );
-                  },
-                ),
-              ),
+                      RefreshIndicator(
+                        onRefresh: _refreshTransactions,
+                        child: MassBookingsList(bookings: state.booking),
+                      ),
+                      RefreshIndicator(
+                        onRefresh: _refreshTransactions,
+                        child: RetreatsList(retreats: state.retreat),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -98,7 +114,7 @@ class _TransactionPageState extends State<TransactionPage>
   Widget _buildSliverAppBar(BuildContext context) {
     return SliverAppBar(
       expandedHeight: 120,
-      pinned: true,
+      pinned: false,
       elevation: 0,
       backgroundColor: Colors.white,
       foregroundColor: Colors.black87,
@@ -168,145 +184,37 @@ class _TransactionPageState extends State<TransactionPage>
           ),
         ),
       ),
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(1),
-        child: Container(
-          height: 1,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Colors.transparent,
-                Colors.grey[200]!,
-                Colors.transparent,
-              ],
-            ),
+    );
+  }
+
+  Widget _buildSliverTabBar() {
+    return SliverPersistentHeader(
+      pinned: true,
+      delegate: _SliverAppBarDelegate(
+        TabBar(
+          controller: _tabController,
+          isScrollable: true,
+          tabAlignment: TabAlignment.start,
+          labelColor: AppColors.primary,
+          unselectedLabelColor: Colors.grey[600],
+          labelStyle: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
           ),
+          unselectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.w400,
+            fontSize: 14,
+          ),
+          indicator: UnderlineTabIndicator(
+            borderSide: BorderSide(
+              width: 3,
+              color: AppColors.primary,
+            ),
+            insets: const EdgeInsets.symmetric(horizontal: 16),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          tabs: _tabs.map((tab) => Tab(text: tab)).toList(),
         ),
-      ),
-    );
-  }
-
-  Widget _buildFilterSection() {
-    final filters = ['All', 'Mass Bookings', 'Donations', 'Events'];
-
-    return Container(
-      margin: const EdgeInsets.fromLTRB(24, 32, 0, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(right: 24),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.filter_list_outlined,
-                  color: Colors.grey[700],
-                  size: 20,
-                ),
-                const Gap(8),
-                Text(
-                  'Filter Transactions',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[800],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Gap(16),
-          SizedBox(
-            height: 40,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.only(left: 0, right: 24),
-              itemCount: filters.length,
-              itemBuilder: (context, index) {
-                final filter = filters[index];
-                final isSelected = selectedFilter == filter;
-
-                return Container(
-                  margin: EdgeInsets.only(right: 12, left: index == 0 ? 0 : 0),
-                  child: FilterChip(
-                    label: Text(filter),
-                    selected: isSelected,
-                    onSelected: (selected) {
-                      setState(() {
-                        selectedFilter = filter;
-                      });
-                    },
-                    backgroundColor: Colors.white,
-                    selectedColor: AppColors.primary.withOpacity(0.1),
-                    checkmarkColor: AppColors.primary,
-                    labelStyle: TextStyle(
-                      color: isSelected ? AppColors.primary : Colors.grey[700],
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.w400,
-                      fontSize: 14,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      side: BorderSide(
-                        color:
-                            isSelected ? AppColors.primary : Colors.grey[300]!,
-                      ),
-                    ),
-                    elevation: 0,
-                    pressElevation: 2,
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTransactionsSection(TransactionState state) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(24, 32, 24, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    Icons.receipt_long_outlined,
-                    color: Colors.grey[700],
-                    size: 20,
-                  ),
-                  const Gap(8),
-                  Text(
-                    'Recent Transactions',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey[800],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const Gap(16),
-          if (state.disputes.isEmpty)
-            _buildEmptyState()
-          else
-            ...state.disputes.asMap().entries.map((entry) {
-              final index = entry.key;
-              final transaction = entry.value;
-              return Container(
-                margin: EdgeInsets.only(
-                    bottom: index == state.disputes.length - 1 ? 0 : 12),
-                child: TransactionItem(transaction: transaction),
-              );
-            }),
-        ],
       ),
     );
   }
@@ -397,45 +305,685 @@ class _TransactionPageState extends State<TransactionPage>
       ),
     );
   }
+}
 
-  Widget _buildEmptyState() {
+class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
+  _SliverAppBarDelegate(this._tabBar);
+
+  final TabBar _tabBar;
+
+  @override
+  double get minExtent => _tabBar.preferredSize.height;
+  @override
+  double get maxExtent => _tabBar.preferredSize.height;
+
+  @override
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
     return Container(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              shape: BoxShape.circle,
+      color: Colors.white,
+      child: _tabBar,
+    );
+  }
+
+  @override
+  bool shouldRebuild(_SliverAppBarDelegate oldDelegate) {
+    return false;
+  }
+}
+
+// Payment Disputes List Component
+class PaymentDisputesList extends StatelessWidget {
+  final List<PaymentDispute> disputes;
+  final currencyFormatter = NumberFormat("#,##0.00", "en_US");
+
+  PaymentDisputesList({super.key, required this.disputes});
+
+  @override
+  Widget build(BuildContext context) {
+    if (disputes.isEmpty) {
+      return _buildEmptyState(
+        icon: Icons.gavel_outlined,
+        title: 'No payment disputes',
+        description: 'Your payment dispute history will appear here.',
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.all(24),
+      itemCount: disputes.length,
+      separatorBuilder: (context, index) => const Gap(12),
+      itemBuilder: (context, index) {
+        final dispute = disputes[index];
+        return PaymentDisputeCard(dispute: dispute);
+      },
+    );
+  }
+
+  Widget _buildEmptyState({
+    required IconData icon,
+    required String title,
+    required String description,
+  }) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: Colors.grey[400],
+                size: 48,
+              ),
             ),
-            child: Icon(
-              Icons.receipt_long_outlined,
-              color: Colors.grey[400],
-              size: 48,
+            const Gap(20),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[800],
+              ),
             ),
-          ),
-          const Gap(20),
-          Text(
-            'No transactions yet',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[800],
+            const Gap(8),
+            Text(
+              description,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+                height: 1.4,
+              ),
             ),
-          ),
-          const Gap(8),
-          Text(
-            'Your transaction history will appear here once you make your first booking or donation.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-              height: 1.4,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Mass Bookings List Component
+class MassBookingsList extends StatelessWidget {
+  final List<MassBooking> bookings;
+  final currencyFormatter = NumberFormat("#,##0.00", "en_US");
+
+  MassBookingsList({super.key, required this.bookings});
+
+  @override
+  Widget build(BuildContext context) {
+    if (bookings.isEmpty) {
+      return _buildEmptyState(
+        icon: Icons.church_outlined,
+        title: 'No mass bookings',
+        description:
+            'Your mass booking history will appear here once you make your first booking.',
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.all(24),
+      itemCount: bookings.length,
+      separatorBuilder: (context, index) => const Gap(12),
+      itemBuilder: (context, index) {
+        final booking = bookings[index];
+        return MassBookingCard(booking: booking);
+      },
+    );
+  }
+
+  Widget _buildEmptyState({
+    required IconData icon,
+    required String title,
+    required String description,
+  }) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: Colors.grey[400],
+                size: 48,
+              ),
             ),
+            const Gap(20),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[800],
+              ),
+            ),
+            const Gap(8),
+            Text(
+              description,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Retreats List Component
+class RetreatsList extends StatelessWidget {
+  final List<Retreat> retreats;
+  final currencyFormatter = NumberFormat("#,##0.00", "en_US");
+
+  RetreatsList({super.key, required this.retreats});
+
+  @override
+  Widget build(BuildContext context) {
+    if (retreats.isEmpty) {
+      return _buildEmptyState(
+        icon: Icons.nature_people_outlined,
+        title: 'No retreat bookings',
+        description:
+            'Your retreat booking history will appear here once you book your first retreat.',
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.all(24),
+      itemCount: retreats.length,
+      separatorBuilder: (context, index) => const Gap(12),
+      itemBuilder: (context, index) {
+        final retreat = retreats[index];
+        return RetreatCard(retreat: retreat);
+      },
+    );
+  }
+
+  Widget _buildEmptyState({
+    required IconData icon,
+    required String title,
+    required String description,
+  }) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: Colors.grey[400],
+                size: 48,
+              ),
+            ),
+            const Gap(20),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[800],
+              ),
+            ),
+            const Gap(8),
+            Text(
+              description,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Individual Card Components
+class PaymentDisputeCard extends StatelessWidget {
+  final PaymentDispute dispute;
+  final currencyFormatter = NumberFormat("#,##0.00", "en_US");
+
+  PaymentDisputeCard({super.key, required this.dispute});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: dispute.confirmed
+                        ? Colors.green[50]
+                        : Colors.orange[50],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    dispute.confirmed ? Icons.check_circle : Icons.pending,
+                    color: dispute.confirmed
+                        ? Colors.green[600]
+                        : Colors.orange[600],
+                    size: 20,
+                  ),
+                ),
+                const Gap(12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Payment Dispute',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                      Text(
+                        dispute.confirmed ? 'Confirmed' : 'Pending',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: dispute.confirmed
+                              ? Colors.green[600]
+                              : Colors.orange[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  '₦${currencyFormatter.format(dispute.amount)}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+            const Gap(16),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildInfoItem('Bank', dispute.bank_name),
+                ),
+                Expanded(
+                  child: _buildInfoItem('Account', dispute.account_name),
+                ),
+              ],
+            ),
+            const Gap(8),
+            _buildInfoItem('Reference', dispute.transaction_ref),
+            const Gap(12),
+            Text(
+              DateFormat('MMM dd, yyyy • hh:mm a').format(dispute.created),
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[500],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoItem(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const Gap(2),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class MassBookingCard extends StatelessWidget {
+  final MassBooking booking;
+
+  const MassBookingCard({super.key, required this.booking});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: booking.confirmed
+                        ? Colors.green[50]
+                        : Colors.orange[50],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.church,
+                    color: booking.confirmed
+                        ? Colors.green[600]
+                        : Colors.orange[600],
+                    size: 20,
+                  ),
+                ),
+                const Gap(12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Mass Booking',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                      Text(
+                        booking.confirmed ? 'Confirmed' : 'Pending',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: booking.confirmed
+                              ? Colors.green[600]
+                              : Colors.orange[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (booking.anonymous)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'Anonymous',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const Gap(16),
+            Text(
+              "${booking.intention}",
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[700],
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+            const Gap(12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildInfoItem(
+                      'Start Time',
+                      DateFormat('MMM dd, yyyy\nhh:mm a')
+                          .format(booking.startTime)),
+                ),
+                if (booking.endTime != null)
+                  Expanded(
+                    child: _buildInfoItem(
+                        'End Time',
+                        DateFormat('MMM dd, yyyy\nhh:mm a')
+                            .format(booking.endTime!)),
+                  ),
+              ],
+            ),
+            if (booking.parish != null) ...[
+              const Gap(8),
+              _buildInfoItem(
+                  'Parish', booking.parish!.data['name'] ?? 'Unknown Parish'),
+            ],
+            const Gap(12),
+            Text(
+              DateFormat('Created: MMM dd, yyyy • hh:mm a')
+                  .format(booking.created),
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[500],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoItem(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const Gap(2),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class RetreatCard extends StatelessWidget {
+  final Retreat retreat;
+
+  const RetreatCard({super.key, required this.retreat});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.blue[50],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(
+                    Icons.nature_people,
+                    color: Colors.blue[600],
+                    size: 20,
+                  ),
+                ),
+                const Gap(12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Retreat Booking',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[800],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            if (retreat.description != null) ...[
+              const Gap(16),
+              Text(
+                retreat.description!,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[700],
+                ),
+              ),
+            ],
+            const Gap(12),
+            if (retreat.startTime != null && retreat.endTime != null) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildInfoItem(
+                        'Start Date',
+                        DateFormat('MMM dd, yyyy\nhh:mm a')
+                            .format(retreat.startTime!)),
+                  ),
+                  Expanded(
+                    child: _buildInfoItem(
+                        'End Date',
+                        DateFormat('MMM dd, yyyy\nhh:mm a')
+                            .format(retreat.endTime!)),
+                  ),
+                ],
+              ),
+              const Gap(8),
+              if (retreat.startTime != null && retreat.endTime != null)
+                _buildInfoItem('Duration',
+                    '${retreat.endTime!.difference(retreat.startTime!).inDays + 1} days'),
+            ],
+            const Gap(12),
+            Text(
+              DateFormat('Booked: MMM dd, yyyy • hh:mm a')
+                  .format(retreat.created),
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[500],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoItem(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const Gap(2),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          ),
+        ),
+      ],
     );
   }
 }
