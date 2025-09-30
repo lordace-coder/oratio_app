@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:glass/glass.dart';
-import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:ace_toast/ace_toast.dart';
 import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:oratio_app/ui/widgets/inputs.dart';

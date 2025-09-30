@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:animate_do/animate_do.dart';
-import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:ace_toast/ace_toast.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/popup_notification/popup_notification.dart';

@@ -8,7 +8,7 @@ import 'package:oratio_app/helpers/functions.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:shimmer/shimmer.dart' as shimmer;
-import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:ace_toast/ace_toast.dart';
 import 'package:oratio_app/bloc/posts/post_cubit.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/networkProvider/requests.dart';

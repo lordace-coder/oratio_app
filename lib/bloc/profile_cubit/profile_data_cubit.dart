@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:meta/meta.dart';
-import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:ace_toast/ace_toast.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 part 'profile_data_state.dart';

@@ -27,7 +27,12 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    AppUpdateService(getPocketBaseFromContext(context)).checkForUpdate(context);
+    // check for just android
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (Theme.of(context).platform == TargetPlatform.android) {
+        AppUpdateService().checkPlayStoreUpdate();
+      }
+    });
     PopupNotification.initialize(context);
     _pages = [
       const FeedsListScreen(),

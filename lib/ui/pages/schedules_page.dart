@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:ace_toast/ace_toast.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/ui/widgets/church_widgets.dart';
 import 'package:oratio_app/ui/widgets/schedule_item.dart';
@@ -32,8 +32,9 @@ class _SchedulesPageState extends State<SchedulesPage> {
     });
     try {
       final pb = context.read<PocketBaseServiceCubit>().state.pb;
-      final data =
-          await pb.collection("schedule").getList(sort: 'date', expand:"parish");
+      final data = await pb
+          .collection("schedule")
+          .getList(sort: 'date', expand: "parish");
       schedule = data.items;
     } catch (e) {
       NotificationService.showError('Failed to load Schedules',
@@ -60,7 +61,10 @@ class _SchedulesPageState extends State<SchedulesPage> {
                     dateTime:
                         DateTime.parse(schedule[index].getStringValue('date')),
                     location: schedule[index].getStringValue("location"),
-                    parish: schedule[index].expand['parish']?.first.getStringValue('name'),
+                    parish: schedule[index]
+                        .expand['parish']
+                        ?.first
+                        .getStringValue('name'),
                     category: schedule[index].getStringValue('type').isEmpty
                         ? 'Meeting'
                         : schedule[index].getStringValue('type'),

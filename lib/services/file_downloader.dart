@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:ace_toast/ace_toast.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_chat_types/flutter_chat_types.dart' as types;
@@ -37,7 +37,8 @@ class FileDownloadHandler {
     }
   }
 
-  static Future<void> downloadRawFile(BuildContext context, String url, {bool? isvideo}) async {
+  static Future<void> downloadRawFile(BuildContext context, String url,
+      {bool? isvideo}) async {
     var status = await Permission.manageExternalStorage.request();
     if (!status.isGranted) {
       throw Exception('Storage permission not granted');
@@ -132,7 +133,8 @@ class FileDownloadHandler {
     );
   }
 
-  static Future<void> downloadFile(types.FileMessage message, BuildContext context) async {
+  static Future<void> downloadFile(
+      types.FileMessage message, BuildContext context) async {
     // Request storage permission
     var status = await Permission.storage.request();
     if (!status.isGranted) {
@@ -174,7 +176,8 @@ class FileDownloadHandler {
     }
   }
 
-  static Future<void> downloadImageFromBytes(BuildContext context, Uint8List imageBytes, String fileName) async {
+  static Future<void> downloadImageFromBytes(
+      BuildContext context, Uint8List imageBytes, String fileName) async {
     var status = await Permission.manageExternalStorage.request();
     if (!status.isGranted) {
       throw Exception('Storage permission not granted');

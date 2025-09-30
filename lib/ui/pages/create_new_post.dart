@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mime/mime.dart';
-import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:ace_toast/ace_toast.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/bloc/posts/post_state.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
@@ -439,7 +439,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
                                       fontSize: 14,
                                     ),
                                   ),
-                                  value: _selectedCommunity,
+                                  initialValue: _selectedCommunity,
                                   items: snapshot.data!
                                       .map((RecordModel community) {
                                     return DropdownMenuItem<String>(

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:ace_toast/ace_toast.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/networkProvider/users.dart';
@@ -238,7 +238,7 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
       // Extract parish name safely
       String parishName = 'Unknown Parish';
       try {
-        final parishExpand = record.expand?['parish'];
+        final parishExpand = record.expand['parish'];
         if (parishExpand != null && parishExpand.isNotEmpty) {
           parishName = parishExpand.first.getStringValue('name');
         }
@@ -250,7 +250,7 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
       // Extract user name safely
       String bookedByName = 'Unknown User';
       try {
-        final userExpand = record.expand?['user'];
+        final userExpand = record.expand['user'];
         if (userExpand != null && userExpand.isNotEmpty) {
           bookedByName = getFullName(userExpand.first);
         }
@@ -262,7 +262,7 @@ class _BookedMassesPageState extends State<BookedMassesPage> {
       // Extract donation amount safely
       double donationAmount = 0.0;
       try {
-        final donationExpand = record.expand?['donation'];
+        final donationExpand = record.expand['donation'];
         if (donationExpand != null && donationExpand.isNotEmpty) {
           donationAmount = donationExpand.first.getDoubleValue('amount');
         }

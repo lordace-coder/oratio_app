@@ -2,7 +2,7 @@
 // prayer_request.dart
 
 import 'package:flutter/foundation.dart';
-import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:ace_toast/ace_toast.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class PrayerRequest {

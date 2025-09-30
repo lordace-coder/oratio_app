@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_paystack_plus/flutter_paystack_plus.dart';
 import 'package:dio/dio.dart';
-import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:ace_toast/ace_toast.dart';
 import 'package:oratio_app/helpers/configs.dart';
 import 'package:pocketbase/pocketbase.dart';
 

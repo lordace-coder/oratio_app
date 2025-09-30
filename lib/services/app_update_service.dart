@@ -1,25 +1,25 @@
 import 'package:flutter/services.dart';
 
 import 'package:flutter/material.dart';
+import 'package:in_app_update/in_app_update.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 const AppVersion = 4.0;
 
 class AppUpdateService {
-  final PocketBase pb;
-  AppUpdateService(this.pb);
+  AppUpdateService();
 
-  Future<void> checkForUpdate(BuildContext context) async {
+  Future<void> checkPlayStoreUpdate() async {
     try {
-      final response = await pb.collection('app').getFirstListItem('');
-      if (response.getDoubleValue('minVersion') > AppVersion) {
-        // prompt user to upgrade app version
-        return updateAppVersion(context, response.getStringValue('updateUrl'));
-      } else if (response.getDoubleValue('version') > AppVersion) {
-        // there is a new version and the user hasnt gone for it yet
+      final info = await InAppUpdate.checkForUpdate();
+      if (info.updateAvailability == UpdateAvailability.updateAvailable) {
+        await InAppUpdate.performImmediateUpdate();
+        // or InAppUpdate.startFlexibleUpdate();
       }
-    } catch (e) {}
+    } catch (e) {
+      print("Update check failed: $e");
+    }
   }
 
   void updateAppVersion(BuildContext context, String url) {

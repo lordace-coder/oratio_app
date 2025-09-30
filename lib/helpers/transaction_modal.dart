@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
-import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:ace_toast/ace_toast.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/ui/pages/mass_booking_page.dart';
 
@@ -212,7 +212,6 @@ Future<String?>? showTransactionModal(
   return amt;
 }
 
-
 Future<String?>? showChurchSelect(BuildContext context) async {
   String? church;
   await showDialog(
@@ -286,13 +285,12 @@ Future<String?>? showChurchSelect(BuildContext context) async {
 class TransactionDetail {
   final Function(BuildContext, int) handleTransaction;
 
-
   final Function(String) onChange;
   final Widget icon;
   final String title;
   final String detail;
   final String actionLabel;
-  
+
   TransactionDetail(
     this.actionLabel, {
     required this.handleTransaction,

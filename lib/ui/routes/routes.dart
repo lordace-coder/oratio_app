@@ -22,7 +22,7 @@ import 'package:oratio_app/ui/routes/priest_shell_route.dart';
 import 'package:oratio_app/ui/screens/chat_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:ace_toast/ace_toast.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/ui/pages/auth/auth_wrapper.dart';
 import 'package:oratio_app/ui/pages/auth/forgot_pw_page.dart';

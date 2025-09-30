@@ -55,6 +55,8 @@ dependencies:
   flutter_contacts: ^1.1.9+2
   package_info_plus: ^8.2.0
   screenshot: ^3.0.0
+  ace_toast: ^0.0.2
+  in_app_update: ^4.2.5
 
 dev_dependencies:
   flutter_test:

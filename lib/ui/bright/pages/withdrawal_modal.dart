@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:oratio_app/ace_toasts/ace_toasts.dart';
+import 'package:ace_toast/ace_toast.dart';
 import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:pocketbase/pocketbase.dart';
 
@@ -207,7 +207,7 @@ class _WithdrawalModalState extends State<WithdrawalModal> {
                 // Bank Dropdown
                 FadeInRight(
                   child: DropdownButtonFormField<String>(
-                    value: _selectedBank,
+                    initialValue: _selectedBank,
                     hint: Text(
                       'Select Bank',
                       style: TextStyle(color: Colors.deepPurple[700]),

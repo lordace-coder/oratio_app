@@ -1,10 +1,10 @@
 import 'dart:io';
 
+import 'package:ace_toast/ace_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
-import 'package:oratio_app/ace_toasts/ace_toasts.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:pocketbase/pocketbase.dart';
 
@@ -59,18 +59,11 @@ class _PaymentProofModalState extends State<PaymentProofModal>
   // Sample account data
   final List<PaymentAccount> accounts = [
     PaymentAccount(
-      bankName: 'First Bank Nigeria',
-      accountNumber: '2034567890',
-      accountName: 'John Doe Business',
+      bankName: 'UBA',
+      accountNumber: '2303637325',
+      accountName: 'Building Bridges Initiative Nigeria',
       currency: '₦ NGN',
       type: 'Nigerian',
-    ),
-    PaymentAccount(
-      bankName: 'Chase Bank USA',
-      accountNumber: '1234567890',
-      accountName: 'John Doe International',
-      currency: '\$ USD',
-      type: 'Foreign',
     ),
   ];
 
