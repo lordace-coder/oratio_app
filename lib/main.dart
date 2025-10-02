@@ -314,8 +314,9 @@ class _MainAppState extends State<MainApp> {
     String editedUrl = '';
     _linkSubscription = _appLinks.stringLinkStream.listen((uri) {
       debugPrint('onAppLink: $uri');
-      editedUrl = uri.replaceFirst('https://www.cathsapp.ng/app', '');
-      editedUrl = uri.replaceFirst('https://cathsapp.ng/app', '');
+      editedUrl = uri
+          .replaceFirst('https://www.cathsapp.ng/app', '')
+          .replaceFirst('https://cathsapp.ng/app', '');
       openAppLink(editedUrl);
     });
   }
