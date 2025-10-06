@@ -146,12 +146,6 @@ class HomeScreenState extends State<HomeScreen> {
                                     }
                                 },
                               ),
-                            _buildSacredAction(
-                              icon: FontAwesomeIcons.church,
-                              label: 'Join Parish',
-                              onTap: () =>
-                                  context.pushNamed(RouteNames.parishpage),
-                            ),
                             if (isPriest)
                               _buildSacredAction(
                                   icon: FontAwesomeIcons.ellipsisVertical,

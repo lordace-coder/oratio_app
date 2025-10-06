@@ -13,17 +13,13 @@ import 'package:oratio_app/ui/pages/chat_page.dart';
 import 'package:oratio_app/ui/pages/create_new_post.dart';
 import 'package:oratio_app/ui/pages/edit_profile_page.dart';
 import 'package:oratio_app/ui/pages/post_detail_page.dart';
-import 'package:oratio_app/ui/pages/priest/live_page.dart';
-import 'package:oratio_app/ui/pages/search_page.dart';
 import 'package:oratio_app/ui/pages/share_bible_passage.dart';
 import 'package:oratio_app/ui/pages/utils/book_appointment.dart';
 import 'package:oratio_app/ui/pages/utils/book_retreat.dart';
 import 'package:oratio_app/ui/routes/priest_shell_route.dart';
-import 'package:oratio_app/ui/screens/chat_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:ace_toast/ace_toast.dart';
-import 'package:oratio_app/bloc/auth_bloc/cubit/pocket_base_service_cubit.dart';
 import 'package:oratio_app/ui/pages/auth/auth_wrapper.dart';
 import 'package:oratio_app/ui/pages/auth/forgot_pw_page.dart';
 import 'package:oratio_app/ui/pages/bible_reading_page.dart';
@@ -128,7 +124,7 @@ class AppRouter {
                 GoRoute(
                   path: '/connect',
                   name: RouteNames.connect,
-                  builder: (context, state) => const ConnectPage(),
+                  builder: (context, state) => const SearchPage(),
                 ),
                 GoRoute(
                   path: '/contacts',
@@ -219,11 +215,7 @@ class AppRouter {
                     parishName: state.pathParameters['parishName'].toString(),
                   )),
                 ),
-                GoRoute(
-                  path: '/parishlistpage',
-                  name: RouteNames.parishpage,
-                  builder: (context, state) => const ParishListPage(),
-                ),
+
                 GoRoute(
                   path: '/share-passage',
                   name: RouteNames.shareBiblePassage,
@@ -267,11 +259,6 @@ class AppRouter {
                   path: '/mass',
                   name: RouteNames.mass,
                   builder: (context, state) => const MassBookingPage(),
-                ),
-                GoRoute(
-                  path: '/searchpage',
-                  name: RouteNames.searchPage,
-                  builder: (context, state) => const SearchPage(),
                 ),
 
                 GoRoute(
