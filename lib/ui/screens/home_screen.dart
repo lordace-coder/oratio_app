@@ -196,13 +196,6 @@ class HomeScreenState extends State<HomeScreen> {
                           childAspectRatio: screenSize.width < 360 ? 1.2 : 1.3,
                           children: [
                             _buildMinistryCard(
-                              icon: FontAwesomeIcons.peopleGroup,
-                              label: 'Communities',
-                              description: 'Connect with fellow believers',
-                              onTap: () =>
-                                  context.pushNamed(RouteNames.communitypage),
-                            ),
-                            _buildMinistryCard(
                               icon: FontAwesomeIcons.clock,
                               label: 'Schedules',
                               description: 'View liturgical schedules',

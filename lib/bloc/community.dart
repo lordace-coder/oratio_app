@@ -1,7 +1,6 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class PrayerCommunity {
@@ -59,7 +58,8 @@ class PrayerCommunity {
         community: map['community'] as String,
         description: map['description'] as String,
         members: map['members'] as int,
-        allMembers: map['allMembers'] as List,
+        allMembers: [],
+        image: map['image'] != null ? map['image'] as String : null,
         leader: RecordModel.fromJson(map['leader']),
         isClosed: map['isClosed']);
   }

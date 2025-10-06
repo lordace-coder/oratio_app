@@ -1,75 +1,145 @@
+import 'package:ace_toast/ace_toast.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:oratio_app/bloc/community.dart';
+import 'package:oratio_app/helpers/functions.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
+import 'package:oratio_app/networkProvider/requests.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
+import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 
 class CommunityCard extends StatelessWidget {
-  final Map<String, dynamic> community;
+  final PrayerCommunity community;
 
   const CommunityCard({super.key, required this.community});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Theme.of(context).primaryColor.withOpacity(0.1),
-            Theme.of(context).primaryColor.withOpacity(0.05),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: Theme.of(context).primaryColor.withOpacity(0.2),
-          width: 1,
-        ),
-      ),
-      child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-        leading: Container(
-          width: 48,
-          height: 48,
+    final userId =
+        getPocketBaseFromContext(context).authStore.model.id as String;
+
+    bool joined = community.allMembers.contains(userId);
+    int membersCount = community.members;
+    print("image url: ${community.image}");
+    return InkWell(
+      onTap: () {
+        openCommunity(context, community.id);
+      },
+      child: StatefulBuilder(builder: (context, rebuild) {
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Theme.of(context).primaryColor.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(12),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-          child: Icon(
-            Icons.groups_rounded,
-            color: Theme.of(context).primaryColor,
-            size: 28,
+          child: Row(
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  image: community.image != null
+                      ? DecorationImage(
+                          image: CachedNetworkImageProvider(community.image!),
+                          fit: BoxFit.cover,
+                          onError: (error, stack) {
+                            debugPrint('error occured loading image $error');
+                          })
+                      : null,
+                ),
+                child: community.image == null
+                    ? Icon(
+                        FontAwesomeIcons.church,
+                        color: AppColors.primary,
+                        size: 20,
+                      )
+                    : null,
+              ),
+              const Gap(16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      community.community,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Gap(4),
+                    Row(
+                      children: [
+                        const Icon(
+                          FontAwesomeIcons.userGroup,
+                          size: 12,
+                          color: Colors.grey,
+                        ),
+                        const Gap(4),
+                        Text(
+                          '$membersCount Members',
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const Gap(12),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              GestureDetector(
+                onTap: () async {
+                  if (joined) {
+                    return NotificationService.showInfo(
+                        'You are already a Member');
+                  }
+                  await joinCommunity(context, communityId: community.id,
+                      onError: () {
+                    NotificationService.showError(
+                        'Error occured while joining community');
+                  });
+                  rebuild(() {
+                    joined = true;
+                    membersCount++;
+                  });
+                },
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    joined ? 'Joined' : 'Join',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              )
+            ],
           ),
-        ),
-        title: Text(
-          community['name'] ?? 'Community',
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-            letterSpacing: 0.2,
-          ),
-        ),
-        subtitle: Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text(
-            'Community',
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 13,
-            ),
-          ),
-        ),
-        trailing: Icon(
-          Icons.arrow_forward_ios_rounded,
-          size: 16,
-          color: Colors.grey[400],
-        ),
-      ),
+        );
+      }),
     );
   }
 }
@@ -318,10 +388,12 @@ class _UserCardState extends State<UserCard> {
                   child: CircleAvatar(
                     radius: 28,
                     backgroundColor: Colors.grey[200],
-                    backgroundImage: widget.profilePicture != null
+                    backgroundImage: (widget.profilePicture != null ||
+                            widget.profilePicture!.isNotEmpty)
                         ? CachedNetworkImageProvider(widget.profilePicture!)
                         : null,
-                    child: widget.profilePicture == null
+                    child: (widget.profilePicture == null ||
+                            widget.profilePicture!.isEmpty)
                         ? Text(
                             widget.name[0].toUpperCase(),
                             style: TextStyle(

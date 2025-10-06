@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:oratio_app/bloc/community.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:oratio_app/networkProvider/users.dart';
 import 'package:oratio_app/ui/pages/search/search_items.dart';
@@ -114,7 +115,7 @@ class _SearchPageState extends State<SearchPage> {
     });
 
     try {
-      final data = await _fetchSearchResults(query);
+      final data = await _fetchSearchResults(query.trim());
       await _saveRecentSearch(query);
 
       setState(() {
@@ -357,10 +358,16 @@ class _SearchPageState extends State<SearchPage> {
       itemBuilder: (context, index) {
         final item = filteredData[index];
         final collectionName = item['collectionName'] as String?;
-
         // Determine item type and render accordingly
-        if (collectionName == 'communities') {
-          return CommunityCard(community: item);
+        if (collectionName == 'prayer_community') {
+          final newMap = Map<String, dynamic>.from(item);
+          newMap['image'] = getPocketBaseFromContext(context)
+              .getFileUrl(RecordModel.fromJson(newMap), newMap['image'])
+              .toString();
+          newMap['leader'] = <String, dynamic>{};
+          newMap['members'] = newMap['members'].length;
+
+          return CommunityCard(community: PrayerCommunity.fromMap(newMap));
         } else if (collectionName == 'parish') {
           return ParishCard(parish: item);
         } else if (collectionName == 'users') {
