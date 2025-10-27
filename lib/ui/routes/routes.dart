@@ -10,6 +10,7 @@ import 'package:oratio_app/ui/bright/pages/create_event.dart';
 import 'package:oratio_app/ui/bright/pages/mass_booking_page.dart';
 import 'package:oratio_app/ui/pages/annoucement_page.dart';
 import 'package:oratio_app/ui/pages/chat_page.dart';
+import 'package:oratio_app/ui/pages/community_prayer/prayers_page.dart';
 import 'package:oratio_app/ui/pages/create_new_post.dart';
 import 'package:oratio_app/ui/pages/edit_profile_page.dart';
 import 'package:oratio_app/ui/pages/post_detail_page.dart';
@@ -307,6 +308,17 @@ class AppRouter {
                   path: '/${RouteNames.readingPage}',
                   name: RouteNames.readingPage,
                   builder: (context, state) => const BibleReadingPage(),
+                ),
+                GoRoute(
+                  path: '/${RouteNames.communityPrayersPage}',
+                  name: RouteNames.communityPrayersPage,
+                  builder: (context, state) {
+                    final prayer = state.extra as Map<String, String>;
+                    return PrayersPage(
+                      prayerTitle: prayer['title'].toString(),
+                      prayerText: prayer['prayer'].toString(),
+                    );
+                  },
                 ),
               ]),
           ShellRoute(

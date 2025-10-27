@@ -34,6 +34,7 @@ class RouteNames {
   static String connect = 'connect';
   static String settingsPage = 'settingsPage';
   static String createPrayerRequest = 'createPrayerRequest';
+  static String communityPrayersPage = 'communityPrayersPage';
   // priest pages
   static String dashboard = 'dashboardPage';
   static String parishTransactions = 'parishTransactionsPage';

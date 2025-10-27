@@ -557,18 +557,45 @@ class _CreatePostSectionState extends State<CreatePostSection> {
           Row(
             children: [
               TextButton(
+                onPressed: () {
+                  Share.shareUri(Uri.https("cathsapp.ng",
+                      '/app/communityDetailPage/${widget.communityId}'));
+                },
+                style:
+                    TextButton.styleFrom(backgroundColor: Colors.grey.shade50),
+                child: const Row(
+                  children: [
+                    Icon(FontAwesomeIcons.share, size: 14),
+                    Gap(5),
+                    Text(
+                      'Invite',
+                      style: TextStyle(color: Colors.black),
+                    )
+                  ],
+                ),
+              ),
+              TextButton(
                   onPressed: () {
-                    Share.shareUri(Uri.https("cathsapp.ng",
-                        '/app/communityDetailPage/${widget.communityId}'));
+                    final demoPrayer = {
+                      "title": "The Lord's Prayer",
+                      "prayer":
+                          '''Our Father, who art in heaven, hallowed be thy name. Thy kingdom come, thy will be done, on earth as it is in heaven. Give us this day our daily bread, and forgive us our trespasses, as we forgive those who trespass against us. And lead us not into temptation, but deliver us from evil. for thine is the kingdom, and the power, and the glory, for ever and ever.''',
+                    };
+                    context.pushNamed(
+                      RouteNames.communityPrayersPage,
+                      extra: demoPrayer,
+                    );
                   },
                   style: TextButton.styleFrom(
-                      backgroundColor: Colors.grey.shade50),
+                    backgroundColor: Colors.grey.shade50,
+                    foregroundColor: Colors.green,
+                  ),
                   child: const Row(
                     children: [
-                      Icon(FontAwesomeIcons.share, size: 14),
+                      Icon(FontAwesomeIcons.prayingHands, size: 14),
                       Gap(5),
                       Text(
-                        'Invite',
+                        'Join Prayers',
                         style: TextStyle(color: Colors.black),
                       )
                     ],
