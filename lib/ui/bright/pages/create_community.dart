@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -32,11 +33,15 @@ class _PrayerCommunityCreationPageState
   final FocusNode _leaderSearchFocusNode = FocusNode();
   final FocusNode _communityNameFocusNode = FocusNode();
   final FocusNode _descriptionFocusNode = FocusNode();
+  final FocusNode _prayerTitleFocusNode = FocusNode();
+  final FocusNode _prayerTextFocusNode = FocusNode();
 
   final TextEditingController _communityNameController =
       TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _leaderSearchController = TextEditingController();
+  final TextEditingController _prayerTitleController = TextEditingController();
+  final TextEditingController _prayerTextController = TextEditingController();
 
   String? _selectedImage;
   final ImagePicker _picker = ImagePicker();
@@ -46,7 +51,7 @@ class _PrayerCommunityCreationPageState
   RecordModel? _selectedLeader;
   bool _showLeaderSearch = true;
   RecordModel? community;
-  bool _isClosed = false;
+  bool _isClosed = true;
 
   void getCommunity() async {}
 
@@ -59,6 +64,13 @@ class _PrayerCommunityCreationPageState
       _selectedImage = widget.community!.image;
       _communityNameController.text = widget.community!.community;
       _descriptionController.text = widget.community!.description;
+      _isClosed = widget.community!.isClosed ?? true;
+
+      // Load prayer data if exists
+      if (widget.community!.prayer != null) {
+        _prayerTitleController.text = widget.community!.prayerTitle ?? '';
+        _prayerTextController.text = widget.community!.prayerText ?? '';
+      }
     }
     _filteredLeaders = [];
     _leaderSearchController.addListener(_onLeaderSearchChange);
@@ -137,7 +149,8 @@ class _PrayerCommunityCreationPageState
       return false;
     }
 
-    if (_selectedImage == null) {
+    // Only require image for new communities
+    if (_selectedImage == null && widget.community == null) {
       showError(context, message: 'Please select a community image');
       return false;
     }
@@ -206,13 +219,27 @@ class _PrayerCommunityCreationPageState
   }
 
   Map<String, dynamic> _collectFormData() {
-    return {
+    final data = {
       'community': _communityNameController.text.trim(),
       'description': _descriptionController.text.trim(),
       'leader': _selectedLeader?.id,
-      'isClosed': _isClosed
-      // 'leaderChurch': _selectedLeader?['church'],
+      'isClosed': _isClosed,
     };
+
+    // Add prayer data if both title and text are provided
+    if (_prayerTitleController.text.trim().isNotEmpty &&
+        _prayerTextController.text.trim().isNotEmpty) {
+      // Encode as JSON string for PocketBase
+      data['prayer'] = json.encode({
+        'title': _prayerTitleController.text.trim(),
+        'prayer': _prayerTextController.text.trim(),
+      });
+    } else {
+      // Explicitly set to empty string if no prayer
+      data['prayer'] = '';
+    }
+
+    return data;
   }
 
   @override
@@ -519,6 +546,44 @@ class _PrayerCommunityCreationPageState
                     ),
                   ],
                 ),
+                const SizedBox(height: 30),
+
+                // Prayer Section Header
+                Text(
+                  'Community Prayer (Optional)',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Set a prayer that members can join together',
+                  style: TextStyle(
+                    color: AppColors.textDarkDim,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 15),
+
+                // Prayer Title Input
+                _buildCustomInput(
+                  controller: _prayerTitleController,
+                  focusNode: _prayerTitleFocusNode,
+                  hint: 'Prayer Title (e.g., "The Lord\'s Prayer")',
+                  icon: Icons.title,
+                ),
+                const SizedBox(height: 20),
+
+                // Prayer Text Input
+                _buildCustomInput(
+                  controller: _prayerTextController,
+                  focusNode: _prayerTextFocusNode,
+                  hint: 'Prayer Text',
+                  icon: Icons.auto_awesome,
+                  maxLines: 8,
+                ),
                 const SizedBox(height: 20),
 
                 // Leader Selection
@@ -608,9 +673,13 @@ class _PrayerCommunityCreationPageState
     _leaderSearchFocusNode.dispose();
     _communityNameFocusNode.dispose();
     _descriptionFocusNode.dispose();
+    _prayerTitleFocusNode.dispose();
+    _prayerTextFocusNode.dispose();
     _communityNameController.dispose();
     _descriptionController.dispose();
     _leaderSearchController.dispose();
+    _prayerTitleController.dispose();
+    _prayerTextController.dispose();
     super.dispose();
   }
 
@@ -618,6 +687,8 @@ class _PrayerCommunityCreationPageState
     _communityNameController.clear();
     _descriptionController.clear();
     _leaderSearchController.clear();
+    _prayerTitleController.clear();
+    _prayerTextController.clear();
     _selectedImage = null;
     _selectedLeader = null;
     setState(() {});

@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:ace_toast/ace_toast.dart';
 import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/bloc/community.dart';
-import 'package:oratio_app/bloc/posts/post_state.dart';
 import 'package:oratio_app/helpers/snackbars.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -75,6 +74,8 @@ Future<PrayerCommunity?> getCommunity(BuildContext context,
       id: data.id,
       allMembers: data.getListValue('members'),
       image: image,
+      prayer: data.getDataValue('prayer'),
+      isClosed: data.getBoolValue('isClosed'),
     );
   } catch (e) {
     print('error $e');

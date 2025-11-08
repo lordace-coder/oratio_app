@@ -2,7 +2,6 @@ import 'dart:io';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_app_lock/flutter_app_lock.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'dart:async';
@@ -11,7 +10,6 @@ import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:hive/hive.dart';
 import 'package:oratio_app/models/contact_model.dart';
 import 'package:oratio_app/networkProvider/priest_requests.dart';
-import 'package:oratio_app/services/user_settings_service.dart';
 import 'package:oratio_app/splash.dart';
 import 'package:oratio_app/ui/widgets/prayer_requests.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
@@ -28,11 +26,9 @@ import 'package:oratio_app/bloc/blocs.dart';
 import 'package:oratio_app/bloc/chat_cubit/chat_cubit.dart';
 import 'package:oratio_app/bloc/notifications_cubit/notifications_cubit.dart';
 import 'package:oratio_app/bloc/posts/post_cubit.dart';
-import 'package:oratio_app/bloc/prayer_requests/requests_cubit.dart';
 import 'package:oratio_app/bloc/profile_cubit/profile_data_cubit.dart';
 import 'package:oratio_app/networkProvider/constants.dart';
 import 'package:oratio_app/services/chat/chat_service.dart';
-import 'package:oratio_app/ui/pages/security/lock_page.dart';
 import 'package:oratio_app/ui/routes/routes.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -53,7 +49,22 @@ class ConnectivityCubit extends Cubit<bool> {
   final Connectivity _connectivity = Connectivity();
   StreamSubscription? connectivitySubscription;
   ConnectivityCubit() : super(true) {
+    _checkInitialConnection();
     monitorConnection();
+  }
+
+  Future<void> _checkInitialConnection() async {
+    try {
+      final result = await _connectivity.checkConnectivity();
+      if (result == ConnectivityResult.none) {
+        emit(false);
+      } else {
+        emit(await _checkInternetConnection());
+      }
+    } catch (e) {
+      debugPrint('Error checking initial connection: $e');
+      emit(false);
+    }
   }
 
   void monitorConnection() {
@@ -70,9 +81,9 @@ class ConnectivityCubit extends Cubit<bool> {
   Future<bool> _checkInternetConnection() async {
     try {
       final result = await InternetAddress.lookup('cathsapp.ng');
-      print([result.isNotEmpty, result[0].rawAddress.isNotEmpty]);
       return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Internet connection check failed: $e');
       return false;
     }
   }
@@ -151,7 +162,6 @@ void main() async {
 
   ChatService chatService = ChatService(pbCubit.state.pb);
 
-  final prayerRequestHelper = PrayerRequestHelper(pb);
   final postHelper = PostHelper(pb);
   final adsRepo = AdsRepo(pb);
   final prayerRequestService = PrayerRequestGroupService(pb);
@@ -233,7 +243,6 @@ class _MainAppState extends State<MainApp> {
   WebSocketChannel? channel;
   Timer? _reconnectTimer;
   late AppLinks _appLinks;
-  StreamSubscription<String>? _linkSubscription;
 
   @override
   void initState() {
@@ -312,7 +321,7 @@ class _MainAppState extends State<MainApp> {
     _appLinks.getLatestLinkString().then((val) {});
     // Handle links
     String editedUrl = '';
-    _linkSubscription = _appLinks.stringLinkStream.listen((uri) {
+    _appLinks.stringLinkStream.listen((uri) {
       debugPrint('onAppLink: $uri');
       editedUrl = uri
           .replaceFirst('https://www.cathsapp.ng/app', '')
@@ -347,39 +356,7 @@ class _MainAppState extends State<MainApp> {
               NotificationService.showError('No internet connection');
             }
           },
-          child: BlocBuilder<ConnectivityCubit, bool>(
-            builder: (context, hasConnection) {
-              if (!hasConnection) {
-                return Scaffold(
-                  body: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.wifi_off,
-                            size: 48, color: AppColors.primary),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'No Internet Connection',
-                          style: TextStyle(
-                              fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 8),
-                        TextButton(
-                          onPressed: () {
-                            context
-                                .read<ConnectivityCubit>()
-                                .monitorConnection();
-                          },
-                          child: const Text('Retry'),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }
-              return child!;
-            },
-          ),
+          child: child!,
         ),
       ),
       color: AppColors.primary,

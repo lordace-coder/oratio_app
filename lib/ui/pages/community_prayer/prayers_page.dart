@@ -3,6 +3,8 @@ import 'package:flutter_tts/flutter_tts.dart';
 import 'dart:async';
 import 'dart:math';
 
+import 'package:go_router/go_router.dart';
+
 class PrayersPage extends StatefulWidget {
   final String prayerText;
   final String prayerTitle;
@@ -86,12 +88,12 @@ class _PrayersPageState extends State<PrayersPage>
   }
 
   void _startUserCountSimulation() {
-    _liveUserCount = 156 + Random().nextInt(40);
-    _userCountTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+    _liveUserCount = 2 + Random().nextInt(1);
+    _userCountTimer = Timer.periodic(const Duration(seconds: 20), (timer) {
       if (mounted) {
         setState(() {
           final change = Random().nextInt(7) - 3;
-          _liveUserCount = max(50, _liveUserCount + change);
+          _liveUserCount = max(10, _liveUserCount + change);
         });
       }
     });
@@ -417,16 +419,21 @@ class _PrayersPageState extends State<PrayersPage>
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.arrow_back_ios_new,
-              color: Colors.white,
-              size: 20,
+          GestureDetector(
+            onTap: () {
+              context.pop();
+            },
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.arrow_back_ios_new,
+                color: Colors.white,
+                size: 20,
+              ),
             ),
           ),
           const SizedBox(width: 16),

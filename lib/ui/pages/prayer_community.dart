@@ -86,6 +86,8 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                       setState(() {
                         _communityData = null;
                       });
+                      // Wait a frame to ensure the FutureBuilder rebuilds
+                      await Future.delayed(const Duration(milliseconds: 100));
                     },
                     child: SingleChildScrollView(
                       physics: const AlwaysScrollableScrollPhysics(),
@@ -269,6 +271,7 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
                           CreatePostSection(
                             communityId: data.id,
                             isLeader: isLeader,
+                            community: data,
                           ),
 
                           // Description Section
@@ -463,10 +466,15 @@ class _PrayerCommunityDetailState extends State<PrayerCommunityDetail> {
 }
 
 class CreatePostSection extends StatefulWidget {
-  const CreatePostSection(
-      {super.key, required this.communityId, required this.isLeader});
+  const CreatePostSection({
+    super.key,
+    required this.communityId,
+    required this.isLeader,
+    required this.community,
+  });
   final String communityId;
   final bool isLeader;
+  final PrayerCommunity community;
   @override
   State<CreatePostSection> createState() => _CreatePostSectionState();
 }
@@ -574,32 +582,28 @@ class _CreatePostSectionState extends State<CreatePostSection> {
                   ],
                 ),
               ),
-              TextButton(
-                  onPressed: () {
-                    final demoPrayer = {
-                      "title": "The Lord's Prayer",
-                      "prayer":
-                          '''Our Father, who art in heaven, hallowed be thy name. Thy kingdom come, thy will be done, on earth as it is in heaven. Give us this day our daily bread, and forgive us our trespasses, as we forgive those who trespass against us. And lead us not into temptation, but deliver us from evil. for thine is the kingdom, and the power, and the glory, for ever and ever.''',
-                    };
-                    context.pushNamed(
-                      RouteNames.communityPrayersPage,
-                      extra: demoPrayer,
-                    );
-                  },
-                  style: TextButton.styleFrom(
-                    backgroundColor: Colors.grey.shade50,
-                    foregroundColor: Colors.green,
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(FontAwesomeIcons.prayingHands, size: 14),
-                      Gap(5),
-                      Text(
-                        'Join Prayers',
-                        style: TextStyle(color: Colors.black),
-                      )
-                    ],
-                  )),
+              if (widget.community.hasPrayer)
+                TextButton(
+                    onPressed: () {
+                      context.pushNamed(
+                        RouteNames.communityPrayersPage,
+                        extra: widget.community.prayerAsStringMap,
+                      );
+                    },
+                    style: TextButton.styleFrom(
+                      backgroundColor: Colors.grey.shade50,
+                      foregroundColor: Colors.green,
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(FontAwesomeIcons.prayingHands, size: 14),
+                        Gap(5),
+                        Text(
+                          'Join Prayers',
+                          style: TextStyle(color: Colors.black),
+                        )
+                      ],
+                    )),
               if (widget.isLeader)
                 TextButton(
                     onPressed: () async {

@@ -23,7 +23,9 @@ class PrayerCommunity {
     this.image,
     this.prayer,
     this.isClosed,
-  });
+  }) {
+    print('PrayerCommunity created with prayer: $prayer');
+  }
 
   PrayerCommunity copyWith({
     String? id,
@@ -64,19 +66,59 @@ class PrayerCommunity {
   }
 
   factory PrayerCommunity.fromMap(Map<String, dynamic> map) {
+    print('=== PRAYER PARSING START ===');
+    print('Prayer data from backend: ${map['prayer']}');
+    print('Prayer data type: ${map['prayer'].runtimeType}');
+    print('Is null? ${map['prayer'] == null}');
+    print('Is empty string? ${map['prayer'] == ''}');
+    print('Is String? ${map['prayer'] is String}');
+    print('Is Map? ${map['prayer'] is Map}');
+
+    // Parse prayer - it might be a JSON string from PocketBase
+    Map<String, dynamic>? prayerData;
+    if (map['prayer'] != null && map['prayer'] != '') {
+      print('Passed null/empty check');
+
+      if (map['prayer'] is String && (map['prayer'] as String).isNotEmpty) {
+        print('Treating as String');
+        // If it's a string, try to decode it
+        try {
+          final decoded = json.decode(map['prayer'] as String);
+          prayerData = Map<String, dynamic>.from(decoded as Map);
+          print('Decoded prayer from string: $prayerData');
+        } catch (e) {
+          print('Error decoding prayer JSON: $e');
+          prayerData = null;
+        }
+      } else if (map['prayer'] is Map) {
+        print('Treating as Map');
+        // If it's already a map, use it directly
+        prayerData = Map<String, dynamic>.from(map['prayer'] as Map);
+        print('Prayer already a map: $prayerData');
+      } else {
+        print(
+            'Prayer is neither String nor Map - type: ${map['prayer'].runtimeType}');
+      }
+    } else {
+      print('Failed null/empty check');
+    }
+
+    print('Final prayerData being assigned: $prayerData');
+    print('=== PRAYER PARSING END ===');
+
     return PrayerCommunity(
       id: map['id'] as String,
       community: map['community'] as String,
       description: map['description'] as String,
       members: map['members'] as int,
       allMembers: map['allMembers'] ?? [],
-      image: map['image'] != null ? map['image'] as String : null,
+      image: map['image'] != null && (map['image'] as String).isNotEmpty
+          ? map['image'] as String
+          : null,
       leader: map['leader'] is RecordModel
           ? map['leader'] as RecordModel
           : RecordModel.fromJson(map['leader']),
-      prayer: map['prayer'] != null
-          ? Map<String, dynamic>.from(map['prayer'] as Map)
-          : null,
+      prayer: prayerData,
       isClosed: map['isClosed'] as bool?,
     );
   }
@@ -123,13 +165,19 @@ class PrayerCommunity {
   String? get prayerTitle => prayer?['title'] as String?;
   String? get prayerText => prayer?['prayer'] as String?;
 
-  bool get hasPrayer =>
-      prayer != null &&
-      prayer!.containsKey('title') &&
-      prayer!.containsKey('prayer');
+  bool get hasPrayer {
+    print('Checking prayer validity: $prayer');
+    return (prayer != null &&
+        prayer!.containsKey('title') &&
+        prayer!.containsKey('prayer') &&
+        prayer!['title'] != null &&
+        prayer!['prayer'] != null &&
+        (prayer!['title'] as String).isNotEmpty &&
+        (prayer!['prayer'] as String).isNotEmpty);
+  }
 
   Map<String, String>? get prayerAsStringMap {
-    if (prayer == null) return null;
+    if (!hasPrayer) return null;
     return {
       'title': prayer!['title']?.toString() ?? '',
       'prayer': prayer!['prayer']?.toString() ?? '',
