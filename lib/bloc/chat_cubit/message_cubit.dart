@@ -1,7 +1,6 @@
 // message_cubit.dart
 import 'dart:async';
 import 'dart:convert';
-import 'dart:isolate';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -67,20 +66,6 @@ class MessageCubit extends Cubit<MessageState> {
     pb.collection('messages').unsubscribe();
   }
 
-  static Future<void> _recieveMessages(List args) async {
-    final messages = args.first as List<MessageModel>;
-    final repository = args[1] as MessageRepository;
-    final pb = args[2] as PocketBase;
-    for (var msg in messages) {
-      if (!msg.received) {
-        repository.messageBox.add(msg);
-        await pb
-            .collection("messages")
-            .update(msg.id, body: {"received": true});
-      }
-    }
-  }
-
   Future<void> loadMessages(String otherUserId) async {
     try {
       emit(state.copyWith(isLoading: true));
@@ -98,8 +83,9 @@ class MessageCubit extends Cubit<MessageState> {
         messages: messages,
         isLoading: false,
       ));
-      // make code run in an isolate
-      Isolate.spawn(_recieveMessages, [messages, repository, pb]);
+
+      // Mark messages as received directly (removed isolate)
+      await _markMessagesAsReceived(messages);
 
       // Cache messages
       await _cacheMessages(otherUserId, messages);
@@ -111,21 +97,28 @@ class MessageCubit extends Cubit<MessageState> {
     }
   }
 
+  Future<void> _markMessagesAsReceived(List<MessageModel> messages) async {
+    try {
+      for (var msg in messages) {
+        if (!msg.received) {
+          repository.messageBox.add(msg);
+          await pb
+              .collection("messages")
+              .update(msg.id, body: {"received": true});
+        }
+      }
+    } catch (e) {
+      // Silently fail - not critical
+      print('Error marking messages as received: $e');
+    }
+  }
+
   Future<void> _cacheMessages(
       String userId, List<MessageModel> messages) async {
     final prefs = await SharedPreferences.getInstance();
     final encodedMessages =
         messages.map((msg) => jsonEncode(msg.toJson())).toList();
     await prefs.setStringList('cached_messages_$userId', encodedMessages);
-  }
-
-  Future<List<MessageModel>> _getCachedMessages(String userId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final encodedMessages =
-        prefs.getStringList('cached_messages_$userId') ?? [];
-    return encodedMessages
-        .map((msg) => MessageModel.fromJson(jsonDecode(msg)))
-        .toList();
   }
 
   Future getSavedMessages(String otherUserId) async {

@@ -80,7 +80,7 @@ class ConnectivityCubit extends Cubit<bool> {
 
   Future<bool> _checkInternetConnection() async {
     try {
-      final result = await InternetAddress.lookup('cathsapp.ng');
+      final result = await InternetAddress.lookup('google.com');
       return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
     } catch (e) {
       debugPrint('Internet connection check failed: $e');
