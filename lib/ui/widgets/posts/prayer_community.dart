@@ -19,6 +19,9 @@ import 'package:oratio_app/ui/widgets/image_viewer.dart';
 import 'package:oratio_app/ui/widgets/posts/bottom_scaffold.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:oratio_app/ui/widgets/report_modal.dart';
+import 'package:oratio_app/ui/widgets/block_user_modal.dart';
+import 'package:oratio_app/models/report_model.dart';
 
 class CommunityPostCard extends StatefulWidget {
   const CommunityPostCard({super.key, required this.post, this.inPage = false});
@@ -158,35 +161,116 @@ class _CommunityPostCardState extends State<CommunityPostCard> {
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Text(widget.post.date),
-            trailing: user.id == widget.post.author.getStringValue('leader')
-                ? PopupMenuButton<String>(
-                    position: PopupMenuPosition.under,
-                    onSelected: (value) {
-                      if (value == 'edit') {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                CreatePostPage(postToEdit: widget.post),
-                          ),
-                        );
-                      }
-                    },
-                    itemBuilder: (BuildContext context) {
-                      return [
-                        const PopupMenuItem<String>(
-                          value: 'edit',
-                          child: Text('Edit Post'),
-                        ),
-                        const PopupMenuItem<String>(
-                          value: 'share',
-                          child: Text('Share Post'),
-                        ),
-                      ];
-                    },
-                    icon: const Icon(Icons.more_vert),
-                  )
-                : null,
+            trailing: PopupMenuButton<String>(
+              position: PopupMenuPosition.under,
+              onSelected: (value) async {
+                if (value == 'edit') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          CreatePostPage(postToEdit: widget.post),
+                    ),
+                  );
+                } else if (value == 'report') {
+                  await showReportModal(
+                    context,
+                    contentId: widget.post.id,
+                    contentType: ContentType.post,
+                    reportedUserId: widget.post.author.getStringValue('leader'),
+                    contentPreview: widget.post.post.length > 100
+                        ? '${widget.post.post.substring(0, 100)}...'
+                        : widget.post.post,
+                  );
+                } else if (value == 'spam') {
+                  await showSpamDialog(
+                    context,
+                    contentId: widget.post.id,
+                    contentType: 'post',
+                    reportedUserId: widget.post.author.getStringValue('leader'),
+                  );
+                } else if (value == 'block') {
+                  final authorId = widget.post.author.getStringValue('leader');
+                  final communityName = widget.post.community ?? 'User';
+                  final result = await showBlockUserDialog(
+                    context,
+                    userId: authorId,
+                    userName: communityName,
+                  );
+                  if (result == true) {
+                    // Refresh the feed or remove the post from view
+                    setState(() {});
+                  }
+                }
+              },
+              itemBuilder: (BuildContext context) {
+                final isOwnPost =
+                    user.id == widget.post.author.getStringValue('leader');
+                if (isOwnPost) {
+                  return [
+                    const PopupMenuItem<String>(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit, size: 18),
+                          SizedBox(width: 8),
+                          Text('Edit Post'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'share',
+                      child: Row(
+                        children: [
+                          Icon(Icons.share, size: 18),
+                          SizedBox(width: 8),
+                          Text('Share Post'),
+                        ],
+                      ),
+                    ),
+                  ];
+                } else {
+                  return [
+                    const PopupMenuItem<String>(
+                      value: 'report',
+                      child: Row(
+                        children: [
+                          Icon(FontAwesomeIcons.flag,
+                              size: 16, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Report Post',
+                              style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'spam',
+                      child: Row(
+                        children: [
+                          Icon(FontAwesomeIcons.ban,
+                              size: 16, color: Colors.orange),
+                          SizedBox(width: 8),
+                          Text('Mark as Spam',
+                              style: TextStyle(color: Colors.orange)),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'block',
+                      child: Row(
+                        children: [
+                          Icon(FontAwesomeIcons.userSlash,
+                              size: 16, color: Colors.grey),
+                          SizedBox(width: 8),
+                          Text('Block User'),
+                        ],
+                      ),
+                    ),
+                  ];
+                }
+              },
+              icon: const Icon(Icons.more_vert),
+            ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -486,25 +570,100 @@ class _PrayerRequestCardState extends State<PrayerRequestCard> {
                 Icon(Icons.public, size: 14, color: Colors.grey[600]),
               ],
             ),
-            trailing: _prayerRequest!.user.id == pb.authStore.model.id
-                ? PopupMenuButton<String>(
-                    position: PopupMenuPosition.under,
-                    onSelected: (value) {
-                      if (value == 'delete') {
-                        deletePrayerRequest(context, _prayerRequest!);
-                      }
-                    },
-                    itemBuilder: (BuildContext context) {
-                      return [
-                        const PopupMenuItem<String>(
-                          value: 'delete',
-                          child: Text('Delete Prayer'),
-                        ),
-                      ];
-                    },
-                    icon: const Icon(Icons.more_vert),
-                  )
-                : null,
+            trailing: PopupMenuButton<String>(
+              position: PopupMenuPosition.under,
+              onSelected: (value) async {
+                if (value == 'delete') {
+                  deletePrayerRequest(context, _prayerRequest!);
+                } else if (value == 'report') {
+                  await showReportModal(
+                    context,
+                    contentId: _prayerRequest!.id,
+                    contentType: ContentType.prayerRequest,
+                    reportedUserId: _prayerRequest!.user.id,
+                    contentPreview: _prayerRequest!.request.length > 100
+                        ? '${_prayerRequest!.request.substring(0, 100)}...'
+                        : _prayerRequest!.request,
+                  );
+                } else if (value == 'spam') {
+                  await showSpamDialog(
+                    context,
+                    contentId: _prayerRequest!.id,
+                    contentType: 'prayer_request',
+                    reportedUserId: _prayerRequest!.user.id,
+                  );
+                } else if (value == 'block') {
+                  final userName =
+                      _prayerRequest!.user.getStringValue('username');
+                  final result = await showBlockUserDialog(
+                    context,
+                    userId: _prayerRequest!.user.id,
+                    userName: userName,
+                  );
+                  if (result == true) {
+                    setState(() {});
+                  }
+                }
+              },
+              itemBuilder: (BuildContext context) {
+                final isOwnPrayer =
+                    _prayerRequest!.user.id == pb.authStore.model.id;
+                if (isOwnPrayer) {
+                  return [
+                    const PopupMenuItem<String>(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, size: 18, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Delete Prayer',
+                              style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    ),
+                  ];
+                } else {
+                  return [
+                    const PopupMenuItem<String>(
+                      value: 'report',
+                      child: Row(
+                        children: [
+                          Icon(FontAwesomeIcons.flag,
+                              size: 16, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Report Prayer',
+                              style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'spam',
+                      child: Row(
+                        children: [
+                          Icon(FontAwesomeIcons.ban,
+                              size: 16, color: Colors.orange),
+                          SizedBox(width: 8),
+                          Text('Mark as Spam',
+                              style: TextStyle(color: Colors.orange)),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem<String>(
+                      value: 'block',
+                      child: Row(
+                        children: [
+                          Icon(FontAwesomeIcons.userSlash,
+                              size: 16, color: Colors.grey),
+                          SizedBox(width: 8),
+                          Text('Block User'),
+                        ],
+                      ),
+                    ),
+                  ];
+                }
+              },
+              icon: const Icon(Icons.more_vert),
+            ),
           ),
           // Prayer Request Content
           Container(

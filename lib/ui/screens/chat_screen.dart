@@ -45,9 +45,12 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _scrollListener() {
-    setState(() {
-      _showFloatingButton = _scrollController.offset > 200;
-    });
+    final shouldShow = _scrollController.offset > 200;
+    if (_showFloatingButton != shouldShow) {
+      setState(() {
+        _showFloatingButton = shouldShow;
+      });
+    }
   }
 
   Future<void> _refreshChats() async {
@@ -159,10 +162,6 @@ class _ChatScreenState extends State<ChatScreen> {
                                 child: SliverList(
                                   delegate: SliverChildBuilderDelegate(
                                     (context, index) {
-                                      print([
-                                        'current index ',
-                                        filteredChats[index]
-                                      ]);
                                       return AnimationConfiguration
                                           .staggeredList(
                                         position: index,
@@ -232,8 +231,9 @@ class _ChatScreenState extends State<ChatScreen> {
                     return sum + chat.unreadCount;
                   });
                 }
+                // Temporarily disabled - backend needs update
                 return Badge(
-                  isLabelVisible: unreadchats > 0,
+                  isLabelVisible: false, // unreadchats > 0,
                   label: Text(
                     unreadchats.toString(),
                     style: TextStyle(
@@ -263,8 +263,9 @@ class _ChatScreenState extends State<ChatScreen> {
                     return sum + chat.unreadCount;
                   });
                 }
+                // Temporarily disabled - backend needs update
                 return Badge(
-                  isLabelVisible: unreadchats > 0,
+                  isLabelVisible: false, // unreadchats > 0,
                   label: Text(
                     unreadchats.toString(),
                     style: TextStyle(
@@ -336,20 +337,48 @@ class _ChatScreenState extends State<ChatScreen> {
       child: CircleAvatar(
         radius: 20,
         backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-        child: IconButton(
+        child: PopupMenuButton<String>(
           icon: const Icon(
-            FontAwesomeIcons.addressBook,
+            FontAwesomeIcons.ellipsisVertical,
             size: 18,
           ),
-          onPressed: () async {
-            // Handle profile tap
-            if (await FlutterContacts.requestPermission()) {
-              context.pushNamed(RouteNames.contacts);
-            } else {
-              NotificationService.showError(
-                  "Permission to access contacts is needed");
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          onSelected: (value) async {
+            if (value == 'contacts') {
+              if (await FlutterContacts.requestPermission()) {
+                context.pushNamed(RouteNames.contacts);
+              } else {
+                NotificationService.showError(
+                    "Permission to access contacts is needed");
+              }
+            } else if (value == 'blocked') {
+              context.pushNamed(RouteNames.blockedUsers);
             }
           },
+          itemBuilder: (context) => [
+            const PopupMenuItem<String>(
+              value: 'contacts',
+              child: Row(
+                children: [
+                  Icon(FontAwesomeIcons.addressBook, size: 16),
+                  Gap(12),
+                  Text('Contacts'),
+                ],
+              ),
+            ),
+            const PopupMenuItem<String>(
+              value: 'blocked',
+              child: Row(
+                children: [
+                  Icon(FontAwesomeIcons.ban, size: 16),
+                  Gap(12),
+                  Text('Blocked Users'),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -560,26 +589,27 @@ class _ChatItemState extends State<ChatItem>
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          if (widget.chatPreview.unreadCount > 0)
-                            Container(
-                              margin: const EdgeInsets.only(left: 8),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.primary,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                '${widget.chatPreview.unreadCount}',
-                                style: TextStyle(
-                                  color:
-                                      Theme.of(context).colorScheme.onPrimary,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            )
+                          // Temporarily disabled - backend needs update
+                          // if (widget.chatPreview.unreadCount > 0)
+                          //   Container(
+                          //     margin: const EdgeInsets.only(left: 8),
+                          //     padding: const EdgeInsets.symmetric(
+                          //       horizontal: 8,
+                          //       vertical: 4,
+                          //     ),
+                          //     decoration: BoxDecoration(
+                          //       color: Theme.of(context).colorScheme.primary,
+                          //       borderRadius: BorderRadius.circular(12),
+                          //     ),
+                          //     child: Text(
+                          //       '${widget.chatPreview.unreadCount}',
+                          //       style: TextStyle(
+                          //         color:
+                          //             Theme.of(context).colorScheme.onPrimary,
+                          //         fontSize: 12,
+                          //       ),
+                          //     ),
+                          //   )
                         ],
                       ),
                     ],

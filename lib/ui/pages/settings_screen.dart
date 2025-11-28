@@ -274,6 +274,15 @@ class _SettingsPageState extends State<SettingsPage> {
           context.pushNamed(RouteNames.editprofile);
         },
       ),
+      _SettingsItem(
+        icon: Icons.block,
+        title: 'Blocked Users',
+        subtitle: 'Manage blocked users',
+        iconGradient: [Colors.red[400]!, Colors.deepOrange[400]!],
+        onTap: () {
+          context.pushNamed(RouteNames.blockedUsers);
+        },
+      ),
       // _SettingsItem(
       //   icon: Icons.palette_outlined,
       //   title: 'Appearance',

@@ -60,7 +60,6 @@ class ChatCubit extends Cubit<ChatState> {
       final chats = await _chatService.getRecentChats();
       emit(ChatsLoaded(chats));
     } catch (e) {
-      print(e);
       emit(ChatError('Failed to load chats: $e'));
     }
   }
@@ -107,20 +106,21 @@ class ChatCubit extends Cubit<ChatState> {
     final currentUserId = _pb.authStore.model.id;
 
     try {
-      // Get unread messages
+      // Get unread messages from messages collection
       final result = await _pb.collection('messages').getList(
             filter:
                 'reciever = "$currentUserId" && sender = "$otherParticipantId" && read = false',
           );
 
-      // Mark each message as read
+      // Mark each message as read in messages collection
       for (final message in result.items) {
         await _pb.collection('messages').update(message.id, body: {
           'read': true,
         });
       }
 
-      // Refresh chat list
+      // Refresh chat list to reflect changes
+      await loadRecentChats();
     } catch (e) {
       emit(ChatError('Failed to mark messages as read: $e'));
       rethrow;
@@ -179,9 +179,10 @@ class ChatCubit extends Cubit<ChatState> {
 
   int unreadCount({required bool isFriend}) {
     if (state is ChatsLoaded) {
+      final currentUser = _pb.authStore.model as RecordModel;
       return (state as ChatsLoaded)
           .chats
-          .where((chat) => chat.isFriend == isFriend && chat.unreadCount > 0)
+          .where((chat) => chat.isFriend(currentUser) == isFriend && chat.unreadCount > 0)
           .length;
     }
     return 0;

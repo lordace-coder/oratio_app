@@ -19,7 +19,7 @@ class ChatService {
             perPage: 50,
             filter: 'members ~ "$currentUserId"',
             expand: 'members,sender',
-            sort: '-created',
+            sort: '-updated',
           );
 
       final Map<String, ChatPreview> chatMap = {};
@@ -53,13 +53,15 @@ class ChatService {
                 msg = "Contact Info : ${metaMessage['first_name']}";
               }
             }
-          } catch (e) {}
+          } catch (e) {
+            // Invalid JSON, use message as is
+          }
         }
         String messagePreview = isSender ? 'You: $msg' : msg;
 
-        bool active = otherParticipant.getBoolValue('active') ?? false;
+        bool active = otherParticipant.getBoolValue('active');
         String? lastSeen = otherParticipant.getStringValue('last_seen');
-        if (lastSeen.isEmpty ?? true) {
+        if (lastSeen.isEmpty) {
           lastSeen = null;
         }
 
@@ -76,7 +78,7 @@ class ChatService {
           );
         }
 
-        if (chat.getBoolValue('read') && !isSender) {
+        if (!chat.getBoolValue('read') && !isSender) {
           chatMap[otherParticipantId]!.unreadCount++;
         }
 
@@ -91,7 +93,6 @@ class ChatService {
         return chatMap[otherParticipantId]!;
       }).toList();
     } catch (e) {
-      print('Error fetching recent chats: $e');
       return [];
     }
   }

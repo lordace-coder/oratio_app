@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:oratio_app/services/chat/db/chat_hive.dart';
+import 'package:oratio_app/services/reporting_service.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:uuid/uuid.dart';
 
@@ -40,37 +41,36 @@ class MessageCubit extends Cubit<MessageState> {
   MessageCubit({
     required this.repository,
     required this.pb,
-  }) : super(MessageState()) {
-    _initMessageSubscription();
-  }
+  }) : super(MessageState());
 
-  void _initMessageSubscription() async {
-    if (!pb.authStore.isValid) return;
-    final currentUserId = pb.authStore.model.id;
-    await pb.collection('messages').subscribe(
-      '*',
-      (e) {
-        if (e.action == 'create' && e.record != null) {
-          if (e.record?.getStringValue("sender") == currentUserId.toString()) {
-            return;
-          }
-          final message = MessageModel.fromPocketBase(e.record!);
-          _handleNewMessage(message);
-        }
-      },
-      filter: 'sender.id = "$currentUserId" || reciever.id = "$currentUserId"',
-    );
-  }
+  // Removed global subscription - each chat page handles its own subscription
+  // void _initMessageSubscription() async {
+  //   if (!pb.authStore.isValid) return;
+  //   final currentUserId = pb.authStore.model.id;
+  //   await pb.collection('messages').subscribe(
+  //     '*',
+  //     (e) {
+  //       if (e.action == 'create' && e.record != null) {
+  //         if (e.record?.getStringValue("sender") == currentUserId.toString()) {
+  //           return;
+  //         }
+  //         final message = MessageModel.fromPocketBase(e.record!);
+  //         _handleNewMessage(message);
+  //       }
+  //     },
+  //     filter: 'sender.id = "$currentUserId" || reciever.id = "$currentUserId"',
+  //   );
+  // }
 
   void _unsubscribe() {
     pb.collection('messages').unsubscribe();
   }
 
-  Future<void> loadMessages(String otherUserId) async {
+  Future<void> loadMessages(String otherUserId, {bool showLoading = false}) async {
     try {
-      emit(state.copyWith(isLoading: true));
-
+      // Don't emit loading state to prevent flickering
       if (!pb.authStore.isValid) return;
+
       final response = await pb.collection('messages').getFullList(
             sort: '-created',
             filter:
@@ -82,6 +82,7 @@ class MessageCubit extends Cubit<MessageState> {
       emit(state.copyWith(
         messages: messages,
         isLoading: false,
+        error: null,
       ));
 
       // Mark messages as received directly (removed isolate)
@@ -203,6 +204,10 @@ class MessageCubit extends Cubit<MessageState> {
       final updatedMessages = [message, ...state.messages];
       emit(state.copyWith(messages: updatedMessages));
     }
+  }
+
+  void clearMessages() {
+    emit(MessageState());
   }
 
   void logout() {

@@ -1,5 +1,3 @@
-import 'dart:isolate';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,7 +8,6 @@ import 'package:flutter_contacts/contact.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart' as intl;
-import 'package:intl/intl.dart';
 import 'package:mime/mime.dart';
 import 'package:ace_toast/ace_toast.dart';
 import 'package:oratio_app/bloc/blocs.dart';
@@ -32,6 +29,9 @@ import 'package:uuid/uuid.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:oratio_app/ui/widgets/block_user_modal.dart';
+import 'package:oratio_app/models/report_model.dart';
 
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key, required this.profile});
@@ -41,122 +41,135 @@ class ChatPage extends StatefulWidget {
   State<ChatPage> createState() => _ChatPageState();
 }
 
-class _ChatPageState extends State<ChatPage> {
-  final List<types.Message> _messages = [];
+class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
   late RecordModel currentUser;
   late PocketBase pb;
   late types.User _user;
   late types.User _otherUser;
+  bool _isSubscribed = false;
+  bool _isInitialized = false;
+  late MessageCubit _messageCubit;
 
   @override
   void initState() {
     super.initState();
-    context
-        .read<ChatCubit>()
-        .markMessagesAsRead(widget.profile.userId)
-        .then((_) {
-      context.read<ChatCubit>().loadRecentChats();
-    });
+    WidgetsBinding.instance.addObserver(this);
+    _messageCubit = context.read<MessageCubit>();
+    _initializeChat();
+  }
+
+  Future<void> _initializeChat() async {
+    if (_isInitialized) return;
+
     pb = context.read<PocketBaseServiceCubit>().state.pb;
     currentUser = pb.authStore.model as RecordModel;
+
     _user = types.User(
       id: currentUser.id,
       firstName: currentUser.getStringValue('first_name'),
       lastName: currentUser.getStringValue('last_name'),
     );
+
     _otherUser = types.User(
-        id: widget.profile.userId,
-        firstName: widget.profile.user.getStringValue('first_name'),
-        lastName: widget.profile.user.getStringValue('last_name'));
-    subscribeToMessages();
+      id: widget.profile.userId,
+      firstName: widget.profile.user.getStringValue('first_name'),
+      lastName: widget.profile.user.getStringValue('last_name'),
+    );
 
-    _clearMessages();
-    _loadCachedMessages();
+    // Clear any previous messages first (synchronously)
+    _messageCubit.clearMessages();
 
-    _loadInitialMessages();
+    // Load messages
+    await _messageCubit.loadMessages(widget.profile.userId);
+
+    // Mark messages as read after loading
+    await context.read<ChatCubit>().markMessagesAsRead(widget.profile.userId);
+
+    // Subscribe to realtime updates
+    _subscribeToMessages();
+
+    // Reload chat list
+    context.read<ChatCubit>().loadRecentChats();
+
+    _isInitialized = true;
   }
 
-  void _clearMessages() {
-    setState(() {
-      _messages.clear();
-    });
-  }
+  void _subscribeToMessages() {
+    if (_isSubscribed) return;
 
-  Future<void> _loadCachedMessages() async {
-    final prefs = await SharedPreferences.getInstance();
-    final encodedMessages =
-        prefs.getStringList('cached_messages_${widget.profile.userId}') ?? [];
-    if (encodedMessages.isEmpty) return;
-    final cachedMessages = encodedMessages
-        .map((msg) {
-          try {
-            return types.Message.fromJson(
-                jsonDecode(msg) as Map<String, dynamic>);
-          } catch (e) {
-            print('Error decoding message: $e');
-            return null;
+    try {
+      pb.collection('messages').subscribe(
+        '*',
+        (e) {
+          if (!mounted) return;
+
+          if (e.action == 'create' && e.record != null) {
+            final message = e.record!;
+            final senderId = message.getStringValue('sender');
+            final receiverId = message.getStringValue('reciever');
+
+            // Process messages for this conversation (both incoming and outgoing)
+            if ((senderId == widget.profile.userId && receiverId == currentUser.id) ||
+                (senderId == currentUser.id && receiverId == widget.profile.userId)) {
+              // Reload messages silently
+              _messageCubit.loadMessages(
+                widget.profile.userId,
+                showLoading: false,
+              );
+
+              // Mark as read if we received it (this also reloads chat list)
+              if (senderId == widget.profile.userId && receiverId == currentUser.id) {
+                context.read<ChatCubit>().markMessagesAsRead(widget.profile.userId);
+              } else {
+                // If it's our own message, just reload chat list
+                context.read<ChatCubit>().loadRecentChats();
+              }
+            }
           }
-        })
-        .whereType<types.Message>()
-        .toList();
-    setState(() {
-      _messages.addAll(cachedMessages);
-    });
+        },
+        filter: '(sender = "${widget.profile.userId}" && reciever = "${currentUser.id}") || (sender = "${currentUser.id}" && reciever = "${widget.profile.userId}")',
+      );
+
+      _isSubscribed = true;
+    } catch (e) {
+      // Silent fail - realtime updates will not work but app continues
+    }
   }
 
-  Future<void> _handleMessageCache() async {
-    final messages = _messages.map((msg) => jsonEncode(msg.toJson())).toList();
-    final userId = widget.profile.userId;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList('cached_messages_$userId', messages);
-    print(['cached messages', 'cached_messages_$userId', messages]);
+  void _unsubscribeFromMessages() {
+    if (_isSubscribed) {
+      try {
+        pb.collection('messages').unsubscribe('*');
+        _isSubscribed = false;
+      } catch (e) {
+        // Silent fail
+      }
+    }
   }
 
   @override
   void dispose() {
-    _handleMessageCache();
+    WidgetsBinding.instance.removeObserver(this);
+    _unsubscribeFromMessages();
+    // Clear messages state when leaving chat (using saved reference)
+    _messageCubit.clearMessages();
     super.dispose();
   }
 
-  intl.DateFormat format = intl.DateFormat("yyyy-MM-dd HH:mm:ss.SSS'Z'");
-  void subscribeToMessages() async {
-    // TODO CHANGE THIS TO USE WEBSOCKETS
-    await pb.collection('messages').subscribe(
-      '*',
-      (e) {
-        if (e.action == 'create' && e.record != null) {
-          final message = e.record!;
-          final newMsg = types.TextMessage(
-              author: _otherUser,
-              id: message.id,
-              text: message.getStringValue('message'));
-          if (mounted) {
-            _addMessage(newMsg);
-          }
-        }
-      },
-      filter: 'reciever.id = "${currentUser.id}"',
-    );
-  }
-
-  void unsubscribeToMessages() {
-    try {
-      pb.collection('messages').unsubscribe('*');
-    } catch (e) {
-      print('unsubscribe error $e');
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Resubscribe when app comes back to foreground
+      _subscribeToMessages();
+      // Reload messages
+      _messageCubit.loadMessages(widget.profile.userId, showLoading: false);
+    } else if (state == AppLifecycleState.paused) {
+      // Unsubscribe when app goes to background
+      _unsubscribeFromMessages();
     }
   }
 
-  void _addMessage(types.Message message) {
-    setState(() {
-      _messages.insert(0, message);
-    });
-  }
-
   void _handleContactSelection() async {
-    // Request permission to access contacts
-
-    // Open contact picker
     Contact? contact = await ContactService.openDeviceContactPicker();
 
     if (contact != null) {
@@ -171,64 +184,47 @@ class _ChatPageState extends State<ChatPage> {
             : 'No email',
       };
 
-      final message = types.CustomMessage(
-        author: _user,
-        createdAt: DateTime.now().millisecondsSinceEpoch,
-        id: const Uuid().v4(),
-        metadata: contactData,
-      );
-
       NotificationService.showInfo('Sending contact...');
       try {
         contactData["metadata"] = "contact";
-        context.read<MessageCubit>().sendMessage(
+        await _messageCubit.sendMessage(
               message: jsonEncode(contactData),
               receiverId: widget.profile.userId,
             );
+        NotificationService.showSuccess('Contact sent');
       } catch (e) {
-        print(e);
         NotificationService.showError('Contact send failed');
       }
-
-      _addMessage(message);
     }
   }
 
   void _handleAttachmentPressed() {
     showModalBottomSheet<void>(
       context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (BuildContext context) => SafeArea(
-        child: SizedBox(
-          height: 144,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              TextButton(
-                onPressed: () {
+              ListTile(
+                leading: Icon(Icons.insert_drive_file, color: AppColors.primary),
+                title: const Text('File'),
+                onTap: () {
                   Navigator.pop(context);
                   _handleFileSelection();
                 },
-                child: const Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Text('File'),
-                ),
               ),
-              TextButton(
-                onPressed: () {
+              ListTile(
+                leading: Icon(Icons.contacts, color: AppColors.primary),
+                title: const Text('Contact'),
+                onTap: () {
                   Navigator.pop(context);
                   _handleContactSelection();
                 },
-                child: const Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Text('Contact'),
-                ),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Align(
-                  alignment: AlignmentDirectional.centerStart,
-                  child: Text('Cancel'),
-                ),
               ),
             ],
           ),
@@ -254,7 +250,7 @@ class _ChatPageState extends State<ChatPage> {
 
       Widget filePreview;
       if (mimeType != null && mimeType.startsWith('image/')) {
-        filePreview = Image.memory(fileBytes, fit: BoxFit.cover);
+        filePreview = Image.memory(fileBytes, fit: BoxFit.cover, height: 200);
       } else if (mimeType != null && mimeType.startsWith('video/')) {
         filePreview = const Icon(Icons.videocam, size: 100);
       } else {
@@ -265,6 +261,9 @@ class _ChatPageState extends State<ChatPage> {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
             title: const Text('Send File'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -279,8 +278,12 @@ class _ChatPageState extends State<ChatPage> {
                 onPressed: () => Navigator.of(context).pop(false),
                 child: const Text('Cancel'),
               ),
-              TextButton(
+              ElevatedButton(
                 onPressed: () => Navigator.of(context).pop(true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                ),
                 child: const Text('Send'),
               ),
             ],
@@ -288,17 +291,7 @@ class _ChatPageState extends State<ChatPage> {
         },
       );
 
-      if (confirmSend == true) {
-        final message = types.FileMessage(
-          author: _user,
-          createdAt: DateTime.now().millisecondsSinceEpoch,
-          id: const Uuid().v4(),
-          mimeType: mimeType,
-          name: fileName,
-          size: result.files.single.size,
-          uri: filePath,
-        );
-
+      if (confirmSend == true && mounted) {
         NotificationService.showInfo('Uploading file...');
         try {
           showDialog(
@@ -306,13 +299,12 @@ class _ChatPageState extends State<ChatPage> {
             barrierDismissible: false,
             builder: (BuildContext context) {
               return const AlertDialog(
-                title: Text('Uploading...'),
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    LinearProgressIndicator(),
+                    CircularProgressIndicator(),
                     SizedBox(height: 20),
-                    Text('Please wait...'),
+                    Text('Uploading...'),
                   ],
                 ),
               );
@@ -326,47 +318,21 @@ class _ChatPageState extends State<ChatPage> {
               "reciever": _otherUser.id,
             },
             files: [
-              http.MultipartFile.fromBytes('file', fileBytes,
-                  filename: fileName)
+              http.MultipartFile.fromBytes('file', fileBytes, filename: fileName)
             ],
           );
 
           if (mounted) {
             Navigator.of(context, rootNavigator: true).pop();
-            _addMessage(message);
+            NotificationService.showSuccess('File sent');
           }
         } catch (e) {
           if (mounted) {
             Navigator.of(context, rootNavigator: true).pop();
           }
-          print(e);
           NotificationService.showError('File upload failed');
         }
       }
-    }
-  }
-
-  void _handleImageSelection() async {
-    final result = await ImagePicker().pickImage(
-      imageQuality: 70,
-      maxWidth: 1440,
-      source: ImageSource.gallery,
-    );
-
-    if (result != null) {
-      final bytes = await result.readAsBytes();
-      final image = await decodeImageFromList(bytes);
-
-      final message = types.ImageMessage(
-        author: _user,
-        createdAt: DateTime.now().millisecondsSinceEpoch,
-        height: image.height.toDouble(),
-        id: const Uuid().v4(),
-        name: result.name,
-        size: bytes.length,
-        uri: result.path,
-        width: image.width.toDouble(),
-      );
     }
   }
 
@@ -381,8 +347,6 @@ class _ChatPageState extends State<ChatPage> {
         openImageView(context, message.uri, imageUrl: message.uri);
       } else if (mimeType != null && mimeType.startsWith('video/')) {
         openVideo(context, message.uri);
-      } else {
-        // Handle other file types if necessary
       }
     }
   }
@@ -391,22 +355,11 @@ class _ChatPageState extends State<ChatPage> {
     types.TextMessage message,
     types.PreviewData previewData,
   ) {
-    final index = _messages.indexWhere((element) => element.id == message.id);
-    final updatedMessage = (_messages[index] as types.TextMessage).copyWith(
-      previewData: previewData,
-    );
-
-    setState(() {
-      _messages[index] = updatedMessage;
-    });
-  }
-
-  Future<void> _loadInitialMessages() async {
-    await context.read<MessageCubit>().loadMessages(widget.profile.userId);
+    // Handle preview data if needed
   }
 
   void _handleSendPressed(types.PartialText message) {
-    context.read<MessageCubit>().sendMessage(
+    _messageCubit.sendMessage(
           message: message.text,
           receiverId: widget.profile.userId,
         );
@@ -474,7 +427,6 @@ class _ChatPageState extends State<ChatPage> {
                     Positioned(
                       right: 0,
                       bottom: -2,
-                      // left: 3,
                       child: Container(
                         width: 16,
                         height: 16,
@@ -491,29 +443,152 @@ class _ChatPageState extends State<ChatPage> {
                 ],
               ),
               const SizedBox(width: 12),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    getFullName(widget.profile.user),
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  if (widget.profile.user.getBoolValue('active') == false)
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      'last seen ${_getLastSeenTime(widget.profile.user.updated)}',
+                      getFullName(widget.profile.user),
                       style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.black54,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                ],
+                    if (widget.profile.user.getBoolValue('active') == false)
+                      Text(
+                        'last seen ${_getLastSeenTime(widget.profile.user.updated)}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black54,
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
+        actions: [
+          PopupMenuButton<String>(
+            position: PopupMenuPosition.under,
+            onSelected: (value) async {
+              if (value == 'block') {
+                final userName = getFullName(widget.profile.user);
+                final result = await showBlockUserDialog(
+                  context,
+                  userId: widget.profile.userId,
+                  userName: userName,
+                );
+                if (result == true && mounted) {
+                  NotificationService.showInfo('User blocked');
+                  Navigator.pop(context);
+                }
+              } else if (value == 'report') {
+                await showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    contentPadding: const EdgeInsets.all(24),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.red.shade50,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            FontAwesomeIcons.flag,
+                            color: Colors.red.shade600,
+                            size: 32,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        const Text(
+                          'Report User?',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Report ${getFullName(widget.profile.user)} for inappropriate behavior or content?',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[700],
+                            height: 1.5,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          await showSpamDialog(
+                            context,
+                            contentId: widget.profile.userId,
+                            contentType: 'user',
+                            reportedUserId: widget.profile.userId,
+                          );
+                        },
+                        child: Text(
+                          'Report',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.red.shade600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+            },
+            itemBuilder: (BuildContext context) => [
+              const PopupMenuItem<String>(
+                value: 'block',
+                child: Row(
+                  children: [
+                    Icon(FontAwesomeIcons.userSlash, size: 16, color: Colors.orange),
+                    SizedBox(width: 12),
+                    Text('Block User', style: TextStyle(color: Colors.orange)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: 'report',
+                child: Row(
+                  children: [
+                    Icon(FontAwesomeIcons.flag, size: 16, color: Colors.red),
+                    SizedBox(width: 12),
+                    Text('Report User', style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
+            icon: const Icon(Icons.more_vert),
+          ),
+        ],
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -526,46 +601,84 @@ class _ChatPageState extends State<ChatPage> {
                 Colors.white.withOpacity(.85), BlendMode.lighten),
           ),
         ),
-        child: BlocConsumer<MessageCubit, MessageState>(
-          listener: (ctx, state) {
-            if (state.isLoading) {
-              _clearMessages();
-            }
-          },
+        child: BlocBuilder<MessageCubit, MessageState>(
           builder: (context, state) {
-            if (state.isLoading) {
-              return const Center(child: CircularProgressIndicator());
+            // Show error state if there's an error and no messages
+            if (state.error != null && state.messages.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Failed to load messages',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      state.error!,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.6),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        context
+                            .read<MessageCubit>()
+                            .loadMessages(widget.profile.userId);
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              );
             }
 
             final messages = state.messages.map((msg) {
               if (msg.filePath != null && msg.filePath!.isNotEmpty) {
-                // Handle file message
                 return types.FileMessage(
                   author: msg.senderId == _user.id ? _user : _otherUser,
                   id: msg.id,
-                  name: msg.filePath!.split('/').last, // Get filename from path
-                  size: 0, // You might want to store file size in your model
+                  name: msg.filePath!.split('/').last,
+                  size: 0,
                   uri: pb.files
                       .getUrl(
-                          RecordModel(
-                              collectionName: "messages",
-                              id: msg.id,
-                              collectionId: "nnh9nuyiwl32nsv"),
-                          msg.filePath!)
+                        RecordModel(
+                          collectionName: "messages",
+                          id: msg.id,
+                          collectionId: "nnh9nuyiwl32nsv",
+                        ),
+                        msg.filePath!,
+                      )
                       .toString(),
                   createdAt: msg.created.millisecondsSinceEpoch,
                   status: msg.read ? types.Status.seen : types.Status.sent,
                 );
               } else {
-                // Handle text message
-                final createdAtUtc = msg.created.toUtc().millisecondsSinceEpoch;
-
                 return types.TextMessage(
                   author: msg.senderId == _user.id ? _user : _otherUser,
                   id: msg.id,
                   text: msg.message,
                   status: msg.read ? types.Status.seen : types.Status.sent,
-                  createdAt: createdAtUtc,
+                  createdAt: msg.created.toUtc().millisecondsSinceEpoch,
                 );
               }
             }).toList();
@@ -573,8 +686,7 @@ class _ChatPageState extends State<ChatPage> {
             return Chat(
               bubbleBuilder: (child,
                       {required message, required nextMessageInGroup}) =>
-                  CustomBubble(
-                      message: message, isUser: message.author == _user),
+                  CustomBubble(message: message, isUser: message.author == _user),
               messages: messages,
               onAttachmentPressed: _handleAttachmentPressed,
               onMessageTap: _handleMessageTap,

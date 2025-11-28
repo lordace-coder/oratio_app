@@ -30,6 +30,7 @@ import 'package:oratio_app/ui/pages/profile_page.dart';
 import 'package:oratio_app/ui/pages/schedules_page.dart';
 import 'package:oratio_app/ui/pages/settings_screen.dart';
 import 'package:oratio_app/ui/pages/transaction_details.dart';
+import 'package:oratio_app/ui/pages/blocked_users_page.dart';
 import 'package:oratio_app/ui/routes/route_names.dart';
 
 import '../pages/pages.dart';
@@ -113,6 +114,11 @@ class AppRouter {
                   path: '/settings',
                   name: RouteNames.settingsPage,
                   builder: (context, state) => const SettingsPage(),
+                ),
+                GoRoute(
+                  path: '/blocked-users',
+                  name: RouteNames.blockedUsers,
+                  builder: (context, state) => const BlockedUsersPage(),
                 ),
                 GoRoute(
                   path: '/profilevisitor/:id',

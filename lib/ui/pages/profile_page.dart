@@ -15,6 +15,7 @@ import 'package:oratio_app/ui/routes/route_names.dart';
 import 'package:oratio_app/ui/themes.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:oratio_app/services/reporting_service.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({
@@ -347,6 +348,16 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                               const Gap(12),
                               _buildGradientButton(
+                                "Delete Account",
+                                FontAwesomeIcons.trash,
+                                const Color(0xFFFF9800),
+                                const Color(0xFFFF5722),
+                                () async {
+                                  await _showDeleteAccountDialog(context, pb);
+                                },
+                              ),
+                              const Gap(12),
+                              _buildGradientButton(
                                 "Log Out",
                                 FontAwesomeIcons.rightFromBracket,
                                 const Color(0xFFFF6B6B),
@@ -616,6 +627,169 @@ class _ProfilePageState extends State<ProfilePage> {
         style: const TextStyle(
           color: Color(0xFF6C63FF),
           fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showDeleteAccountDialog(BuildContext context, PocketBase pb) async {
+    final TextEditingController confirmController = TextEditingController();
+    bool isDeleting = false;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          contentPadding: const EdgeInsets.all(24),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  FontAwesomeIcons.triangleExclamation,
+                  color: Colors.red.shade600,
+                  size: 40,
+                ),
+              ),
+              const Gap(20),
+              const Text(
+                'Delete Account?',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const Gap(12),
+              Text(
+                'This action is permanent and cannot be undone. All your data will be deleted including:\n\n'
+                '• Your profile and personal information\n'
+                '• All your posts and prayer requests\n'
+                '• Your messages and conversations\n'
+                '• Your community memberships',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[700],
+                  height: 1.5,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const Gap(24),
+              Text(
+                'Type "DELETE" to confirm',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[800],
+                ),
+              ),
+              const Gap(12),
+              TextField(
+                controller: confirmController,
+                enabled: !isDeleting,
+                textAlign: TextAlign.center,
+                decoration: InputDecoration(
+                  hintText: 'DELETE',
+                  hintStyle: TextStyle(color: Colors.grey[400]),
+                  filled: true,
+                  fillColor: Colors.grey[50],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade200),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey.shade200),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.red.shade300, width: 2),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: isDeleting
+                  ? null
+                  : () {
+                      confirmController.dispose();
+                      Navigator.pop(context);
+                    },
+              child: const Text(
+                'Cancel',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black54,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: isDeleting
+                  ? null
+                  : () async {
+                      if (confirmController.text.trim() != 'DELETE') {
+                        NotificationService.showError(
+                            'Please type "DELETE" to confirm');
+                        return;
+                      }
+
+                      setState(() {
+                        isDeleting = true;
+                      });
+
+                      try {
+                        final currentUser = pb.authStore.model as RecordModel;
+                        final reportingService = ReportingService(pb);
+
+                        await reportingService.deleteUserAccount(currentUser.id);
+
+                        if (context.mounted) {
+                          confirmController.dispose();
+                          Navigator.pop(context);
+                          NotificationService.showSuccess(
+                              'Account deleted successfully');
+                          context.read<CentralCubit>().logout();
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          setState(() {
+                            isDeleting = false;
+                          });
+                          NotificationService.showError(
+                              'Failed to delete account: ${e.toString()}');
+                        }
+                      }
+                    },
+              child: isDeleting
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : Text(
+                      'Delete Account',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.red.shade600,
+                      ),
+                    ),
+            ),
+          ],
         ),
       ),
     );

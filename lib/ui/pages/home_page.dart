@@ -81,8 +81,9 @@ class _HomePageState extends State<HomePage> {
             const BottomNavigationBarItem(
                 icon: Icon(FontAwesomeIcons.bars), label: 'Menu'),
             BottomNavigationBarItem(
+                // Temporarily disabled - backend needs update
                 icon: Badge(
-                    isLabelVisible: unreadchats > 0,
+                    isLabelVisible: false, // unreadchats > 0,
                     label:
                         unreadchats > 0 ? Text(unreadchats.toString()) : null,
                     child: const Icon(FontAwesomeIcons.solidMessage)),

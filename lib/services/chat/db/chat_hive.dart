@@ -136,7 +136,6 @@ class MessageRepository {
   }
 
   Future<List<MessageModel>> getUnreceivedMessages(String otherUserId) async {
-    print(['hive saved', messageBox.values.map((i) => i.message).toList()]);
     return messageBox.values
         .where((message) => (message.receiverId == otherUserId ||
             message.senderId == otherUserId))
